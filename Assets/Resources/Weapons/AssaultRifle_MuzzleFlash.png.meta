@@ -1,0 +1,468 @@
+fileFormatVersion: 2
+guid: 00b0b7b962bb949478c9c03656a09d46
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1674181001519165678
+    second: AssaultRifle_MuzzleFlash_0
+  - first:
+      213: -1931713133245318518
+    second: AssaultRifle_MuzzleFlash_1
+  - first:
+      213: -2464090359518465487
+    second: AssaultRifle_MuzzleFlash_2
+  - first:
+      213: -8392464259138167943
+    second: AssaultRifle_MuzzleFlash_3
+  - first:
+      213: -4683361083336746233
+    second: AssaultRifle_MuzzleFlash_4
+  - first:
+      213: 6186656127588965795
+    second: AssaultRifle_MuzzleFlash_5
+  - first:
+      213: 7857960940827453899
+    second: AssaultRifle_MuzzleFlash_6
+  - first:
+      213: -7179047668051641827
+    second: AssaultRifle_MuzzleFlash_7
+  - first:
+      213: 1777364077359322721
+    second: AssaultRifle_MuzzleFlash_8
+  - first:
+      213: 5469901600707477028
+    second: AssaultRifle_MuzzleFlash_9
+  - first:
+      213: -6704706187613430101
+    second: AssaultRifle_MuzzleFlash_10
+  - first:
+      213: 4281666016732685453
+    second: AssaultRifle_MuzzleFlash_11
+  - first:
+      213: 6061027330817481404
+    second: AssaultRifle_MuzzleFlash_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_0
+      rect:
+        serializedVersion: 2
+        x: 723
+        y: 29
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee0f14d20c2eb3710800000000000000
+      internalID: 1674181001519165678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_1
+      rect:
+        serializedVersion: 2
+        x: 850
+        y: 29
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8ab4f4d32d2135e0800000000000000
+      internalID: -1931713133245318518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_2
+      rect:
+        serializedVersion: 2
+        x: 979
+        y: 40
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 132ff629fdacdcdd0800000000000000
+      internalID: -2464090359518465487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_3
+      rect:
+        serializedVersion: 2
+        x: 1115
+        y: 18
+        width: 894
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97b58e3b83af78b80800000000000000
+      internalID: -8392464259138167943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_4
+      rect:
+        serializedVersion: 2
+        x: 1115
+        y: 35
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70b13d088eb510fb0800000000000000
+      internalID: -4683361083336746233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_5
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 26
+        width: 394
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ad1f6048fa6bd550800000000000000
+      internalID: 6186656127588965795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_6
+      rect:
+        serializedVersion: 2
+        x: 721
+        y: 27
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc92ae8a7d51d0d60800000000000000
+      internalID: 7857960940827453899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_7
+      rect:
+        serializedVersion: 2
+        x: 723
+        y: 18
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1a7f20ae26ee5c90800000000000000
+      internalID: -7179047668051641827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_8
+      rect:
+        serializedVersion: 2
+        x: 847
+        y: 28
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 166da8326377aa810800000000000000
+      internalID: 1777364077359322721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_9
+      rect:
+        serializedVersion: 2
+        x: 849
+        y: 15
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42e728a668ef8eb40800000000000000
+      internalID: 5469901600707477028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_10
+      rect:
+        serializedVersion: 2
+        x: 976
+        y: 28
+        width: 20
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bae10f3de3914f2a0800000000000000
+      internalID: -6704706187613430101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_11
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 22
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d84a6369e888b6b30800000000000000
+      internalID: 4281666016732685453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AssaultRifle_MuzzleFlash_12
+      rect:
+        serializedVersion: 2
+        x: 978
+        y: 12
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cba5f43ae381d1450800000000000000
+      internalID: 6061027330817481404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      AssaultRifle_MuzzleFlash_0: 1674181001519165678
+      AssaultRifle_MuzzleFlash_1: -1931713133245318518
+      AssaultRifle_MuzzleFlash_10: -6704706187613430101
+      AssaultRifle_MuzzleFlash_11: 4281666016732685453
+      AssaultRifle_MuzzleFlash_12: 6061027330817481404
+      AssaultRifle_MuzzleFlash_2: -2464090359518465487
+      AssaultRifle_MuzzleFlash_3: -8392464259138167943
+      AssaultRifle_MuzzleFlash_4: -4683361083336746233
+      AssaultRifle_MuzzleFlash_5: 6186656127588965795
+      AssaultRifle_MuzzleFlash_6: 7857960940827453899
+      AssaultRifle_MuzzleFlash_7: -7179047668051641827
+      AssaultRifle_MuzzleFlash_8: 1777364077359322721
+      AssaultRifle_MuzzleFlash_9: 5469901600707477028
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
