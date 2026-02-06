@@ -8,6 +8,9 @@ TagManager:
   - EnemyProjectile
   - Ground
   - Wall
+  - Collectible
+  - Bullet
+  - PlayerBullet
   layers:
   - Default
   - TransparentFX

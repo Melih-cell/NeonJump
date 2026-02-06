@@ -1,0 +1,13 @@
+{
+    "asset": "c3edd26fbfeb4b74dacf99eea1c5b89e",
+    "fileName": "019ba33e-6e04-7ce1-8741-d818f100c18c.wav",
+    "prompt": "tank ateş sesi\n",
+    "negativePrompt": "",
+    "model": "6ab5371b-d771-4e55-b856-fb0296eaf50c",
+    "modelName": "Beatoven Music Generation",
+    "customSeed": -1,
+    "w3CTraceId": "7726d6be86e06d4818d658ea1c17bee2",
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false
+}

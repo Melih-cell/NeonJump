@@ -15,6 +15,8 @@ public class EnemyPatrol : EnemyBase
     [Header("Donus Ayarlari")]
     public bool flipSprite = true;
     public bool useScaleFlip = true;
+    public float waitTimeAtEdge = 0.5f; // Donus noktasinda bekleme suresi
+    public float directionChangeCooldown = 0.3f; // Art arda donus engelleme
 
     [Header("Duvar/Ucurum Algilama")]
     public bool detectWalls = true;
@@ -29,6 +31,9 @@ public class EnemyPatrol : EnemyBase
     private Vector3 startPosition;
     private bool movingRight;
     private bool isInitialized = false;
+    private bool isWaiting = false;
+    private float waitTimer = 0f;
+    private float cooldownTimer = 0f;
 
     protected override void Awake()
     {
@@ -42,14 +47,28 @@ public class EnemyPatrol : EnemyBase
         startPosition = transform.position;
         movingRight = startMovingRight;
 
-        // Ground layer otomatik ayarla
+        // Ground layer otomatik ayarla - birden fazla yontemle dene
         if (groundLayer == 0)
         {
             int layer = LayerMask.NameToLayer("Ground");
             if (layer != -1)
+            {
                 groundLayer = 1 << layer;
+            }
             else
-                groundLayer = 1 << LayerMask.NameToLayer("Default");
+            {
+                // Platform veya Terrain layer'larini da dene
+                int platformLayer = LayerMask.NameToLayer("Platform");
+                if (platformLayer != -1)
+                {
+                    groundLayer = 1 << platformLayer;
+                }
+                else
+                {
+                    // Fallback: Default layer
+                    groundLayer = 1 << LayerMask.NameToLayer("Default");
+                }
+            }
         }
 
         // EnemyAI varsa ve kullanilacaksa, patrol bounds'lari ayarla
@@ -74,6 +93,21 @@ public class EnemyPatrol : EnemyBase
         // EnemyAI kullaniliyorsa, sadece onu birak
         if (useAISystem && enemyAI != null) return;
 
+        // Cooldown timer guncelle
+        if (cooldownTimer > 0f)
+            cooldownTimer -= Time.deltaTime;
+
+        // Bekleme durumunu yonet
+        if (isWaiting)
+        {
+            waitTimer -= Time.deltaTime;
+            if (waitTimer <= 0f)
+            {
+                isWaiting = false;
+            }
+            return;
+        }
+
         CheckBounds();
         CheckObstacles();
     }
@@ -84,6 +118,16 @@ public class EnemyPatrol : EnemyBase
 
         // EnemyAI kullaniliyorsa, o halleder
         if (useAISystem && enemyAI != null) return;
+
+        // Bekliyorsa hareketi durdur
+        if (isWaiting)
+        {
+            if (rb != null && rb.bodyType == RigidbodyType2D.Dynamic)
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+            return;
+        }
 
         Move();
     }
@@ -104,18 +148,31 @@ public class EnemyPatrol : EnemyBase
 
     void CheckBounds()
     {
+        if (cooldownTimer > 0f) return;
+
         if (movingRight && transform.position.x >= startPosition.x + rightDistance)
         {
+            // Sinir disina tasmamasi icin pozisyonu sinirla
+            if (rb != null && rb.bodyType == RigidbodyType2D.Dynamic)
+            {
+                transform.position = new Vector3(startPosition.x + rightDistance, transform.position.y, transform.position.z);
+            }
             Turn();
         }
         else if (!movingRight && transform.position.x <= startPosition.x - leftDistance)
         {
+            if (rb != null && rb.bodyType == RigidbodyType2D.Dynamic)
+            {
+                transform.position = new Vector3(startPosition.x - leftDistance, transform.position.y, transform.position.z);
+            }
             Turn();
         }
     }
 
     void CheckObstacles()
     {
+        if (cooldownTimer > 0f) return;
+
         float direction = movingRight ? 1f : -1f;
 
         // Duvar kontrolu
@@ -124,19 +181,33 @@ public class EnemyPatrol : EnemyBase
             Vector2 wallCheckOrigin = (Vector2)transform.position + Vector2.up * 0.2f;
             RaycastHit2D wallHit = Physics2D.Raycast(wallCheckOrigin, Vector2.right * direction, wallCheckDistance, groundLayer);
 
-            // Carptigi obje baska bir dusman mi kontrol et
-            if (wallHit.collider != null)
+            // groundLayer ile bulamadiysa tum layer'lara bak
+            if (wallHit.collider == null)
             {
-                // Enemy tag'li veya EnemyBase olan objeleri yoksay
+                wallHit = Physics2D.Raycast(wallCheckOrigin, Vector2.right * direction, wallCheckDistance);
+                // Kendini, trigger'lari ve diger dusmanlari filtrele
+                if (wallHit.collider != null &&
+                    (wallHit.collider.gameObject == gameObject ||
+                     wallHit.collider.isTrigger ||
+                     wallHit.collider.CompareTag("Enemy") ||
+                     wallHit.collider.GetComponent<EnemyBase>() != null))
+                {
+                    wallHit = new RaycastHit2D();
+                }
+            }
+            else
+            {
+                // groundLayer'da bulduysa da dusman kontrolu yap
                 if (wallHit.collider.CompareTag("Enemy") || wallHit.collider.GetComponent<EnemyBase>() != null)
                 {
-                    // Baska bir dusman, duvarmis gibi davranma
+                    wallHit = new RaycastHit2D();
                 }
-                else
-                {
-                    Turn();
-                    return;
-                }
+            }
+
+            if (wallHit.collider != null)
+            {
+                Turn();
+                return;
             }
         }
 
@@ -150,7 +221,10 @@ public class EnemyPatrol : EnemyBase
             {
                 // Fallback: tum layer'lara bak
                 groundHit = Physics2D.Raycast(cliffCheckOrigin, Vector2.down, cliffCheckDistance);
-                if (groundHit.collider != null && (groundHit.collider.gameObject == gameObject || groundHit.collider.isTrigger))
+                if (groundHit.collider != null &&
+                    (groundHit.collider.gameObject == gameObject ||
+                     groundHit.collider.isTrigger ||
+                     groundHit.collider.CompareTag("Enemy")))
                 {
                     groundHit = new RaycastHit2D();
                 }
@@ -167,6 +241,14 @@ public class EnemyPatrol : EnemyBase
     void Turn()
     {
         movingRight = !movingRight;
+        cooldownTimer = directionChangeCooldown;
+
+        // Donus noktasinda bekle
+        if (waitTimeAtEdge > 0f)
+        {
+            isWaiting = true;
+            waitTimer = waitTimeAtEdge;
+        }
 
         if (flipSprite)
         {

@@ -1,0 +1,20 @@
+{
+    "asset": "b614218aa885fab4181cdc37c7d61856",
+    "fileName": "019ba345-ede4-70c3-81ca-0ded913ff3eb.png",
+    "prompt": "player ninja karakter",
+    "negativePrompt": "",
+    "model": "5b5b2af1-6ea4-4266-b087-cc9f3bf4f450",
+    "modelName": "Flux.1 Dev",
+    "customSeed": -1,
+    "w3CTraceId": "911ffac35c1301c6693bed1c5b007fc9",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

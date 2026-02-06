@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(dir:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(findstr:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "mcp__mcp-unity__get_scene_info",
+      "mcp__mcp-unity__get_console_logs",
+      "Bash(node --version:*)",
+      "Bash(node build/index.js:*)",
+      "mcp__mcp-registry__search_mcp_registry"
+    ]
+  }
+}

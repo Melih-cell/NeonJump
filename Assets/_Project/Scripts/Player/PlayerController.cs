@@ -110,6 +110,9 @@ public class PlayerController : MonoBehaviour
     private int currentFrame;
     private bool spritesCreated = false;
 
+    // Cached bullet sprite (runtime texture'i tekrar tekrar olusturmamak icin)
+    private static Sprite cachedBulletSprite = null;
+
     // Jump tracking for HUD
     private int currentJumpCount = 0;
 
@@ -763,13 +766,14 @@ public class PlayerController : MonoBehaviour
         Vector2 rightBoxCenter = position + Vector2.right * (colliderHalfWidth + wallCheckDistance * 0.3f) + Vector2.up * 0.1f;
         Collider2D[] rightHits = Physics2D.OverlapBoxAll(rightBoxCenter, boxSize, 0f, combinedLayers);
 
-        // Debug görselleştirme
+        #if UNITY_EDITOR
         Vector2 rbMin = rightBoxCenter - boxSize * 0.5f;
         Vector2 rbMax = rightBoxCenter + boxSize * 0.5f;
         Debug.DrawLine(new Vector2(rbMin.x, rbMin.y), new Vector2(rbMax.x, rbMin.y), Color.cyan);
         Debug.DrawLine(new Vector2(rbMax.x, rbMin.y), new Vector2(rbMax.x, rbMax.y), Color.cyan);
         Debug.DrawLine(new Vector2(rbMax.x, rbMax.y), new Vector2(rbMin.x, rbMax.y), Color.cyan);
         Debug.DrawLine(new Vector2(rbMin.x, rbMax.y), new Vector2(rbMin.x, rbMin.y), Color.cyan);
+        #endif
 
         foreach (Collider2D col in rightHits)
         {
@@ -784,13 +788,14 @@ public class PlayerController : MonoBehaviour
         Vector2 leftBoxCenter = position + Vector2.left * (colliderHalfWidth + wallCheckDistance * 0.3f) + Vector2.up * 0.1f;
         Collider2D[] leftHits = Physics2D.OverlapBoxAll(leftBoxCenter, boxSize, 0f, combinedLayers);
 
-        // Debug görselleştirme
+        #if UNITY_EDITOR
         Vector2 lbMin = leftBoxCenter - boxSize * 0.5f;
         Vector2 lbMax = leftBoxCenter + boxSize * 0.5f;
         Debug.DrawLine(new Vector2(lbMin.x, lbMin.y), new Vector2(lbMax.x, lbMin.y), Color.cyan);
         Debug.DrawLine(new Vector2(lbMax.x, lbMin.y), new Vector2(lbMax.x, lbMax.y), Color.cyan);
         Debug.DrawLine(new Vector2(lbMax.x, lbMax.y), new Vector2(lbMin.x, lbMax.y), Color.cyan);
         Debug.DrawLine(new Vector2(lbMin.x, lbMax.y), new Vector2(lbMin.x, lbMin.y), Color.cyan);
+        #endif
 
         foreach (Collider2D col in leftHits)
         {
@@ -814,7 +819,9 @@ public class PlayerController : MonoBehaviour
                 Vector2 rightOrigin = checkPos;
                 RaycastHit2D hitRight = Physics2D.Raycast(rightOrigin, Vector2.right, colliderHalfWidth + wallCheckDistance, combinedLayers);
 
+                #if UNITY_EDITOR
                 Debug.DrawRay(rightOrigin, Vector2.right * (colliderHalfWidth + wallCheckDistance), hitRight.collider != null ? Color.green : Color.red);
+                #endif
 
                 if (hitRight.collider != null && IsValidWallCollider(hitRight.collider))
                 {
@@ -827,7 +834,9 @@ public class PlayerController : MonoBehaviour
                 Vector2 leftOrigin = checkPos;
                 RaycastHit2D hitLeft = Physics2D.Raycast(leftOrigin, Vector2.left, colliderHalfWidth + wallCheckDistance, combinedLayers);
 
+                #if UNITY_EDITOR
                 Debug.DrawRay(leftOrigin, Vector2.left * (colliderHalfWidth + wallCheckDistance), hitLeft.collider != null ? Color.green : Color.red);
+                #endif
 
                 if (hitLeft.collider != null && IsValidWallCollider(hitLeft.collider))
                 {
@@ -1139,17 +1148,21 @@ public class PlayerController : MonoBehaviour
         Collider2D playerCollider = GetComponent<Collider2D>();
         Collider2D bulletCollider;
 
-        // Sprite
+        // Sprite (cached - her mermi icin yeni texture olusturma)
         SpriteRenderer sr = bullet.AddComponent<SpriteRenderer>();
         sr.color = new Color(1f, 0.8f, 0f); // Sari/turuncu mermi
 
-        Texture2D tex = new Texture2D(8, 4);
-        Color[] colors = new Color[32];
-        for (int i = 0; i < colors.Length; i++) colors[i] = Color.white;
-        tex.SetPixels(colors);
-        tex.filterMode = FilterMode.Point;
-        tex.Apply();
-        sr.sprite = Sprite.Create(tex, new Rect(0, 0, 8, 4), new Vector2(0.5f, 0.5f), 16);
+        if (cachedBulletSprite == null)
+        {
+            Texture2D tex = new Texture2D(8, 4);
+            Color[] colors = new Color[32];
+            for (int i = 0; i < colors.Length; i++) colors[i] = Color.white;
+            tex.SetPixels(colors);
+            tex.filterMode = FilterMode.Point;
+            tex.Apply();
+            cachedBulletSprite = Sprite.Create(tex, new Rect(0, 0, 8, 4), new Vector2(0.5f, 0.5f), 16);
+        }
+        sr.sprite = cachedBulletSprite;
         sr.sortingOrder = 5;
 
         // Rigidbody

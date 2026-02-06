@@ -1,0 +1,11 @@
+{
+    "asset": "1d97e1ac558aa1f44b17bc734e3a374e",
+    "fileName": "019ba33f-4a26-77e8-89e3-aa9d5d80fe6a.pose.json",
+    "prompt": "koşu animasyonu istiyorum karaktere",
+    "negativePrompt": "",
+    "model": "9e46c009-67d8-4254-a3a0-32e3168247ee",
+    "modelName": "Text to Motion",
+    "customSeed": 553627543,
+    "w3CTraceId": "39b73cbc3fbbc6de92a0fe2d70ddc0d2",
+    "isTrimmed": false
+}

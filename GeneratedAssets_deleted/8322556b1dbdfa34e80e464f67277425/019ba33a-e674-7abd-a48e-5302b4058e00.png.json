@@ -1,0 +1,20 @@
+{
+    "asset": "8322556b1dbdfa34e80e464f67277425",
+    "fileName": "019ba33a-e674-7abd-a48e-5302b4058e00.png",
+    "prompt": "final boss",
+    "negativePrompt": "",
+    "model": "5b5b2af1-6ea4-4266-b087-cc9f3bf4f450",
+    "modelName": "Flux.1 Dev",
+    "customSeed": -1,
+    "w3CTraceId": "99cb6f9be7cd4361af91f3c28e6e2524",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0
+}

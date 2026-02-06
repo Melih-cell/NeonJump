@@ -121,7 +121,7 @@ public class TilemapSetup : MonoBehaviour
         Debug.Log("Parallax arka plan oluşturuldu!");
     }
 
-    void CreateParallaxLayer(Transform parent, string name, float zPos, float parallaxStrength, Color color)
+    void CreateParallaxLayer(Transform parent, string name, float zPos, float parallaxValue, Color color)
     {
         // Zaten varsa atla
         Transform existing = parent.Find(name);
@@ -159,8 +159,8 @@ public class TilemapSetup : MonoBehaviour
 
         // Parallax script
         ParallaxBackground parallax = layer.AddComponent<ParallaxBackground>();
-        parallax.parallaxStrength = parallaxStrength;
-        parallax.infiniteHorizontal = true;
+        parallax.parallaxEffect = parallaxValue;
+        parallax.infiniteScrollX = true;
     }
 
     [ContextMenu("Create Hazard Prefabs")]

@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
     public float deathY = -99999f;  // Devre disi - dusunce olmez
 
     [Header("Settings")]
-    public int maxHealth = 3;
+    public int maxHealth = 5;
 
     private int score = 0;
     private int coins = 0;

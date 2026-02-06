@@ -29,6 +29,13 @@ public class EnemyHealth : MonoBehaviour
     public event Action OnDeath;
     public event Action<float> OnDamaged; // damage amount
 
+    /// <summary>
+    /// Hasar hesaplamasini intercept etmek icin kullanilir.
+    /// Delegate bir hasar degeri alir ve modifiye edilmis hasari dondurur.
+    /// Ornegin zirh sistemi icin: damage => damage * 0.4f
+    /// </summary>
+    public Func<float, float> DamageModifier;
+
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
     private bool isDead = false;
@@ -52,10 +59,17 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
 
-        currentHealth -= damage;
+        // DamageModifier varsa hasari modifiye et (zirh sistemi vb.)
+        float finalDamage = damage;
+        if (DamageModifier != null)
+        {
+            finalDamage = DamageModifier(damage);
+        }
+
+        currentHealth -= finalDamage;
         currentHealth = Mathf.Max(0, currentHealth);
 
-        OnDamaged?.Invoke(damage);
+        OnDamaged?.Invoke(finalDamage);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         // Floating damage text
