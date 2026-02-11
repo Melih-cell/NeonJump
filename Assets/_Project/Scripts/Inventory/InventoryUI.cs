@@ -26,7 +26,7 @@ public class InventoryUI : MonoBehaviour
     private GameObject notificationPanel;
 
     private List<QuickSlotUI> quickSlots = new List<QuickSlotUI>();
-    private List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
+    private List<InventorySlotSimpleUI> inventorySlots = new List<InventorySlotSimpleUI>();
     private List<ActiveEffectUI> activeEffects = new List<ActiveEffectUI>();
 
     [Header("Settings")]
@@ -474,7 +474,7 @@ public class InventoryUI : MonoBehaviour
         btn.colors = colors;
 
         // Slot UI component
-        InventorySlotUI slotUI = slotObj.AddComponent<InventorySlotUI>();
+        InventorySlotSimpleUI slotUI = slotObj.AddComponent<InventorySlotSimpleUI>();
         slotUI.itemType = itemType;
         slotUI.icon = icon;
         slotUI.countText = countText;
@@ -1051,7 +1051,7 @@ public class QuickSlotUI : MonoBehaviour
     }
 }
 
-public class InventorySlotUI : MonoBehaviour
+public class InventorySlotSimpleUI : MonoBehaviour
 {
     public ItemType itemType;
     public Image icon;

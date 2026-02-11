@@ -101,7 +101,7 @@ public class EnemyIndicatorManager : MonoBehaviour
         rt.sizeDelta = new Vector2(healthBarWidth, healthBarHeight);
         rt.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
-        // Background
+        // Background - koyu mor-siyah
         GameObject bgObj = new GameObject("Background");
         bgObj.transform.SetParent(obj.transform, false);
         RectTransform bgRt = bgObj.AddComponent<RectTransform>();
@@ -110,7 +110,7 @@ public class EnemyIndicatorManager : MonoBehaviour
         bgRt.sizeDelta = Vector2.zero;
 
         Image bgImg = bgObj.AddComponent<Image>();
-        bgImg.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+        bgImg.color = new Color(0.04f, 0.02f, 0.08f, 0.9f);
 
         // Fill
         GameObject fillObj = new GameObject("Fill");
@@ -123,11 +123,23 @@ public class EnemyIndicatorManager : MonoBehaviour
         fillRt.offsetMax = new Vector2(-1, -1);
 
         Image fillImg = fillObj.AddComponent<Image>();
-        fillImg.color = new Color(1f, 0.2f, 0.2f, 1f);
+        fillImg.color = new Color(0f, 1f, 0.6f, 1f); // Neon yesil
 
-        // Border
+        // Ust parlaklik serit
+        GameObject shineObj = new GameObject("Shine");
+        shineObj.transform.SetParent(fillObj.transform, false);
+        RectTransform shineRt = shineObj.AddComponent<RectTransform>();
+        shineRt.anchorMin = new Vector2(0, 0.6f);
+        shineRt.anchorMax = Vector2.one;
+        shineRt.offsetMin = Vector2.zero;
+        shineRt.offsetMax = Vector2.zero;
+        Image shineImg = shineObj.AddComponent<Image>();
+        shineImg.color = new Color(1f, 1f, 1f, 0.15f);
+        shineImg.raycastTarget = false;
+
+        // Border - neon cyan ince sinir
         Outline outline = obj.AddComponent<Outline>();
-        outline.effectColor = new Color(1f, 0f, 0f, 0.5f);
+        outline.effectColor = new Color(0f, 0.8f, 0.8f, 0.6f);
         outline.effectDistance = new Vector2(1, 1);
 
         EnemyHealthBarUI bar = obj.AddComponent<EnemyHealthBarUI>();
@@ -392,7 +404,6 @@ public class EnemyHealthBarUI : MonoBehaviour
     public Image backgroundImage;
 
     private float displayedHealth;
-    private Color normalColor = new Color(1f, 0.2f, 0.2f);
     private Color damageColor = Color.white;
     private float damageFlashTimer;
 
@@ -405,27 +416,29 @@ public class EnemyHealthBarUI : MonoBehaviour
 
         fillImage.rectTransform.anchorMax = new Vector2(displayedHealth, 1);
 
-        // Renk
+        // Renk - neon tema
+        Color targetColor;
+        if (healthPercent > 0.5f)
+            targetColor = new Color(0f, 1f, 0.6f);    // Neon yesil
+        else if (healthPercent > 0.25f)
+            targetColor = new Color(1f, 0.7f, 0f);    // Neon turuncu
+        else
+            targetColor = new Color(1f, 0.15f, 0.25f); // Neon kirmizi
+
         if (damageFlashTimer > 0)
         {
             damageFlashTimer -= Time.deltaTime;
-            fillImage.color = Color.Lerp(normalColor, damageColor, damageFlashTimer / 0.1f);
+            fillImage.color = Color.Lerp(targetColor, damageColor, damageFlashTimer / 0.15f);
         }
         else
         {
-            // Can durumuna gore renk
-            if (healthPercent > 0.5f)
-                fillImage.color = new Color(0.2f, 1f, 0.2f); // Yesil
-            else if (healthPercent > 0.25f)
-                fillImage.color = new Color(1f, 0.8f, 0f);   // Sari
-            else
-                fillImage.color = new Color(1f, 0.2f, 0.2f); // Kirmizi
+            fillImage.color = targetColor;
         }
     }
 
     public void OnDamage()
     {
-        damageFlashTimer = 0.1f;
+        damageFlashTimer = 0.15f;
     }
 }
 

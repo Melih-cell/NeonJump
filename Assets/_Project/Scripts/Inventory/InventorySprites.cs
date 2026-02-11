@@ -1,12 +1,51 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
-/// Envanter eşyaları için detaylı sprite'lar oluşturur
+/// Envanter esyalari icin detayli sprite'lar olusturur.
+/// Singleton instance uzerinden erisim saglar ve sprite cache'leme yapar.
 /// </summary>
-public static class InventorySprites
+public class InventorySprites : MonoBehaviour
 {
+    public static InventorySprites Instance { get; private set; }
+
+    // Sprite cache - her seferinde yeniden olusturmamak icin
+    private Dictionary<ItemType, Sprite> spriteCache = new Dictionary<ItemType, Sprite>();
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     /// <summary>
-    /// Eşya tipine göre sprite oluştur
+    /// Esya tipine gore sprite al (cached)
+    /// </summary>
+    public Sprite GetSprite(ItemType type)
+    {
+        if (spriteCache.TryGetValue(type, out Sprite cached))
+            return cached;
+
+        Sprite sprite = CreateItemSprite(type);
+        spriteCache[type] = sprite;
+        return sprite;
+    }
+
+    /// <summary>
+    /// Esya tipine gore sprite olustur
     /// </summary>
     public static Sprite CreateItemSprite(ItemType type)
     {
@@ -27,11 +66,66 @@ public static class InventorySprites
             case ItemType.ExtraLife:
                 return CreateExtraLife();
             default:
-                return CreateHealthPotion();
+                return CreateDefaultSprite(type);
         }
     }
 
-    // === CAN İKSİRİ - Kırmızı şişe ===
+    // === VARSAYILAN SPRITE (yeni item turleri icin) ===
+    static Sprite CreateDefaultSprite(ItemType type)
+    {
+        int w = 16, h = 16;
+        Texture2D tex = new Texture2D(w, h);
+        Color[] p = new Color[w * h];
+        Clear(p);
+
+        // Item turune gore renk sec
+        Color main = type switch
+        {
+            ItemType.ScrapMetal => new Color(0.5f, 0.5f, 0.55f),
+            ItemType.NeonCrystal => new Color(0f, 1f, 1f),
+            ItemType.VoidEssence => new Color(0.5f, 0f, 0.8f),
+            ItemType.PlasmaCore => new Color(1f, 0.4f, 0f),
+            ItemType.EternalShard => new Color(1f, 0.85f, 0f),
+            ItemType.ManaPotion => new Color(0.2f, 0.4f, 1f),
+            ItemType.DamageBooster => new Color(1f, 0.2f, 0.2f),
+            ItemType.SpeedRing => new Color(1f, 1f, 0.3f),
+            ItemType.FireRateModule => new Color(1f, 0.5f, 0f),
+            ItemType.MagnetCore => new Color(0.8f, 0.2f, 0.8f),
+            ItemType.LuckyCharm => new Color(0.3f, 1f, 0.3f),
+            ItemType.VampireAmulet => new Color(0.8f, 0f, 0.2f),
+            ItemType.ShieldGenerator => new Color(0.2f, 0.6f, 1f),
+            ItemType.NeonWarriorHelm => new Color(0f, 1f, 0.8f),
+            ItemType.ShadowHunterMask => new Color(0.3f, 0.1f, 0.4f),
+            ItemType.VoidWalkerCrown => new Color(0.6f, 0f, 1f),
+            _ => new Color(0.7f, 0.7f, 0.7f)
+        };
+
+        Color light = Brighten(main, 0.2f);
+        Color dark = new Color(main.r * 0.5f, main.g * 0.5f, main.b * 0.5f);
+
+        // Basit kare ikon
+        for (int y = 2; y < 14; y++)
+        {
+            for (int x = 2; x < 14; x++)
+            {
+                float lightFactor = 1f - (x - 2f) / 12f;
+                if (lightFactor > 0.65f)
+                    p[y * w + x] = light;
+                else if (lightFactor < 0.35f)
+                    p[y * w + x] = dark;
+                else
+                    p[y * w + x] = main;
+            }
+        }
+
+        // Parlama
+        p[4 * w + 4] = new Color(1f, 1f, 1f, 0.7f);
+        p[5 * w + 4] = new Color(1f, 1f, 1f, 0.4f);
+
+        return CreateSprite(tex, p, w, h);
+    }
+
+    // === CAN IKSIRI - Kirmizi sise ===
     static Sprite CreateHealthPotion()
     {
         int w = 16, h = 20;
@@ -45,7 +139,7 @@ public static class InventorySprites
         Color cork = new Color(0.6f, 0.4f, 0.25f);
         Color liquid = new Color(1f, 0.15f, 0.15f);
 
-        // Şişe gövdesi (oval)
+        // Sise govdesi (oval)
         for (int y = 2; y < 14; y++)
         {
             for (int x = 3; x < 13; x++)
@@ -66,7 +160,7 @@ public static class InventorySprites
             }
         }
 
-        // Sıvı içi (daha koyu)
+        // Sivi ici (daha koyu)
         for (int y = 3; y < 12; y++)
         {
             for (int x = 5; x < 11; x++)
@@ -80,15 +174,15 @@ public static class InventorySprites
             }
         }
 
-        // Şişe boynu
+        // Sise boynu
         FillRect(p, w, 6, 14, 10, 17, glass);
         FillRect(p, w, 7, 14, 9, 16, glassLight);
 
-        // Mantar tıpa
+        // Mantar tipa
         FillRect(p, w, 6, 17, 10, 20, cork);
         FillRect(p, w, 7, 18, 9, 19, Brighten(cork, 0.15f));
 
-        // Parlama noktası
+        // Parlama noktasi
         p[6 * w + 5] = new Color(1f, 1f, 1f, 0.8f);
         p[7 * w + 5] = new Color(1f, 1f, 1f, 0.5f);
 
@@ -109,7 +203,7 @@ public static class InventorySprites
         Color gold = new Color(0.9f, 0.75f, 0.3f);
         Color goldDark = new Color(0.7f, 0.5f, 0.15f);
 
-        // Kalkan şekli (üst geniş, alt sivri)
+        // Kalkan sekli (ust genis, alt sivri)
         for (int y = 0; y < 18; y++)
         {
             float widthRatio = y < 10 ? 1f : 1f - (y - 10f) / 8f;
@@ -130,11 +224,11 @@ public static class InventorySprites
             }
         }
 
-        // Altın kenar (üst)
+        // Altin kenar (ust)
         FillRect(p, w, 2, 0, 16, 2, gold);
         FillRect(p, w, 3, 1, 15, 1, goldDark);
 
-        // Altın merkez sembol (yıldız benzeri)
+        // Altin merkez sembol (yildiz benzeri)
         p[8 * w + 9] = gold;
         p[7 * w + 9] = gold;
         p[9 * w + 9] = gold;
@@ -150,7 +244,7 @@ public static class InventorySprites
         return CreateSprite(tex, p, w, h);
     }
 
-    // === HIZ GÜCÜ - Sarı yıldırım ===
+    // === HIZ GUCU - Sari yildirim ===
     static Sprite CreateSpeedBoost()
     {
         int w = 16, h = 20;
@@ -163,21 +257,21 @@ public static class InventorySprites
         Color boltDark = new Color(0.8f, 0.6f, 0.1f);
         Color glow = new Color(1f, 0.95f, 0.5f, 0.4f);
 
-        // Yıldırım şekli
-        // Üst kısım
+        // Yildirim sekli
+        // Ust kisim
         FillRect(p, w, 8, 17, 12, 19, bolt);
         FillRect(p, w, 7, 15, 11, 17, bolt);
         FillRect(p, w, 6, 13, 10, 15, bolt);
         FillRect(p, w, 5, 11, 12, 13, bolt);
 
-        // Orta kısım (zikzak)
+        // Orta kisim (zikzak)
         FillRect(p, w, 7, 9, 13, 11, bolt);
         FillRect(p, w, 6, 7, 10, 9, bolt);
         FillRect(p, w, 5, 5, 9, 7, bolt);
         FillRect(p, w, 4, 3, 8, 5, bolt);
         FillRect(p, w, 3, 1, 7, 3, bolt);
 
-        // Parlaklık (sol kenar)
+        // Parlaklik (sol kenar)
         p[18 * w + 8] = boltLight;
         p[16 * w + 7] = boltLight;
         p[14 * w + 6] = boltLight;
@@ -195,7 +289,7 @@ public static class InventorySprites
             {
                 if (p[y * w + x].a == 0)
                 {
-                    // Yakın piksel kontrolü
+                    // Yakin piksel kontrolu
                     bool nearBolt = false;
                     for (int dy = -1; dy <= 1; dy++)
                     {
@@ -218,7 +312,7 @@ public static class InventorySprites
         return CreateSprite(tex, p, w, h);
     }
 
-    // === ÇİFT HASAR - Turuncu kılıç ===
+    // === CIFT HASAR - Turuncu kilic ===
     static Sprite CreateDoubleDamage()
     {
         int w = 16, h = 20;
@@ -233,7 +327,7 @@ public static class InventorySprites
         Color guard = new Color(1f, 0.6f, 0.1f);
         Color guardDark = new Color(0.8f, 0.4f, 0.05f);
 
-        // Kılıç bıçağı (çapraz)
+        // Kilic bicagi (capraz)
         for (int i = 0; i < 14; i++)
         {
             int x = 6 + i / 2;
@@ -246,7 +340,7 @@ public static class InventorySprites
             }
         }
 
-        // Keskin uç
+        // Keskin uc
         p[19 * w + 12] = bladeLight;
         p[18 * w + 11] = blade;
 
@@ -268,7 +362,7 @@ public static class InventorySprites
         return CreateSprite(tex, p, w, h);
     }
 
-    // === MIKNATIS - Mor U şekli ===
+    // === MIKNATIS - Mor U sekli ===
     static Sprite CreateMagnet()
     {
         int w = 18, h = 18;
@@ -281,23 +375,23 @@ public static class InventorySprites
         Color metalLight = new Color(0.7f, 0.7f, 0.75f);
         Color metalDark = new Color(0.4f, 0.4f, 0.45f);
 
-        // Sol bacak (kırmızı)
+        // Sol bacak (kirmizi)
         FillRect(p, w, 2, 0, 6, 14, magnetRed);
         FillRect(p, w, 3, 1, 5, 13, Brighten(magnetRed, 0.15f));
 
-        // Sağ bacak (mavi)
+        // Sag bacak (mavi)
         FillRect(p, w, 12, 0, 16, 14, magnetBlue);
         FillRect(p, w, 13, 1, 15, 13, Brighten(magnetBlue, 0.15f));
 
-        // Üst bağlantı (metal)
+        // Ust baglanti (metal)
         FillRect(p, w, 2, 14, 16, 18, metalDark);
         FillRect(p, w, 3, 15, 15, 17, metalLight);
 
-        // Uçlar (parlak)
+        // Uclar (parlak)
         FillRect(p, w, 2, 0, 6, 2, metalLight);
         FillRect(p, w, 12, 0, 16, 2, metalLight);
 
-        // Manyetik çizgiler (dekoratif)
+        // Manyetik cizgiler (dekoratif)
         p[7 * w + 8] = new Color(0.8f, 0.3f, 0.8f, 0.5f);
         p[7 * w + 9] = new Color(0.8f, 0.3f, 0.8f, 0.5f);
         p[7 * w + 10] = new Color(0.8f, 0.3f, 0.8f, 0.5f);
@@ -322,7 +416,7 @@ public static class InventorySprites
         Color spark = new Color(1f, 0.8f, 0.2f);
         Color sparkGlow = new Color(1f, 0.5f, 0.1f);
 
-        // Bomba gövdesi (daire)
+        // Bomba govdesi (daire)
         Vector2 center = new Vector2(9, 8);
         for (int y = 0; y < 16; y++)
         {
@@ -342,7 +436,7 @@ public static class InventorySprites
             }
         }
 
-        // Fitil deliği
+        // Fitil deligi
         FillRect(p, w, 8, 15, 11, 17, bombDark);
 
         // Fitil
@@ -352,22 +446,22 @@ public static class InventorySprites
         p[18 * w + 11] = fuse;
         p[19 * w + 11] = fuse;
 
-        // Kıvılcım
+        // Kivilcim
         p[19 * w + 12] = spark;
         p[19 * w + 13] = sparkGlow;
         p[18 * w + 13] = new Color(spark.r, spark.g, spark.b, 0.6f);
 
-        // Parlama noktası
+        // Parlama noktasi
         p[5 * w + 5] = new Color(1f, 1f, 1f, 0.5f);
         p[6 * w + 6] = new Color(1f, 1f, 1f, 0.3f);
 
-        // Dekoratif çizgi
+        // Dekoratif cizgi
         FillRect(p, w, 4, 7, 14, 9, bombLight);
 
         return CreateSprite(tex, p, w, h);
     }
 
-    // === EKSTRA CAN - Yeşil kalp ===
+    // === EKSTRA CAN - Yesil kalp ===
     static Sprite CreateExtraLife()
     {
         int w = 18, h = 16;
@@ -380,7 +474,7 @@ public static class InventorySprites
         Color heartDark = new Color(0.1f, 0.6f, 0.25f);
         Color glow = new Color(0.3f, 1f, 0.5f, 0.3f);
 
-        // Kalp şekli
+        // Kalp sekli
         int[] heartShape = {
             0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,
             0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,
@@ -420,7 +514,7 @@ public static class InventorySprites
         p[10 * w + 5] = new Color(1f, 1f, 1f, 0.5f);
         p[11 * w + 6] = new Color(1f, 1f, 1f, 0.4f);
 
-        // + işareti (ekstra için)
+        // + isareti (ekstra icin)
         p[7 * w + 15] = heartLight;
         p[6 * w + 15] = heartLight;
         p[8 * w + 15] = heartLight;
@@ -430,7 +524,7 @@ public static class InventorySprites
         return CreateSprite(tex, p, w, h);
     }
 
-    // === YARDIMCI FONKSİYONLAR ===
+    // === YARDIMCI FONKSIYONLAR ===
 
     static void Clear(Color[] p)
     {

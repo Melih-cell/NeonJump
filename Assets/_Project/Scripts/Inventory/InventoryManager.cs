@@ -271,6 +271,98 @@ public class InventoryManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Tum item instance'larini al (yeni envanter UI icin)
+    /// </summary>
+    public List<InventoryItemInstance> GetAllItemInstances()
+    {
+        var result = new List<InventoryItemInstance>();
+        int slotIdx = 0;
+        foreach (var kvp in inventory)
+        {
+            if (kvp.Value > 0)
+            {
+                var instance = InventoryItemInstance.Create(kvp.Key, kvp.Value);
+                instance.slotIndex = slotIdx;
+                result.Add(instance);
+                slotIdx++;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Item instance'ini envanterden kaldir
+    /// </summary>
+    public bool RemoveItem(InventoryItemInstance item)
+    {
+        if (item == null) return false;
+
+        if (inventory.ContainsKey(item.itemType) && inventory[item.itemType] >= item.stackCount)
+        {
+            inventory[item.itemType] -= item.stackCount;
+            OnItemChanged?.Invoke(item.itemType, inventory[item.itemType]);
+            SaveInventory();
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// InventoryItemInstance uzerinden esya kullan
+    /// </summary>
+    public bool UseItem(InventoryItemInstance item)
+    {
+        if (item == null) return false;
+        return UseItem(item.itemType);
+    }
+
+    /// <summary>
+    /// InventoryItemInstance olarak esya ekle.
+    /// Rarity ve stack bilgisini korur.
+    /// </summary>
+    public bool TryAddItemInstance(InventoryItemInstance item)
+    {
+        if (item == null) return false;
+
+        return AddItem(item.itemType, item.stackCount);
+    }
+
+    /// <summary>
+    /// Belirtilen turden belirtilen miktarda esya kaldir.
+    /// </summary>
+    public bool RemoveItemByType(ItemType type, int amount)
+    {
+        if (!inventory.ContainsKey(type)) return false;
+        if (inventory[type] < amount) return false;
+
+        inventory[type] -= amount;
+        OnItemChanged?.Invoke(type, inventory[type]);
+        SaveInventory();
+        return true;
+    }
+
+    /// <summary>
+    /// Esyayi envanterden cikar ve dunyaya drop et.
+    /// </summary>
+    public void DropItem(InventoryItemInstance item)
+    {
+        if (item == null) return;
+
+        // Envanterden cikar
+        RemoveItem(item);
+
+        // Dunyaya drop et (player pozisyonunda)
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        if (player != null)
+        {
+            Vector3 dropPos = player.transform.position + Vector3.right * 1.5f;
+            LootDropVisual.Create(item.itemType, item.rarity, item.stackCount, dropPos);
+        }
+
+        Debug.Log($"[InventoryManager] Item drop edildi: {item.GetDisplayName()}");
+    }
+
+    /// <summary>
     /// Hızlı slottaki eşya türünü al
     /// </summary>
     public ItemType GetQuickSlotItem(int slotIndex)

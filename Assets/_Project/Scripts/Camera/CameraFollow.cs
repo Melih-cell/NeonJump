@@ -232,6 +232,38 @@ public class CameraFollow : MonoBehaviour
         Shake(intensity, 0.1f);
     }
 
+    /// <summary>
+    /// Hit freeze efekti - kisa sure oyunu dondurur (hitstop)
+    /// Dusman oldurme ve boss hasarinda kullanilir
+    /// </summary>
+    public void HitFreeze(float duration = 0.04f)
+    {
+        StartCoroutine(HitFreezeCoroutine(duration));
+    }
+
+    private System.Collections.IEnumerator HitFreezeCoroutine(float duration)
+    {
+        Time.timeScale = 0.02f;
+        yield return new WaitForSecondsRealtime(duration);
+        Time.timeScale = 1f;
+    }
+
+    /// <summary>
+    /// Dusman oldurme hitstop'u
+    /// </summary>
+    public void HitFreezeOnKill()
+    {
+        HitFreeze(0.04f);
+    }
+
+    /// <summary>
+    /// Boss hasar hitstop'u (daha uzun)
+    /// </summary>
+    public void HitFreezeOnBossDamage()
+    {
+        HitFreeze(0.06f);
+    }
+
     Vector3 GetTargetPosition()
     {
         if (target == null) return transform.position;

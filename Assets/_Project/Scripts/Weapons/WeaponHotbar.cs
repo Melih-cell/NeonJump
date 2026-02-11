@@ -17,11 +17,12 @@ public class WeaponHotbar : MonoBehaviour
     public float slotSpacing = 12f;
     public float bottomMargin = 25f;
 
-    [Header("Colors")]
-    public Color activeSlotColor = new Color(1f, 0.8f, 0.2f, 1f);
-    public Color inactiveSlotColor = new Color(0.3f, 0.3f, 0.3f, 0.8f);
-    public Color emptySlotColor = new Color(0.15f, 0.15f, 0.15f, 0.6f);
+    [Header("Colors - Cyberpunk Theme")]
+    public Color activeSlotColor = new Color(0f, 1f, 1f, 1f);
+    public Color inactiveSlotColor = new Color(0.12f, 0.08f, 0.2f, 0.9f);
+    public Color emptySlotColor = new Color(0.06f, 0.03f, 0.12f, 0.7f);
     public Color lowAmmoColor = new Color(1f, 0.3f, 0.3f, 1f);
+    public Color neonCyanColor = new Color(0f, 1f, 1f, 0.6f);
 
     // UI References
     private Canvas canvas;
@@ -118,9 +119,36 @@ public class WeaponHotbar : MonoBehaviour
         float totalWidth = (slotSize * maxSlots) + (slotSpacing * (maxSlots - 1)) + 20;
         panelRect.sizeDelta = new Vector2(totalWidth, slotSize + 30);
 
-        // Panel arka plan
+        // Panel arka plan - koyu mor-siyah cyberpunk
         Image panelBg = hotbarPanel.AddComponent<Image>();
-        panelBg.color = new Color(0, 0, 0, 0.5f);
+        panelBg.color = new Color(0.05f, 0.02f, 0.1f, 0.85f);
+
+        // Neon cyan sinir cercevesi
+        GameObject frameObj = new GameObject("NeonFrame");
+        frameObj.transform.SetParent(hotbarPanel.transform, false);
+        RectTransform frameRect = frameObj.AddComponent<RectTransform>();
+        frameRect.anchorMin = Vector2.zero;
+        frameRect.anchorMax = Vector2.one;
+        frameRect.offsetMin = new Vector2(-2, -2);
+        frameRect.offsetMax = new Vector2(2, 2);
+        Image frameImg = frameObj.AddComponent<Image>();
+        frameImg.color = neonCyanColor;
+        frameImg.raycastTarget = false;
+        // Frame'i arkaya gonder (panel BG'nin arkasinda olmamali)
+        frameObj.transform.SetAsFirstSibling();
+
+        // Panel ust kenarinda ince neon cizgi
+        GameObject topLineObj = new GameObject("TopNeonLine");
+        topLineObj.transform.SetParent(hotbarPanel.transform, false);
+        RectTransform topLineRect = topLineObj.AddComponent<RectTransform>();
+        topLineRect.anchorMin = new Vector2(0, 1);
+        topLineRect.anchorMax = new Vector2(1, 1);
+        topLineRect.pivot = new Vector2(0.5f, 1);
+        topLineRect.anchoredPosition = Vector2.zero;
+        topLineRect.sizeDelta = new Vector2(0, 1);
+        Image topLineImg = topLineObj.AddComponent<Image>();
+        topLineImg.color = new Color(0f, 1f, 1f, 0.8f);
+        topLineImg.raycastTarget = false;
 
         // Slotlari olustur
         CreateSlots();
@@ -143,6 +171,22 @@ public class WeaponHotbar : MonoBehaviour
 
             HotbarSlot slot = CreateSlotVisuals(slotObj, i);
             slots.Add(slot);
+
+            // Slotlar arasi dikey neon ayirici cizgi (son slot haric)
+            if (i < maxSlots - 1)
+            {
+                GameObject sepObj = new GameObject($"Separator_{i}");
+                sepObj.transform.SetParent(hotbarPanel.transform, false);
+                RectTransform sepRect = sepObj.AddComponent<RectTransform>();
+                sepRect.anchorMin = new Vector2(0.5f, 0.5f);
+                sepRect.anchorMax = new Vector2(0.5f, 0.5f);
+                float sepX = startX + i * (slotSize + slotSpacing) + slotSize / 2f + slotSpacing / 2f;
+                sepRect.anchoredPosition = new Vector2(sepX, 5);
+                sepRect.sizeDelta = new Vector2(1, slotSize * 0.7f);
+                Image sepImg = sepObj.AddComponent<Image>();
+                sepImg.color = new Color(0f, 1f, 1f, 0.4f);
+                sepImg.raycastTarget = false;
+            }
         }
     }
 
@@ -152,85 +196,98 @@ public class WeaponHotbar : MonoBehaviour
         slot.index = index;
 
         // Slot kategorileri
-        string[] slotLabels = { "TABANCA", "ANA", "OZEL" };
+        string[] slotLabels = { "PISTOL", "PRIMARY", "SPECIAL" };
         string slotLabel = index < slotLabels.Length ? slotLabels[index] : "";
 
-        // Border/Frame
+        // Border/Frame - ince neon cerceve
         Image border = slotObj.AddComponent<Image>();
         border.color = inactiveSlotColor;
         slot.border = border;
 
-        // Background
+        // Background - koyu ic alan
         GameObject bgObj = new GameObject("Background");
         bgObj.transform.SetParent(slotObj.transform, false);
         RectTransform bgRect = bgObj.AddComponent<RectTransform>();
         bgRect.anchorMin = Vector2.zero;
         bgRect.anchorMax = Vector2.one;
-        bgRect.offsetMin = new Vector2(3, 3);
-        bgRect.offsetMax = new Vector2(-3, -3);
+        bgRect.offsetMin = new Vector2(2, 2);
+        bgRect.offsetMax = new Vector2(-2, -2);
         slot.background = bgObj.AddComponent<Image>();
         slot.background.color = emptySlotColor;
 
-        // Weapon Icon
+        // Rarity glow overlay (hafif rarity renkli arka plan - ikon arkasinda)
+        GameObject glowObj = new GameObject("RarityGlow");
+        glowObj.transform.SetParent(slotObj.transform, false);
+        RectTransform glowRect = glowObj.AddComponent<RectTransform>();
+        glowRect.anchorMin = Vector2.zero;
+        glowRect.anchorMax = Vector2.one;
+        glowRect.offsetMin = new Vector2(2, 2);
+        glowRect.offsetMax = new Vector2(-2, -2);
+        slot.rarityGlow = glowObj.AddComponent<Image>();
+        slot.rarityGlow.color = Color.clear;
+        slot.rarityGlow.raycastTarget = false;
+
+        // Weapon Icon - biraz daha buyuk alan
         GameObject iconObj = new GameObject("WeaponIcon");
         iconObj.transform.SetParent(slotObj.transform, false);
         RectTransform iconRect = iconObj.AddComponent<RectTransform>();
-        iconRect.anchorMin = new Vector2(0.15f, 0.25f);
-        iconRect.anchorMax = new Vector2(0.85f, 0.8f);
+        iconRect.anchorMin = new Vector2(0.1f, 0.2f);
+        iconRect.anchorMax = new Vector2(0.9f, 0.82f);
         iconRect.offsetMin = Vector2.zero;
         iconRect.offsetMax = Vector2.zero;
         slot.weaponIcon = iconObj.AddComponent<Image>();
         slot.weaponIcon.preserveAspect = true;
         slot.weaponIcon.enabled = false;
 
-        // Slot Number (sol ust)
+        // Slot Number (sol ust kose - kucuk badge)
         GameObject numObj = new GameObject("SlotNumber");
         numObj.transform.SetParent(slotObj.transform, false);
         RectTransform numRect = numObj.AddComponent<RectTransform>();
         numRect.anchorMin = new Vector2(0, 1);
-        numRect.anchorMax = new Vector2(0.3f, 1);
+        numRect.anchorMax = new Vector2(0, 1);
         numRect.pivot = new Vector2(0, 1);
-        numRect.anchoredPosition = new Vector2(5, -3);
-        numRect.sizeDelta = new Vector2(20, 18);
+        numRect.anchoredPosition = new Vector2(4, -2);
+        numRect.sizeDelta = new Vector2(16, 16);
         slot.slotNumberText = numObj.AddComponent<Text>();
         slot.slotNumberText.text = (index + 1).ToString();
         slot.slotNumberText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        slot.slotNumberText.fontSize = 16;
+        slot.slotNumberText.fontSize = 12;
         slot.slotNumberText.fontStyle = FontStyle.Bold;
-        slot.slotNumberText.color = new Color(1, 1, 1, 0.8f);
+        slot.slotNumberText.color = new Color(0.5f, 0.4f, 0.7f, 0.7f);
         slot.slotNumberText.alignment = TextAnchor.UpperLeft;
 
-        // Slot Label (kategori - sag ust)
+        // Slot Label (alt orta - kategori bilgisi)
         GameObject labelObj = new GameObject("SlotLabel");
         labelObj.transform.SetParent(slotObj.transform, false);
         RectTransform labelRect = labelObj.AddComponent<RectTransform>();
-        labelRect.anchorMin = new Vector2(0.3f, 1);
-        labelRect.anchorMax = new Vector2(1, 1);
-        labelRect.pivot = new Vector2(1, 1);
-        labelRect.anchoredPosition = new Vector2(-3, -3);
-        labelRect.sizeDelta = new Vector2(50, 14);
+        labelRect.anchorMin = new Vector2(0, 0);
+        labelRect.anchorMax = new Vector2(1, 0);
+        labelRect.pivot = new Vector2(0.5f, 0);
+        labelRect.anchoredPosition = new Vector2(0, 3);
+        labelRect.sizeDelta = new Vector2(slotSize, 12);
         Text labelText = labelObj.AddComponent<Text>();
         labelText.text = slotLabel;
         labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        labelText.fontSize = 9;
-        labelText.color = new Color(0.6f, 0.6f, 0.6f);
-        labelText.alignment = TextAnchor.UpperRight;
+        labelText.fontSize = 8;
+        labelText.color = new Color(0.4f, 0.35f, 0.6f, 0.6f);
+        labelText.alignment = TextAnchor.MiddleCenter;
 
-        // Ammo Text (alt)
+        // Ammo Text (sag alt kose)
         GameObject ammoObj = new GameObject("AmmoText");
         ammoObj.transform.SetParent(slotObj.transform, false);
         RectTransform ammoRect = ammoObj.AddComponent<RectTransform>();
-        ammoRect.anchorMin = new Vector2(0, 0);
-        ammoRect.anchorMax = new Vector2(1, 0.25f);
-        ammoRect.offsetMin = new Vector2(2, 2);
-        ammoRect.offsetMax = new Vector2(-2, 0);
+        ammoRect.anchorMin = new Vector2(0.5f, 0);
+        ammoRect.anchorMax = new Vector2(1, 0);
+        ammoRect.pivot = new Vector2(1, 0);
+        ammoRect.anchoredPosition = new Vector2(-4, 14);
+        ammoRect.sizeDelta = new Vector2(40, 14);
         slot.ammoText = ammoObj.AddComponent<Text>();
         slot.ammoText.text = "";
         slot.ammoText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         slot.ammoText.fontSize = 11;
         slot.ammoText.fontStyle = FontStyle.Bold;
         slot.ammoText.color = Color.white;
-        slot.ammoText.alignment = TextAnchor.MiddleCenter;
+        slot.ammoText.alignment = TextAnchor.LowerRight;
 
         // Weapon Name (ust - aktif oldugunda gosterilir)
         GameObject nameObj = new GameObject("WeaponName");
@@ -239,14 +296,14 @@ public class WeaponHotbar : MonoBehaviour
         nameRect.anchorMin = new Vector2(0.5f, 1);
         nameRect.anchorMax = new Vector2(0.5f, 1);
         nameRect.pivot = new Vector2(0.5f, 0);
-        nameRect.anchoredPosition = new Vector2(0, 5);
-        nameRect.sizeDelta = new Vector2(100, 20);
+        nameRect.anchoredPosition = new Vector2(0, 4);
+        nameRect.sizeDelta = new Vector2(110, 18);
         slot.weaponNameText = nameObj.AddComponent<Text>();
         slot.weaponNameText.text = "";
         slot.weaponNameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        slot.weaponNameText.fontSize = 12;
+        slot.weaponNameText.fontSize = 11;
         slot.weaponNameText.fontStyle = FontStyle.Bold;
-        slot.weaponNameText.color = activeSlotColor;
+        slot.weaponNameText.color = new Color(0f, 1f, 1f, 1f);
         slot.weaponNameText.alignment = TextAnchor.MiddleCenter;
         slot.weaponNameText.enabled = false;
 
@@ -254,12 +311,27 @@ public class WeaponHotbar : MonoBehaviour
         GameObject rarityObj = new GameObject("RarityBar");
         rarityObj.transform.SetParent(slotObj.transform, false);
         RectTransform rarityRect = rarityObj.AddComponent<RectTransform>();
-        rarityRect.anchorMin = new Vector2(0.1f, 0.92f);
-        rarityRect.anchorMax = new Vector2(0.9f, 0.97f);
+        rarityRect.anchorMin = new Vector2(0.05f, 0.95f);
+        rarityRect.anchorMax = new Vector2(0.95f, 0.98f);
         rarityRect.offsetMin = Vector2.zero;
         rarityRect.offsetMax = Vector2.zero;
         slot.rarityBar = rarityObj.AddComponent<Image>();
         slot.rarityBar.color = Color.clear;
+
+        // Mermi cubugu (sol kenarda dikey bar)
+        GameObject ammoBarObj = new GameObject("AmmoBar");
+        ammoBarObj.transform.SetParent(slotObj.transform, false);
+        RectTransform ammoBarRect = ammoBarObj.AddComponent<RectTransform>();
+        ammoBarRect.anchorMin = new Vector2(0, 0.05f);
+        ammoBarRect.anchorMax = new Vector2(0, 0.9f);
+        ammoBarRect.pivot = new Vector2(0, 0);
+        ammoBarRect.anchoredPosition = new Vector2(3, 0);
+        ammoBarRect.sizeDelta = new Vector2(3, 0);
+        slot.ammoBar = ammoBarObj.AddComponent<Image>();
+        slot.ammoBar.type = Image.Type.Filled;
+        slot.ammoBar.fillMethod = Image.FillMethod.Vertical;
+        slot.ammoBar.fillAmount = 1f;
+        slot.ammoBar.color = Color.clear;
 
         return slot;
     }
@@ -273,21 +345,23 @@ public class WeaponHotbar : MonoBehaviour
     void HandleInput()
     {
         var keyboard = Keyboard.current;
-        if (keyboard == null) return;
 
-        // 1-8 tuslari ile slot secimi
-        if (keyboard.digit1Key.wasPressedThisFrame) SelectSlot(0);
-        else if (keyboard.digit2Key.wasPressedThisFrame) SelectSlot(1);
-        else if (keyboard.digit3Key.wasPressedThisFrame) SelectSlot(2);
-        else if (keyboard.digit4Key.wasPressedThisFrame) SelectSlot(3);
-        else if (keyboard.digit5Key.wasPressedThisFrame) SelectSlot(4);
-        else if (keyboard.digit6Key.wasPressedThisFrame) SelectSlot(5);
-        else if (keyboard.digit7Key.wasPressedThisFrame) SelectSlot(6);
-        else if (keyboard.digit8Key.wasPressedThisFrame) SelectSlot(7);
+        if (keyboard != null)
+        {
+            // 1-8 tuslari ile slot secimi
+            if (keyboard.digit1Key.wasPressedThisFrame) SelectSlot(0);
+            else if (keyboard.digit2Key.wasPressedThisFrame) SelectSlot(1);
+            else if (keyboard.digit3Key.wasPressedThisFrame) SelectSlot(2);
+            else if (keyboard.digit4Key.wasPressedThisFrame) SelectSlot(3);
+            else if (keyboard.digit5Key.wasPressedThisFrame) SelectSlot(4);
+            else if (keyboard.digit6Key.wasPressedThisFrame) SelectSlot(5);
+            else if (keyboard.digit7Key.wasPressedThisFrame) SelectSlot(6);
+            else if (keyboard.digit8Key.wasPressedThisFrame) SelectSlot(7);
 
-        // Q/E ile onceki/sonraki silah
-        if (keyboard.qKey.wasPressedThisFrame) SelectPreviousWeapon();
-        else if (keyboard.eKey.wasPressedThisFrame) SelectNextWeapon();
+            // Q/E ile onceki/sonraki silah
+            if (keyboard.qKey.wasPressedThisFrame) SelectPreviousWeapon();
+            else if (keyboard.eKey.wasPressedThisFrame) SelectNextWeapon();
+        }
 
         // Mouse scroll
         var mouse = Mouse.current;
@@ -296,6 +370,12 @@ public class WeaponHotbar : MonoBehaviour
             float scroll = mouse.scroll.ReadValue().y;
             if (scroll > 0) SelectPreviousWeapon();
             else if (scroll < 0) SelectNextWeapon();
+        }
+
+        // Mobil silah degistirme butonu
+        if (MobileControls.Instance != null && MobileControls.Instance.SwitchWeaponPressed)
+        {
+            SelectNextWeapon();
         }
     }
 
@@ -311,9 +391,6 @@ public class WeaponHotbar : MonoBehaviour
         // WeaponManager'a bildir
         if (WeaponManager.Instance != null)
         {
-            // Hotbar slot -> WeaponManager slot eslestirmesi
-            // Hotbar: 0=Pistol(Secondary), 1=Primary, 2=Special
-            // Manager: 0=Primary, 1=Secondary, 2=Special
             int managerSlot = HotbarToManagerSlot(slotIndex);
             if (managerSlot >= 0)
             {
@@ -323,6 +400,38 @@ public class WeaponHotbar : MonoBehaviour
 
         UpdateUI();
         PlaySwitchSound();
+
+        // Silah degistirme animasyonu
+        if (slotIndex < slots.Count)
+        {
+            StartCoroutine(WeaponSwitchAnimation(slots[slotIndex], weapon));
+        }
+    }
+
+    /// <summary>
+    /// Silah degistirme animasyonu: Scale punch + border renk flash
+    /// </summary>
+    System.Collections.IEnumerator WeaponSwitchAnimation(HotbarSlot slot, WeaponInstance weapon)
+    {
+        if (slot.border == null) yield break;
+
+        Color rarityColor = WeaponRarityHelper.GetRarityColor(weapon.rarity);
+
+        // Sadece renk flash (beyaz -> rarity), boyut degisimi yok
+        float duration = 0.2f;
+        float elapsed = 0f;
+
+        slot.border.color = Color.white;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            slot.border.color = Color.Lerp(Color.white, rarityColor, t);
+            yield return null;
+        }
+
+        slot.border.color = rarityColor;
     }
 
     /// <summary>
@@ -460,18 +569,18 @@ public class WeaponHotbar : MonoBehaviour
             bool isActive = (i == currentSlotIndex);
             bool hasWeapon = weapon != null && weapon.isUnlocked;
 
-            // Border rengi
+            // Border ve arkaplan rengi
             if (isActive && hasWeapon)
             {
                 Color rarityColor = WeaponRarityHelper.GetRarityColor(weapon.rarity);
                 slot.border.color = rarityColor;
-                slot.background.color = new Color(rarityColor.r * 0.2f, rarityColor.g * 0.2f, rarityColor.b * 0.2f, 0.9f);
+                slot.background.color = new Color(rarityColor.r * 0.12f, rarityColor.g * 0.12f, rarityColor.b * 0.12f, 0.95f);
             }
             else if (hasWeapon)
             {
                 Color rarityColor = WeaponRarityHelper.GetRarityColor(weapon.rarity);
-                slot.border.color = new Color(rarityColor.r * 0.5f, rarityColor.g * 0.5f, rarityColor.b * 0.5f, 0.8f);
-                slot.background.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+                slot.border.color = new Color(rarityColor.r * 0.35f, rarityColor.g * 0.35f, rarityColor.b * 0.35f, 0.6f);
+                slot.background.color = new Color(0.05f, 0.03f, 0.1f, 0.9f);
             }
             else
             {
@@ -486,15 +595,36 @@ public class WeaponHotbar : MonoBehaviour
                 slot.weaponIcon.sprite = WeaponSpriteLoader.GetWeaponIcon(weapon.data.type);
                 slot.weaponIcon.color = isActive ? Color.white : new Color(0.7f, 0.7f, 0.7f);
 
-                // Ammo
+                // Ammo text
                 slot.ammoText.text = $"{weapon.currentAmmo}";
-                if (weapon.currentAmmo <= weapon.data.maxAmmo * 0.2f)
+                float ammoPercent = (weapon.data.maxAmmo > 0) ? (float)weapon.currentAmmo / weapon.data.maxAmmo : 1f;
+                if (ammoPercent <= 0.2f)
                     slot.ammoText.color = lowAmmoColor;
                 else
                     slot.ammoText.color = Color.white;
 
-                // Rarity bar
-                slot.rarityBar.color = WeaponRarityHelper.GetRarityColor(weapon.rarity);
+                // Ammo bar (sol kenarda dikey cubuk)
+                if (slot.ammoBar != null)
+                {
+                    slot.ammoBar.fillAmount = ammoPercent;
+                    if (ammoPercent >= 0.6f)
+                        slot.ammoBar.color = new Color(0f, 1f, 0.6f, 0.8f);
+                    else if (ammoPercent >= 0.2f)
+                        slot.ammoBar.color = new Color(1f, 0.7f, 0f, 0.8f);
+                    else
+                        slot.ammoBar.color = new Color(1f, 0.2f, 0.2f, 0.9f);
+                }
+
+                // Rarity bar (ust cizgi)
+                Color rarityColor2 = WeaponRarityHelper.GetRarityColor(weapon.rarity);
+                slot.rarityBar.color = isActive ? rarityColor2 : new Color(rarityColor2.r, rarityColor2.g, rarityColor2.b, 0.5f);
+
+                // Rarity glow overlay - sadece aktifken belirgin
+                if (slot.rarityGlow != null)
+                {
+                    float glowAlpha = isActive ? 0.12f : 0.05f;
+                    slot.rarityGlow.color = new Color(rarityColor2.r, rarityColor2.g, rarityColor2.b, glowAlpha);
+                }
 
                 // Weapon name (sadece aktifse)
                 slot.weaponNameText.enabled = isActive;
@@ -510,29 +640,34 @@ public class WeaponHotbar : MonoBehaviour
                 slot.ammoText.text = "";
                 slot.rarityBar.color = Color.clear;
                 slot.weaponNameText.enabled = false;
+                if (slot.ammoBar != null) slot.ammoBar.color = Color.clear;
+                if (slot.rarityGlow != null) slot.rarityGlow.color = Color.clear;
             }
 
-            // Slot numarasi rengi
-            slot.slotNumberText.color = isActive ? activeSlotColor : new Color(1, 1, 1, 0.5f);
+            // Slot numarasi rengi (aktifken neon cyan)
+            slot.slotNumberText.color = isActive ? new Color(0f, 1f, 1f, 1f) : new Color(0.6f, 0.5f, 0.8f, 0.6f);
         }
     }
 
     void UpdateActiveSlotAnimation()
     {
-        // Aktif slot icin hafif parlama animasyonu
+        // Aktif slot icin sadece renk pulse (scale yok)
         if (currentSlotIndex >= 0 && currentSlotIndex < slots.Count)
         {
             HotbarSlot slot = slots[currentSlotIndex];
-            float pulse = (Mathf.Sin(Time.time * 4f) * 0.1f) + 1f;
-            slot.border.transform.localScale = Vector3.one * pulse;
-        }
 
-        // Diger slotlari normal boyuta dondur
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (i != currentSlotIndex)
+            // Border renk pulse (cyan bazli, boyut degisimi yok)
+            WeaponInstance weapon = (currentSlotIndex < allWeapons.Count) ? allWeapons[currentSlotIndex] : null;
+            if (weapon != null && weapon.isUnlocked)
             {
-                slots[i].border.transform.localScale = Vector3.one;
+                Color rarityColor = WeaponRarityHelper.GetRarityColor(weapon.rarity);
+                float colorPulse = (Mathf.Sin(Time.time * 3f) + 1f) * 0.5f;
+                slot.border.color = Color.Lerp(rarityColor, neonCyanColor, colorPulse * 0.4f);
+            }
+            else
+            {
+                float colorPulse = (Mathf.Sin(Time.time * 3f) + 1f) * 0.5f;
+                slot.border.color = Color.Lerp(activeSlotColor, new Color(0f, 1f, 1f, 0.8f), colorPulse * 0.3f);
             }
         }
     }
@@ -570,6 +705,8 @@ public class HotbarSlot
     public Image background;
     public Image weaponIcon;
     public Image rarityBar;
+    public Image rarityGlow;
+    public Image ammoBar;
     public Text slotNumberText;
     public Text ammoText;
     public Text weaponNameText;

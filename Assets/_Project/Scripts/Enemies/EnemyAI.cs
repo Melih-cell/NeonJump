@@ -7,7 +7,7 @@ using System;
 /// </summary>
 public class EnemyAI : MonoBehaviour
 {
-    public enum AIState { Idle, Patrol, Alert, Chase, Attack, Hurt, Dead }
+    public enum AIState { Idle, Patrol, Alert, Chase, Attack, Hurt, Dead, Flank }
 
     [Header("Mevcut Durum")]
     [SerializeField] private AIState currentState = AIState.Idle;
@@ -49,6 +49,15 @@ public class EnemyAI : MonoBehaviour
     public bool returnToStart = true;
     public float maxChaseDistance = 15f;
     public float alertDuration = 0.5f; // Oyuncuyu gordugunde sasirma
+
+    [Header("Flank (Kusatma) Ayarlari")]
+    public bool canFlank = false;
+    public float flankDistance = 3f;
+    [Range(0f, 1f)]
+    public float flankChance = 0.3f;
+    public float flankDuration = 2f;
+    private float flankTimer = 0f;
+    private int flankSide = 1; // 1=sag, -1=sol
 
     [Header("Tepki Sureleri")]
     public float reactionTime = 0.1f; // Karar verme gecikmesi
@@ -173,6 +182,9 @@ public class EnemyAI : MonoBehaviour
                 break;
             case AIState.Attack:
                 UpdateAttack();
+                break;
+            case AIState.Flank:
+                UpdateFlank();
                 break;
             case AIState.Hurt:
                 UpdateHurt();
@@ -430,8 +442,20 @@ public class EnemyAI : MonoBehaviour
 
         movement.Run(dirToPlayer);
 
-        // Saldiri mesafesi kontrolu
+        // Flank sansi - orta mesafede
         float distToPlayer = Vector2.Distance(transform.position, player.position);
+        if (canFlank && distToPlayer > attackRange * 2f && distToPlayer < detectionRange * 0.6f)
+        {
+            if (UnityEngine.Random.value < flankChance * Time.deltaTime)
+            {
+                flankSide = UnityEngine.Random.value > 0.5f ? 1 : -1;
+                flankTimer = 0f;
+                ChangeState(AIState.Flank);
+                return;
+            }
+        }
+
+        // Saldiri mesafesi kontrolu
         if (canAttack && distToPlayer <= attackRange && attackTimer <= 0)
         {
             ChangeState(AIState.Attack);
@@ -491,6 +515,37 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    void UpdateFlank()
+    {
+        if (movement == null || player == null)
+        {
+            ChangeState(AIState.Chase);
+            return;
+        }
+
+        flankTimer += Time.deltaTime;
+
+        // Oyuncunun arkasina dolan
+        float targetX = player.position.x + flankSide * flankDistance;
+        float dirToTarget = Mathf.Sign(targetX - transform.position.x);
+        movement.Run(dirToTarget);
+
+        // Hedefe ulasildi veya sure doldu
+        float distToTarget = Mathf.Abs(transform.position.x - targetX);
+        if (distToTarget < 0.5f || flankTimer >= flankDuration)
+        {
+            // Saldiriya gec
+            if (canAttack && attackTimer <= 0)
+            {
+                ChangeState(AIState.Attack);
+            }
+            else
+            {
+                ChangeState(AIState.Chase);
+            }
+        }
+    }
+
     #endregion
 
     #region State Management
@@ -535,6 +590,10 @@ public class EnemyAI : MonoBehaviour
             case AIState.Chase:
                 lastChaseDirection = 0;
                 lastDirectionChangeTime = 0;
+                break;
+
+            case AIState.Flank:
+                flankTimer = 0f;
                 break;
 
             case AIState.Hurt:

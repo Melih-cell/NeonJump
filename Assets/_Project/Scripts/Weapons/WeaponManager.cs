@@ -34,6 +34,7 @@ public class WeaponManager : MonoBehaviour
     private Coroutine reloadCoroutine;
     private SpriteRenderer playerSpriteRenderer;
     private Transform playerTransform; // Player'ın ana transform'u (flip kontrolü için)
+    private GameObject weaponAuraObject;
 
     void Awake()
     {
@@ -140,6 +141,7 @@ public class WeaponManager : MonoBehaviour
         HandleWeaponSwitch();
         HandleReloadInput();
         UpdateFirePointPosition();
+        UpdateWeaponRarityAura();
     }
 
     // Son nisan yonu (FirePoint pozisyonu icin)
@@ -212,9 +214,11 @@ public class WeaponManager : MonoBehaviour
     void HandleReloadInput()
     {
         var keyboard = UnityEngine.InputSystem.Keyboard.current;
-        if (keyboard == null) return;
 
-        if (keyboard.rKey.wasPressedThisFrame && !isReloading)
+        bool reloadInput = (keyboard != null && keyboard.rKey.wasPressedThisFrame)
+                           || (MobileControls.Instance != null && MobileControls.Instance.ReloadPressed);
+
+        if (reloadInput && !isReloading)
         {
             TryReload();
         }
@@ -427,7 +431,13 @@ public class WeaponManager : MonoBehaviour
         // Bullet component - Efektif statları kullan (Rarity + Level bonuslu)
         WeaponInstance currentWeapon = GetCurrentWeapon();
         Bullet bulletComp = bullet.AddComponent<Bullet>();
-        bulletComp.damage = currentWeapon != null ? currentWeapon.GetEffectiveDamage() : data.damage;
+        int baseDamage = currentWeapon != null ? currentWeapon.GetEffectiveDamage() : data.damage;
+        // Apply equipment damage bonus
+        float equipDmgBonus = EquipmentManager.Instance != null ? EquipmentManager.Instance.TotalDamageBonus : 0f;
+        float equipCritBonus = EquipmentManager.Instance != null ? EquipmentManager.Instance.TotalCritBonus : 0f;
+        // Critical hit check
+        bool isCrit = Random.value < equipCritBonus;
+        bulletComp.damage = Mathf.RoundToInt(baseDamage * (1f + equipDmgBonus) * (isCrit ? 2f : 1f));
         bulletComp.weaponType = data.type;
         bulletComp.hasExplosion = data.hasExplosion;
         bulletComp.explosionRadius = data.explosionRadius;
@@ -857,6 +867,72 @@ public class WeaponManager : MonoBehaviour
         if (current != null)
         {
             OnAmmoChanged?.Invoke(current.currentAmmo, current.reserveAmmo);
+        }
+    }
+
+    /// <summary>
+    /// Silah raritysine gore oyuncu etrafinda hafif glow efekti
+    /// </summary>
+    private void UpdateWeaponRarityAura()
+    {
+        WeaponInstance weapon = GetCurrentWeapon();
+        if (weapon == null || weapon.rarity == WeaponRarity.Common)
+        {
+            // Aura'yi kapat
+            if (weaponAuraObject != null)
+                weaponAuraObject.SetActive(false);
+            return;
+        }
+
+        // Aura olustur
+        if (weaponAuraObject == null)
+        {
+            weaponAuraObject = new GameObject("WeaponAura");
+            weaponAuraObject.transform.SetParent(playerTransform);
+            weaponAuraObject.transform.localPosition = Vector3.zero;
+
+            SpriteRenderer auraSr = weaponAuraObject.AddComponent<SpriteRenderer>();
+            auraSr.sortingOrder = -1;
+
+            // Basit daire sprite
+            int size = 32;
+            Texture2D tex = new Texture2D(size, size);
+            Color[] pixels = new Color[size * size];
+            Vector2 center = new Vector2(size / 2f, size / 2f);
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), center);
+                    float alpha = Mathf.Max(0, 1f - dist / (size / 2f));
+                    alpha = alpha * alpha * 0.3f; // Yumusak gradient
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            }
+            tex.SetPixels(pixels);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.Apply();
+            auraSr.sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16);
+        }
+
+        weaponAuraObject.SetActive(true);
+        SpriteRenderer aura = weaponAuraObject.GetComponent<SpriteRenderer>();
+        if (aura != null)
+        {
+            Color rarityColor = WeaponRarityHelper.GetRarityColor(weapon.rarity);
+            float pulse = 0.15f + Mathf.Sin(Time.time * 2f) * 0.05f;
+            aura.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, pulse);
+
+            // Boyut - rarity'ye gore
+            float scale = weapon.rarity switch
+            {
+                WeaponRarity.Uncommon => 2f,
+                WeaponRarity.Rare => 2.5f,
+                WeaponRarity.Epic => 3f,
+                WeaponRarity.Legendary => 3.5f,
+                _ => 2f
+            };
+            weaponAuraObject.transform.localScale = Vector3.one * scale;
         }
     }
 

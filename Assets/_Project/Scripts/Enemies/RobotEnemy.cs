@@ -280,7 +280,7 @@ public class RobotEnemy : EnemyBase
 
     [Header("=== BOSS STATS (Black Myth Wukong Style) ===")]
     [Tooltip("Boss toplam cani")]
-    public float bossHealth = 15000f;
+    public float bossHealth = 30000f;
 
     [Tooltip("Boss can barı gosterilsin mi")]
     public bool showBossHealthBar = true;
@@ -526,6 +526,35 @@ public class RobotEnemy : EnemyBase
 
     #endregion
 
+    #region Saldiri Ayarlari - Neon Beam Sweep
+
+    [Header("Neon Beam Sweep Saldirisi")]
+    [Tooltip("Beam sweep aktif mi")]
+    public bool canBeamSweep = true;
+
+    [Tooltip("Beam sweep hasari")]
+    public int beamSweepDamage = 2;
+
+    [Tooltip("Beam sweep cooldown")]
+    public float beamSweepCooldown = 8f;
+
+    [Tooltip("Beam sweep yay acisi (derece)")]
+    public float beamSweepArc = 120f;
+
+    [Tooltip("Beam sweep suresi")]
+    public float beamSweepDuration = 2f;
+
+    [Tooltip("Beam sweep uyari suresi")]
+    public float beamSweepWarning = 0.8f;
+
+    [Tooltip("Beam sweep menzili")]
+    public float beamSweepRange = 10f;
+
+    [Tooltip("Beam sweep rengi")]
+    public Color beamSweepColor = new Color(1f, 0f, 0.5f, 0.8f);
+
+    #endregion
+
     #region Saldiri Ayarlari - Melee
 
     [Header("Melee Saldirisi (Yakin Mesafe)")]
@@ -634,6 +663,26 @@ public class RobotEnemy : EnemyBase
 
     #endregion
 
+    #region Difficulty Scaling
+
+    [Header("Difficulty Scaling")]
+    [Tooltip("Zorluk olcekleme aktif mi")]
+    public bool useDifficultyScaling = true;
+
+    [Tooltip("Baslangic zorluk carpani")]
+    public float baseDifficultyMultiplier = 1f;
+
+    [Tooltip("Oyuncu kill basina zorluk artisi")]
+    public float difficultyPerKill = 0.02f;
+
+    [Tooltip("Maksimum zorluk carpani")]
+    public float maxDifficultyMultiplier = 3f;
+
+    // Runtime difficulty
+    private float difficultyMultiplier = 1f;
+
+    #endregion
+
     #region Neon Visual Effects Ayarlari
 
     [Header("Neon Visual Effects")]
@@ -648,7 +697,7 @@ public class RobotEnemy : EnemyBase
 
     [Tooltip("Glow yogunlugu")]
     [Range(0f, 1f)]
-    public float glowIntensity = 0.3f;
+    public float glowIntensity = 0.5f;
 
     [Tooltip("Saldiri sirasindaki flash rengi")]
     public Color attackFlashColor = new Color(1f, 1f, 1f, 1f);
@@ -700,6 +749,8 @@ public class RobotEnemy : EnemyBase
     private bool isAttacking = false;
     private bool isLaserActive = false;
     private bool isDashing = false;
+    private float beamSweepCooldownTimer = 0f;
+    private bool isBeamSweeping = false;
 
     // Cached sprites for projectiles
     private static Sprite cachedBulletSprite;
@@ -723,6 +774,30 @@ public class RobotEnemy : EnemyBase
     // Neon effects
     private float glowTimer = 0f;
     private Coroutine attackFlashCoroutine;
+
+    // Outer glow
+    private SpriteRenderer outerGlowSprite;
+    private float outerGlowScale = 1.8f;
+    private float outerGlowMaxAlpha = 0.4f;
+
+    // Eye glow
+    private SpriteRenderer leftEyeGlow;
+    private SpriteRenderer rightEyeGlow;
+
+    // Laser glow
+    private LineRenderer laserGlowRenderer;
+
+    // Ambient sparks
+    private float sparkTimer = 0f;
+    private float sparkInterval = 1.5f;
+
+    // Attack flash color constants
+    private static readonly Color flashProjectile = new Color(1f, 0.6f, 0f);      // turuncu
+    private static readonly Color flashLaser = new Color(1f, 0.2f, 0.2f);          // kirmizi
+    private static readonly Color flashMelee = new Color(1f, 1f, 0.3f);            // sari
+    private static readonly Color flashBomb = new Color(1f, 0.4f, 0.1f);           // kirmizi-turuncu
+    private static readonly Color flashDash = new Color(0f, 1f, 1f);               // cyan
+    private static readonly Color flashGroundSlam = new Color(1f, 0f, 1f);         // magenta
 
     // Initialization
     private bool isInitialized = false;
@@ -908,6 +983,29 @@ public class RobotEnemy : EnemyBase
 
         isInitialized = true;
 
+        // Enhanced visual setup
+        if (enableGlowEffect)
+        {
+            SetupOuterGlow();
+            SetupEyeGlows();
+            SetupLaserGlowRenderer();
+        }
+
+        // Difficulty scaling
+        if (useDifficultyScaling && GameManager.Instance != null)
+        {
+            int totalKills = GameManager.Instance.GetScore() / 100; // Approximate kills from score
+            difficultyMultiplier = Mathf.Min(baseDifficultyMultiplier + totalKills * difficultyPerKill, maxDifficultyMultiplier);
+            // Apply difficulty
+            bossHealth *= difficultyMultiplier;
+            if (enemyHealth != null) enemyHealth.SetMaxHealth(bossHealth, true);
+            projectileCooldown /= difficultyMultiplier;
+            laserCooldown /= difficultyMultiplier;
+            meleeCooldown /= difficultyMultiplier;
+            if (usePredictiveTargeting)
+                predictionAccuracy = Mathf.Min(predictionAccuracy * difficultyMultiplier, 0.95f);
+        }
+
         // Baslangicta yurume animasyonu
         SetWalkingAnimation(true);
     }
@@ -920,7 +1018,7 @@ public class RobotEnemy : EnemyBase
         // EnemyHealth varsa boss canini ayarla
         if (enemyHealth != null)
         {
-            enemyHealth.SetMaxHealth(bossHealth);
+            enemyHealth.SetMaxHealth(bossHealth, true);
             Debug.Log($"[RobotEnemy] Boss health set to: {bossHealth}");
         }
         else
@@ -1458,6 +1556,12 @@ public class RobotEnemy : EnemyBase
                 isStaggered = false;
                 staggerImmunityTimer = staggerImmunityDuration;
                 accumulatedStaggerDamage = 0f;
+
+                // Stagger sonrasi durumu duzelt - oyuncu gorunuyorsa chase'e gec
+                if (playerDetected && currentState != RobotState.Chase)
+                {
+                    ChangeState(RobotState.Chase);
+                }
                 Debug.Log("[BOSS] Stagger ended, immunity started");
             }
         }
@@ -1627,6 +1731,13 @@ public class RobotEnemy : EnemyBase
     void FixedUpdate()
     {
         if (isDead || !isInitialized || isAttacking) return;
+
+        // Stagger sirasinda hareket etme
+        if (isStaggered)
+        {
+            StopMovement();
+            return;
+        }
 
         // Dash sirasinda fizik hareketi coroutine tarafindan kontrol edilir
         if (isDashing) return;
@@ -2143,16 +2254,19 @@ public class RobotEnemy : EnemyBase
     /// </summary>
     private void GroundSlamImpact()
     {
-        // Ekran sarsintisi
+        // Buyuk ekran sarsintisi
         if (CameraFollow.Instance != null)
         {
-            CameraFollow.Instance.Shake(0.4f, 0.5f);
+            CameraFollow.Instance.ShakeOnCombo(8);
         }
 
-        // Particle efekti
+        // Shockwave patlama efekti
         if (ParticleManager.Instance != null)
         {
-            ParticleManager.Instance.PlayEnemyDeath(transform.position); // Buyuk patlama efekti
+            ParticleManager.Instance.PlayRobotBombExplosion(transform.position, groundSlamRadius, flashGroundSlam);
+            // Iki yanda toz
+            ParticleManager.Instance.PlayLandDust(transform.position + Vector3.left * 1f);
+            ParticleManager.Instance.PlayLandDust(transform.position + Vector3.right * 1f);
         }
 
         // Alan hasari
@@ -2461,29 +2575,53 @@ public class RobotEnemy : EnemyBase
     {
         phaseTransitioning = true;
 
-        // Phase gecis efekti
+        Color phaseColor = newPhase == 3 ? rageColor1 : glowColor;
+
+        // 8 kez hizli renk flash (beyaz/faz rengi)
         if (spriteRenderer != null)
         {
-            Color flashColor = newPhase == 3 ? rageColor1 : glowColor;
-
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 8; i++)
             {
-                spriteRenderer.color = flashColor;
-                yield return new WaitForSeconds(0.1f);
-                spriteRenderer.color = originalColor;
-                yield return new WaitForSeconds(0.1f);
+                spriteRenderer.color = Color.white;
+                if (outerGlowSprite != null) outerGlowSprite.color = new Color(1f, 1f, 1f, 0.8f);
+                yield return new WaitForSeconds(0.06f);
+                spriteRenderer.color = phaseColor;
+                if (outerGlowSprite != null) outerGlowSprite.color = new Color(phaseColor.r, phaseColor.g, phaseColor.b, outerGlowMaxAlpha);
+                yield return new WaitForSeconds(0.06f);
+            }
+            spriteRenderer.color = originalColor;
+        }
+
+        // Shockwave + NeonGlow parcaciklari
+        if (ParticleManager.Instance != null)
+        {
+            ParticleManager.Instance.PlayRobotBombExplosion(transform.position, 3f, phaseColor);
+            ParticleManager.Instance.PlayNeonGlow(transform.position, phaseColor, 1f);
+        }
+
+        // 3x elektrik kivilcimi
+        for (int i = 0; i < 3; i++)
+        {
+            if (ParticleManager.Instance != null)
+            {
+                Vector3 sparkPos = transform.position + new Vector3(Random.Range(-1f, 1f), Random.Range(-0.5f, 1f), 0f);
+                ParticleManager.Instance.PlayRobotLaserHit(sparkPos);
             }
         }
 
-        currentPhase = newPhase;
+        // Buyuk ekran sarsintisi
+        if (CameraFollow.Instance != null)
+        {
+            CameraFollow.Instance.ShakeOnCombo(10);
+        }
 
-        // Phase bonuslari uygula
+        currentPhase = newPhase;
         ApplyPhaseModifiers();
 
         // Bildirim
         if (NotificationManager.Instance != null)
         {
-            NotificationManager.Instance.ShowNotification("ROBOT PHASE " + newPhase, "Daha guclu hale geldi!", NotificationType.Warning);
+            NotificationManager.Instance.ShowNotification($"FAZ {newPhase}!", "ROBOT GUCLENIYOR!", NotificationType.Warning);
         }
 
         phaseTransitioning = false;
@@ -2772,7 +2910,7 @@ public class RobotEnemy : EnemyBase
         loseTargetTimer = 0f;
 
         // Saldiri yapilamiyorsa bekle
-        if (isAttacking || isTeleporting || isGroundSlamming) return;
+        if (isAttacking || isTeleporting || isGroundSlamming || isStaggered) return;
 
         // FIX #11: Onceden hesaplanmis mesafeyi kullan
         float distanceToPlayer = cachedDistanceToPlayer;
@@ -3136,7 +3274,7 @@ public class RobotEnemy : EnemyBase
         }
 
         // Saldiri flash
-        TriggerAttackFlash();
+        TriggerAttackFlash(flashProjectile);
 
         // Saldiriyi biraz gecikmeyle yap (animasyonla senkron)
         StartCoroutine(ExecuteProjectileAttack());
@@ -3420,7 +3558,7 @@ public class RobotEnemy : EnemyBase
             animator.SetTrigger(attackTrigger);
         }
 
-        TriggerAttackFlash();
+        TriggerAttackFlash(flashBomb);
         StartCoroutine(ExecuteBombAttack());
     }
 
@@ -3574,7 +3712,7 @@ public class RobotEnemy : EnemyBase
             animator.SetTrigger(attackTrigger);
         }
 
-        TriggerAttackFlash();
+        TriggerAttackFlash(flashProjectile);
         StartCoroutine(ExecuteRocketAttack());
     }
 
@@ -3731,7 +3869,7 @@ public class RobotEnemy : EnemyBase
         }
 
         // Saldiri flash
-        TriggerAttackFlash();
+        TriggerAttackFlash(flashLaser);
 
         StartCoroutine(ExecuteLaserAttack());
     }
@@ -3748,6 +3886,14 @@ public class RobotEnemy : EnemyBase
         if (laserLineRenderer != null)
         {
             laserLineRenderer.enabled = true;
+            // Cekirdek isin beyaz
+            laserLineRenderer.startColor = Color.white;
+            laserLineRenderer.endColor = new Color(1f, 1f, 1f, 0.5f);
+        }
+        // Glow katmani kirmizi/saydam
+        if (laserGlowRenderer != null)
+        {
+            laserGlowRenderer.enabled = true;
         }
 
         // Lazer suresi boyunca aktif tut
@@ -3776,6 +3922,13 @@ public class RobotEnemy : EnemyBase
         if (laserLineRenderer != null)
         {
             laserLineRenderer.enabled = false;
+            // Renkleri varsayilana dondur
+            laserLineRenderer.startColor = laserColor;
+            laserLineRenderer.endColor = new Color(laserColor.r, laserColor.g, laserColor.b, 0.5f);
+        }
+        if (laserGlowRenderer != null)
+        {
+            laserGlowRenderer.enabled = false;
         }
 
         laserCooldownTimer = GetEffectiveCooldown(laserCooldown);
@@ -3802,6 +3955,21 @@ public class RobotEnemy : EnemyBase
 
         laserLineRenderer.SetPosition(0, startPos);
         laserLineRenderer.SetPosition(1, endPos);
+
+        // Genislik titresimi
+        float widthVibration = laserWidth + Mathf.Sin(Time.time * 20f) * 0.03f;
+        laserLineRenderer.startWidth = widthVibration;
+        laserLineRenderer.endWidth = widthVibration * 0.5f;
+
+        // Glow layer pozisyon ve boyut
+        if (laserGlowRenderer != null && laserGlowRenderer.enabled)
+        {
+            laserGlowRenderer.SetPosition(0, startPos);
+            laserGlowRenderer.SetPosition(1, endPos);
+            float glowVibration = laserWidth * 4f + Mathf.Sin(Time.time * 15f) * 0.05f;
+            laserGlowRenderer.startWidth = glowVibration;
+            laserGlowRenderer.endWidth = glowVibration * 0.5f;
+        }
     }
 
     private void CheckLaserHit()
@@ -3859,7 +4027,7 @@ public class RobotEnemy : EnemyBase
         }
 
         // Saldiri flash
-        TriggerAttackFlash();
+        TriggerAttackFlash(flashMelee);
 
         StartCoroutine(ExecuteMeleeAttack());
     }
@@ -3944,7 +4112,7 @@ public class RobotEnemy : EnemyBase
         }
 
         // Saldiri flash
-        TriggerAttackFlash();
+        TriggerAttackFlash(flashDash);
 
         StartCoroutine(ExecuteDashAttack());
     }
@@ -4163,6 +4331,157 @@ public class RobotEnemy : EnemyBase
         dashTrailRenderer.positionCount = 0;
         dashTrailRenderer.startColor = startColorA;
         dashTrailRenderer.endColor = endColorA;
+    }
+
+    /// <summary>
+    /// Neon Beam Sweep saldirisi - 120 derecelik donen lazer isini
+    /// </summary>
+    private System.Collections.IEnumerator BeamSweepAttack()
+    {
+        isAttacking = true;
+        isBeamSweeping = true;
+        EnableHyperArmor();
+
+        // Uyari - yere cizgi ciz
+        if (laserLineRenderer != null)
+        {
+            laserLineRenderer.enabled = true;
+            laserLineRenderer.startColor = new Color(beamSweepColor.r, beamSweepColor.g, beamSweepColor.b, 0.3f);
+            laserLineRenderer.endColor = new Color(beamSweepColor.r, beamSweepColor.g, beamSweepColor.b, 0.1f);
+            laserLineRenderer.startWidth = 0.05f;
+            laserLineRenderer.endWidth = 0.05f;
+        }
+
+        float warningTimer = 0f;
+        float facingDir = spriteRenderer != null && spriteRenderer.flipX ? -1f : 1f;
+        float startAngle = facingDir > 0 ? -beamSweepArc / 2f : 180f - beamSweepArc / 2f;
+
+        // Warning phase - thin line preview
+        while (warningTimer < beamSweepWarning)
+        {
+            warningTimer += Time.deltaTime;
+            float warningPulse = Mathf.Sin(warningTimer * 15f) * 0.5f + 0.5f;
+            if (laserLineRenderer != null)
+            {
+                float angle = startAngle * Mathf.Deg2Rad;
+                Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                laserLineRenderer.SetPosition(0, transform.position);
+                laserLineRenderer.SetPosition(1, (Vector2)transform.position + dir * beamSweepRange * warningPulse);
+            }
+            yield return null;
+        }
+
+        // Sweep phase
+        if (laserLineRenderer != null)
+        {
+            laserLineRenderer.startWidth = 0.4f;
+            laserLineRenderer.endWidth = 0.2f;
+            laserLineRenderer.startColor = beamSweepColor;
+            laserLineRenderer.endColor = beamSweepColor;
+        }
+
+        float sweepTimer = 0f;
+        float damageTickTimer = 0f;
+
+        while (sweepTimer < beamSweepDuration)
+        {
+            sweepTimer += Time.deltaTime;
+            damageTickTimer += Time.deltaTime;
+            float progress = sweepTimer / beamSweepDuration;
+            float currentAngle = startAngle + beamSweepArc * progress;
+            float rad = currentAngle * Mathf.Deg2Rad;
+            Vector2 beamDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+
+            if (laserLineRenderer != null)
+            {
+                laserLineRenderer.SetPosition(0, transform.position);
+                laserLineRenderer.SetPosition(1, (Vector2)transform.position + beamDir * beamSweepRange);
+            }
+
+            // Hasar - her 0.2 saniyede kontrol et
+            if (damageTickTimer >= 0.2f)
+            {
+                damageTickTimer = 0f;
+                RaycastHit2D hit = Physics2D.Raycast(transform.position, beamDir, beamSweepRange);
+                if (hit.collider != null && hit.collider.CompareTag("Player"))
+                {
+                    PlayerController pc = hit.collider.GetComponent<PlayerController>();
+                    if (pc != null) pc.TakeDamage();
+                }
+
+                // BoxCast for wider beam
+                RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, new Vector2(0.4f, 0.4f), currentAngle, beamDir, beamSweepRange);
+                foreach (var h in hits)
+                {
+                    if (h.collider != null && h.collider.CompareTag("Player"))
+                    {
+                        PlayerController pc = h.collider.GetComponent<PlayerController>();
+                        if (pc != null) pc.TakeDamage();
+                        break;
+                    }
+                }
+            }
+
+            // Kamera sarsmasi
+            if (CameraFollow.Instance != null)
+                CameraFollow.Instance.Shake(0.05f, 0.05f);
+
+            yield return null;
+        }
+
+        // Bitir
+        if (laserLineRenderer != null)
+        {
+            laserLineRenderer.enabled = false;
+        }
+
+        DisableHyperArmor();
+        isBeamSweeping = false;
+        isAttacking = false;
+        beamSweepCooldownTimer = beamSweepCooldown;
+    }
+
+    /// <summary>
+    /// Charge/dash saldirilarinda neon trail efekti
+    /// Solan sprite izi birakir
+    /// </summary>
+    private void CreateNeonTrail()
+    {
+        if (spriteRenderer == null) return;
+
+        GameObject trail = new GameObject("NeonTrail");
+        trail.transform.position = transform.position;
+        trail.transform.localScale = transform.localScale;
+
+        SpriteRenderer trailSr = trail.AddComponent<SpriteRenderer>();
+        trailSr.sprite = spriteRenderer.sprite;
+        trailSr.color = new Color(dashTrailColor.r, dashTrailColor.g, dashTrailColor.b, 0.5f);
+        trailSr.sortingOrder = spriteRenderer.sortingOrder - 1;
+        trailSr.flipX = spriteRenderer.flipX;
+
+        // Fade out coroutine - StartCoroutine olmadan basit bir yaklasim
+        StartCoroutine(FadeTrail(trailSr));
+    }
+
+    private System.Collections.IEnumerator FadeTrail(SpriteRenderer trailSr)
+    {
+        float fadeDuration = 0.3f;
+        float elapsed = 0f;
+        Color startColor = trailSr.color;
+
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            if (trailSr != null)
+            {
+                float alpha = Mathf.Lerp(startColor.a, 0f, elapsed / fadeDuration);
+                trailSr.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            }
+            yield return null;
+        }
+
+        if (trailSr != null)
+            Destroy(trailSr.gameObject);
     }
 
     #endregion
@@ -4419,6 +4738,16 @@ public class RobotEnemy : EnemyBase
         {
             animator.SetBool(rageParam, true);
         }
+
+        // 2x elektrik kivilcimi (yumusak gecis)
+        if (ParticleManager.Instance != null)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                Vector3 sparkPos = transform.position + new Vector3(Random.Range(-1.5f, 1.5f), Random.Range(-0.5f, 1.5f), 0f);
+                ParticleManager.Instance.PlayRobotLaserHit(sparkPos);
+            }
+        }
     }
 
     private void DeactivateRageMode()
@@ -4449,8 +4778,23 @@ public class RobotEnemy : EnemyBase
         float t = (Mathf.Sin(Time.time * rageFlashSpeed) + 1f) * 0.5f;
         Color rageFlash = Color.Lerp(rageColor1, rageColor2, t);
 
-        // Orijinal renk ile rage rengi arasinda karistir
-        spriteRenderer.color = Color.Lerp(originalColor, rageFlash, 0.6f);
+        // Hafif kirmizi tint (robot hala gorunur)
+        spriteRenderer.color = Color.Lerp(originalColor, rageFlash, 0.35f);
+
+        // Outer glow kirmizi agresif pulse
+        if (outerGlowSprite != null)
+        {
+            float ragePulse = (Mathf.Sin(Time.time * rageFlashSpeed * 1.5f) + 1f) * 0.5f;
+            Color rageGlowColor = Color.Lerp(rageColor1, rageColor2, ragePulse);
+            outerGlowSprite.color = new Color(rageGlowColor.r, rageGlowColor.g, rageGlowColor.b, Mathf.Lerp(0.1f, 0.3f, ragePulse));
+        }
+
+        // %0.4 sans kivilcim (nadir, incelikli)
+        if (Random.value < 0.004f && ParticleManager.Instance != null)
+        {
+            Vector3 sparkPos = transform.position + new Vector3(Random.Range(-0.8f, 0.8f), Random.Range(-0.5f, 0.8f), 0f);
+            ParticleManager.Instance.PlayNeonGlow(sparkPos, rageFlash, 0.3f);
+        }
     }
 
     /// <summary>
@@ -4597,6 +4941,111 @@ public class RobotEnemy : EnemyBase
 
     #endregion
 
+    #region Enhanced Visual Setup
+
+    /// <summary>
+    /// Dis glow katmani - robotun arkasinda buyuk, yari saydam daire
+    /// </summary>
+    private void SetupOuterGlow()
+    {
+        GameObject glowObj = new GameObject("OuterGlow");
+        glowObj.transform.SetParent(transform);
+        glowObj.transform.localPosition = Vector3.zero;
+        glowObj.transform.localScale = Vector3.one * outerGlowScale;
+
+        outerGlowSprite = glowObj.AddComponent<SpriteRenderer>();
+        outerGlowSprite.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder - 1 : 4;
+
+        Texture2D glowTex = CreateFilledCircleTexture(64, Color.white);
+        outerGlowSprite.sprite = Sprite.Create(glowTex, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f), 32);
+        outerGlowSprite.color = new Color(glowColor.r, glowColor.g, glowColor.b, outerGlowMaxAlpha * 0.5f);
+    }
+
+    /// <summary>
+    /// Dolu daire texture olusturur (glow efektleri icin)
+    /// </summary>
+    private Texture2D CreateFilledCircleTexture(int size, Color color)
+    {
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        float radius = size * 0.5f;
+        Color transparent = Color.clear;
+
+        for (int x = 0; x < size; x++)
+        {
+            for (int y = 0; y < size; y++)
+            {
+                float dist = Vector2.Distance(new Vector2(x, y), new Vector2(radius, radius));
+                if (dist < radius)
+                {
+                    float fade = 1f - (dist / radius);
+                    fade = fade * fade; // Quadratic falloff
+                    texture.SetPixel(x, y, new Color(color.r, color.g, color.b, fade));
+                }
+                else
+                {
+                    texture.SetPixel(x, y, transparent);
+                }
+            }
+        }
+
+        texture.filterMode = FilterMode.Bilinear;
+        texture.Apply();
+        return texture;
+    }
+
+    /// <summary>
+    /// Goz glow efekti - iki kucuk parlak nokta
+    /// </summary>
+    private void SetupEyeGlows()
+    {
+        Texture2D eyeTex = CreateFilledCircleTexture(16, Color.white);
+        Sprite eyeSprite = Sprite.Create(eyeTex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
+
+        int eyeOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 2 : 8;
+
+        // Sol goz
+        GameObject leftEye = new GameObject("LeftEyeGlow");
+        leftEye.transform.SetParent(transform);
+        leftEye.transform.localPosition = new Vector3(-0.15f, 0.2f, 0f);
+        leftEye.transform.localScale = Vector3.one * 0.15f;
+        leftEyeGlow = leftEye.AddComponent<SpriteRenderer>();
+        leftEyeGlow.sprite = eyeSprite;
+        leftEyeGlow.color = new Color(0f, 1f, 1f, 0.9f);
+        leftEyeGlow.sortingOrder = eyeOrder;
+
+        // Sag goz
+        GameObject rightEye = new GameObject("RightEyeGlow");
+        rightEye.transform.SetParent(transform);
+        rightEye.transform.localPosition = new Vector3(0.15f, 0.2f, 0f);
+        rightEye.transform.localScale = Vector3.one * 0.15f;
+        rightEyeGlow = rightEye.AddComponent<SpriteRenderer>();
+        rightEyeGlow.sprite = eyeSprite;
+        rightEyeGlow.color = new Color(0f, 1f, 1f, 0.9f);
+        rightEyeGlow.sortingOrder = eyeOrder;
+    }
+
+    /// <summary>
+    /// Gelismis lazer glow renderer - cekirdek isinin etrafinda genis saydam katman
+    /// </summary>
+    private void SetupLaserGlowRenderer()
+    {
+        GameObject laserGlowObj = new GameObject("LaserGlow");
+        laserGlowObj.transform.SetParent(transform);
+        laserGlowObj.transform.localPosition = Vector3.zero;
+
+        laserGlowRenderer = laserGlowObj.AddComponent<LineRenderer>();
+        laserGlowRenderer.positionCount = 2;
+        laserGlowRenderer.startWidth = laserWidth * 4f;
+        laserGlowRenderer.endWidth = laserWidth * 2f;
+        laserGlowRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        laserGlowRenderer.startColor = new Color(laserColor.r, laserColor.g, laserColor.b, 0.2f);
+        laserGlowRenderer.endColor = new Color(laserColor.r, laserColor.g, laserColor.b, 0.05f);
+        laserGlowRenderer.sortingOrder = 9;
+        laserGlowRenderer.enabled = false;
+    }
+
+    #endregion
+
     #region Neon Visual Effects
 
     /// <summary>
@@ -4612,6 +5061,69 @@ public class RobotEnemy : EnemyBase
 
         float intensity = (Mathf.Sin(glowTimer * glowPulseSpeed) + 1f) * 0.5f;
         spriteRenderer.color = Color.Lerp(originalColor, glowColor, intensity * glowIntensity);
+
+        // Outer glow pulse (ana glow'dan yavas, offset)
+        if (outerGlowSprite != null)
+        {
+            float outerPulse = (Mathf.Sin(glowTimer * glowPulseSpeed * 0.6f + 1.5f) + 1f) * 0.5f;
+            float outerAlpha = Mathf.Lerp(outerGlowMaxAlpha * 0.3f, outerGlowMaxAlpha, outerPulse);
+            outerGlowSprite.color = new Color(glowColor.r, glowColor.g, glowColor.b, outerAlpha);
+        }
+
+        // Eye glow pulse
+        UpdateEyeGlow();
+
+        // Ambient sparks
+        UpdateAmbientSparks();
+    }
+
+    /// <summary>
+    /// Goz glow efektini gunceller - pulse eden alfa/boyut, rage modda kirmizi
+    /// </summary>
+    private void UpdateEyeGlow()
+    {
+        if (leftEyeGlow == null || rightEyeGlow == null) return;
+
+        float eyePulse = (Mathf.Sin(glowTimer * glowPulseSpeed * 1.5f) + 1f) * 0.5f;
+        float eyeAlpha = Mathf.Lerp(0.6f, 1f, eyePulse);
+        float eyeScale = Mathf.Lerp(0.12f, 0.18f, eyePulse);
+
+        Color eyeColor = isRageActive ? new Color(1f, 0.1f, 0f, eyeAlpha) : new Color(0f, 1f, 1f, eyeAlpha);
+
+        leftEyeGlow.color = eyeColor;
+        rightEyeGlow.color = eyeColor;
+        leftEyeGlow.transform.localScale = Vector3.one * eyeScale;
+        rightEyeGlow.transform.localScale = Vector3.one * eyeScale;
+
+        // Sprite flip'e gore pozisyon guncelle
+        bool facingRight = spriteRenderer != null && spriteRenderer.flipX;
+        float eyeXOffset = facingRight ? 1f : -1f;
+        leftEyeGlow.transform.localPosition = new Vector3(-0.15f * eyeXOffset, 0.2f, 0f);
+        rightEyeGlow.transform.localPosition = new Vector3(0.15f * eyeXOffset, 0.2f, 0f);
+    }
+
+    /// <summary>
+    /// Bosta iken rastgele elektrik kivilcimlari
+    /// </summary>
+    private void UpdateAmbientSparks()
+    {
+        // Sadece bosta/yururken, dash/slam sirasinda degil
+        if (isDashing || isGroundSlamming || isAttacking) return;
+
+        sparkTimer += Time.deltaTime;
+        if (sparkTimer >= sparkInterval)
+        {
+            sparkTimer = 0f;
+            if (ParticleManager.Instance != null)
+            {
+                Vector3 sparkPos = transform.position + new Vector3(
+                    Random.Range(-0.5f, 0.5f),
+                    Random.Range(-0.3f, 0.5f),
+                    0f
+                );
+                ParticleManager.Instance.PlayNeonGlow(sparkPos, glowColor, 0.3f);
+            }
+        }
     }
 
     /// <summary>
@@ -4620,28 +5132,34 @@ public class RobotEnemy : EnemyBase
     /// </summary>
     private void TriggerAttackFlash()
     {
+        TriggerAttackFlash(attackFlashColor);
+    }
+
+    private void TriggerAttackFlash(Color flashColor)
+    {
         if (spriteRenderer == null) return;
 
-        // Onceki flash varsa durdur
         if (attackFlashCoroutine != null)
         {
             StopCoroutine(attackFlashCoroutine);
         }
 
-        attackFlashCoroutine = StartCoroutine(AttackFlashEffect());
+        attackFlashCoroutine = StartCoroutine(AttackFlashEffect(flashColor));
     }
 
-    private IEnumerator AttackFlashEffect()
+    private IEnumerator AttackFlashEffect(Color flashColor)
     {
         if (spriteRenderer == null) yield break;
 
         Color beforeColor = spriteRenderer.color;
-        spriteRenderer.color = attackFlashColor;
+        spriteRenderer.color = flashColor;
+
+        // Gozleri de flash et
+        if (leftEyeGlow != null) leftEyeGlow.color = new Color(flashColor.r, flashColor.g, flashColor.b, 1f);
+        if (rightEyeGlow != null) rightEyeGlow.color = new Color(flashColor.r, flashColor.g, flashColor.b, 1f);
 
         yield return new WaitForSeconds(attackFlashDuration);
 
-        // Rage aktifse rage rengine don, degilse orijinale don
-        // (bir sonraki Update frame'inde zaten dogru renk uygulanacak)
         if (!isRageActive)
         {
             spriteRenderer.color = beforeColor;
@@ -4744,6 +5262,79 @@ public class RobotEnemy : EnemyBase
 
         // Esya dusur (isDead=true olmadan once, cunku TryDropItem'in calismasi lazim)
         TryDropItem();
+
+        // Equipment ve malzeme dusurme
+        if (canDropItems && InventoryManager.Instance != null)
+        {
+            float effectiveDropChance = dropChance;
+            // Zorluk carpanina gore drop orani artisi
+            if (useDifficultyScaling)
+            {
+                effectiveDropChance *= (1f + (difficultyMultiplier - 1f) * 0.5f);
+            }
+            // Equipment drop rate bonus
+            if (EquipmentManager.Instance != null)
+            {
+                effectiveDropChance *= (1f + EquipmentManager.Instance.TotalDropRateBonus);
+            }
+
+            if (Random.value < effectiveDropChance)
+            {
+                // Rastgele equipment veya malzeme dusur
+                if (Random.value < 0.4f)
+                {
+                    // Equipment dusur
+                    ItemType[] equipmentTypes = {
+                        ItemType.DamageBooster, ItemType.SpeedRing, ItemType.FireRateModule,
+                        ItemType.MagnetCore, ItemType.LuckyCharm, ItemType.ShieldGenerator,
+                        ItemType.CriticalLens, ItemType.VampireFangs, ItemType.ReflectShield
+                    };
+                    ItemType dropType = equipmentTypes[Random.Range(0, equipmentTypes.Length)];
+                    InventoryManager.Instance.AddItem(dropType, 1);
+
+                    if (NotificationManager.Instance != null)
+                    {
+                        string itemName = InventoryItem.Create(dropType).name;
+                        NotificationManager.Instance.ShowNotification("ESYA DUSTU!", itemName, NotificationType.ItemPickup);
+                    }
+                }
+                else
+                {
+                    // Malzeme dusur - zorluga gore kalite artar
+                    ItemType materialType;
+                    int materialCount;
+
+                    if (difficultyMultiplier >= 2.5f)
+                    {
+                        materialType = ItemType.PlasmaCore;
+                        materialCount = 1;
+                    }
+                    else if (difficultyMultiplier >= 2f)
+                    {
+                        materialType = ItemType.VoidEssence;
+                        materialCount = Random.Range(1, 3);
+                    }
+                    else if (difficultyMultiplier >= 1.5f)
+                    {
+                        materialType = ItemType.NeonCrystal;
+                        materialCount = Random.Range(1, 4);
+                    }
+                    else
+                    {
+                        materialType = ItemType.ScrapMetal;
+                        materialCount = Random.Range(2, 6);
+                    }
+
+                    InventoryManager.Instance.AddItem(materialType, materialCount);
+
+                    if (NotificationManager.Instance != null)
+                    {
+                        string matName = InventoryItem.Create(materialType).name;
+                        NotificationManager.Instance.ShowNotification("MALZEME!", $"{materialCount}x {matName}", NotificationType.Info);
+                    }
+                }
+            }
+        }
 
         // --- FIX #1: base.Die()'in erken destroy sorununu coz ---
         // base.Die() cagrilmali cunku OnEnemyDeath event'i sadece EnemyBase icinden invoke edilebilir.

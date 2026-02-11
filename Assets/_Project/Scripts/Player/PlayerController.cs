@@ -79,6 +79,23 @@ public class PlayerController : MonoBehaviour
     private int dashDirection = 1;
     private bool hasAirDashed = false; // Havada sadece 1 kez dash
 
+    [Header("Grapple Hook Settings")]
+    public float grappleMaxDistance = 12f;
+    public float grappleSpeed = 25f;
+    public float grappleCooldown = 3f;
+    private bool isGrappling = false;
+    private float grappleCooldownTimer = 0f;
+    private Vector2 grappleTarget;
+    private LineRenderer grappleLineRenderer;
+
+    [Header("Ground Pound Settings")]
+    public float groundPoundSpeed = 30f;
+    public float groundPoundRadius = 2.5f;
+    public int groundPoundDamage = 3;
+    public float groundPoundCooldown = 2f;
+    private bool isGroundPounding = false;
+    private float groundPoundCooldownTimer = 0f;
+
     // Ziplama takla kontrolu
     private bool isJumpRolling = false;
     private float jumpRollMinTime = 0.35f; // Minimum takla suresi (artirildi - animasyonun tamamlanmasi icin)
@@ -110,6 +127,10 @@ public class PlayerController : MonoBehaviour
     private int currentFrame;
     private bool spritesCreated = false;
 
+    // Equipment stat modifiers
+    private float baseMoveSpeed;
+    private float baseInvincibleDuration;
+
     // Cached bullet sprite (runtime texture'i tekrar tekrar olusturmamak icin)
     private static Sprite cachedBulletSprite = null;
 
@@ -126,6 +147,12 @@ public class PlayerController : MonoBehaviour
     public int JumpCount => currentJumpCount;
     public int MaxJumpCount => 2; // Double jump destegi
     public bool IsGrounded => isGrounded;
+    public float GrappleCooldownTimer => grappleCooldownTimer;
+    public float GrappleCooldownMax => grappleCooldown;
+    public bool CanGrapple => !isGrappling && grappleCooldownTimer <= 0 && !isDashing && !isRolling;
+    public float GroundPoundCooldownTimer => groundPoundCooldownTimer;
+    public float GroundPoundCooldownMax => groundPoundCooldown;
+    public bool CanGroundPound => !isGroundPounding && groundPoundCooldownTimer <= 0 && !isGrounded && !isDashing;
 
     void Start()
     {
@@ -154,6 +181,17 @@ public class PlayerController : MonoBehaviour
         // Baslangic degerleri
         isGrounded = true;
         coyoteTimeCounter = coyoteTime;
+
+        // Cache base stats for equipment modifiers
+        baseMoveSpeed = moveSpeed;
+        baseInvincibleDuration = invincibleDuration;
+
+        // Subscribe to equipment changes
+        if (EquipmentManager.Instance != null)
+        {
+            EquipmentManager.Instance.OnStatsChanged += ApplyEquipmentStats;
+            ApplyEquipmentStats(); // Apply any existing equipment
+        }
     }
 
     void Update()
@@ -184,15 +222,41 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Input
+        // Input - Mobil ve klavye destegi
         Keyboard keyboard = Keyboard.current;
-        if (keyboard == null) return;
+        bool hasMobile = MobileControls.Instance != null && MobileControls.Instance.IsEnabled;
 
-        horizontalInput = 0f;
-        if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
-            horizontalInput = -1f;
-        else if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
-            horizontalInput = 1f;
+        // Mobil input
+        if (hasMobile)
+        {
+            Vector2 mobileMove = MobileControls.Instance.MoveInput;
+            if (Mathf.Abs(mobileMove.x) > 0.1f)
+                horizontalInput = mobileMove.x;
+            else if (keyboard != null)
+            {
+                horizontalInput = 0f;
+                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+                    horizontalInput = -1f;
+                else if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+                    horizontalInput = 1f;
+            }
+            else
+            {
+                horizontalInput = mobileMove.x;
+            }
+        }
+        else if (keyboard != null)
+        {
+            horizontalInput = 0f;
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+                horizontalInput = -1f;
+            else if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+                horizontalInput = 1f;
+        }
+        else
+        {
+            horizontalInput = 0f;
+        }
 
         // Coyote time (yere degdikten sonra kisa sure ziplama hakki)
         if (isGrounded)
@@ -205,7 +269,10 @@ public class PlayerController : MonoBehaviour
         }
 
         // Jump buffer (ziplama tusuna basildiginda kisa sure bekle)
-        if (keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame)
+        bool jumpInput = (keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame))
+                         || (hasMobile && MobileControls.Instance.JumpPressed);
+
+        if (jumpInput)
         {
             jumpBufferCounter = jumpBufferTime;
         }
@@ -327,12 +394,25 @@ public class PlayerController : MonoBehaviour
             isWallSliding = false;
         }
 
-        // === ATES ETME (J veya Sol Mouse) ===
+        // === ATES ETME (J veya Sol Mouse veya Mobil) ===
         Mouse mouse = Mouse.current;
-        bool firePressed = keyboard.jKey.isPressed || (mouse != null && mouse.leftButton.isPressed);
-        bool fireJustPressed = keyboard.jKey.wasPressedThisFrame || (mouse != null && mouse.leftButton.wasPressedThisFrame);
+        bool firePressed = (keyboard != null && keyboard.jKey.isPressed) || (mouse != null && mouse.leftButton.isPressed)
+                           || (hasMobile && MobileControls.Instance.FireHeld);
+        bool fireJustPressed = (keyboard != null && keyboard.jKey.wasPressedThisFrame) || (mouse != null && mouse.leftButton.wasPressedThisFrame)
+                               || (hasMobile && MobileControls.Instance.FireHeld);
 
         // === 8 YONLU NISAN SISTEMI ===
+        // Mobil joystick'i nisan yonu olarak kullan
+        if (hasMobile && MobileControls.Instance.MoveInput.sqrMagnitude > 0.1f)
+        {
+            MobileAimDirection = MobileControls.Instance.MoveInput;
+            UseMobileAim = true;
+        }
+        else
+        {
+            UseMobileAim = false;
+        }
+
         Vector2 aimDirection = CalculateAimDirection(keyboard);
 
         // WeaponManager varsa onu kullan
@@ -373,7 +453,7 @@ public class PlayerController : MonoBehaviour
         // === TAKLA / ROLL (K veya Left Shift - sadece yerde) ===
         rollCooldownTimer -= Time.deltaTime;
 
-        if ((keyboard.kKey.wasPressedThisFrame || keyboard.leftShiftKey.wasPressedThisFrame)
+        if ((keyboard != null && (keyboard.kKey.wasPressedThisFrame || keyboard.leftShiftKey.wasPressedThisFrame))
             && !isRolling && !isDashing && rollCooldownTimer <= 0 && isGrounded)
         {
             StartRoll();
@@ -401,7 +481,10 @@ public class PlayerController : MonoBehaviour
         bool canDash = !isDashing && !isRolling && dashCooldownTimer <= 0;
         bool airDashAllowed = canAirDash && !hasAirDashed;
 
-        if (keyboard.leftCtrlKey.wasPressedThisFrame && canDash && (isGrounded || airDashAllowed))
+        bool dashInput = (keyboard != null && keyboard.leftCtrlKey.wasPressedThisFrame)
+                         || (hasMobile && MobileControls.Instance.DashPressed);
+
+        if (dashInput && canDash && (isGrounded || airDashAllowed))
         {
             StartDash();
         }
@@ -414,6 +497,31 @@ public class PlayerController : MonoBehaviour
             {
                 EndDash();
             }
+        }
+
+        // === GRAPPLE HOOK (Q) ===
+        grappleCooldownTimer -= Time.deltaTime;
+
+        if (keyboard != null && keyboard.qKey.wasPressedThisFrame && !isGrappling && grappleCooldownTimer <= 0 && !isDashing && !isRolling)
+        {
+            StartGrapple();
+        }
+
+        // Grapple durumu guncelle
+        if (isGrappling)
+        {
+            UpdateGrapple();
+        }
+
+        // === GROUND POUND (Asagi + Jump havadayken) ===
+        groundPoundCooldownTimer -= Time.deltaTime;
+
+        bool downPressed = (keyboard != null && (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed));
+        bool jumpPressed = jumpInput;
+
+        if (downPressed && jumpPressed && !isGrounded && !isGroundPounding && groundPoundCooldownTimer <= 0 && !isDashing)
+        {
+            StartGroundPound();
         }
 
         // Jump roll timer guncelle
@@ -1048,6 +1156,28 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Equipment stat degisikliklerini player'a uygula
+    /// </summary>
+    private void ApplyEquipmentStats()
+    {
+        if (EquipmentManager.Instance == null) return;
+
+        // Speed bonus -> moveSpeed
+        moveSpeed = baseMoveSpeed * (1f + EquipmentManager.Instance.TotalSpeedBonus);
+
+        // Defense bonus -> invincibleDuration (savunma arttikca dokunulmazlik suresi artar)
+        invincibleDuration = baseInvincibleDuration * (1f + EquipmentManager.Instance.TotalDefenseBonus);
+    }
+
+    void OnDestroy()
+    {
+        if (EquipmentManager.Instance != null)
+        {
+            EquipmentManager.Instance.OnStatsChanged -= ApplyEquipmentStats;
+        }
+    }
+
     // Power-up invincibility
     public void SetInvincible(bool value)
     {
@@ -1270,6 +1400,12 @@ public class PlayerController : MonoBehaviour
         {
             CameraFollow.Instance.ShakeOnDash();
         }
+
+        // Mobil buton cooldown gostergesi
+        if (MobileControls.Instance != null)
+        {
+            MobileControls.Instance.StartDashCooldown(dashCooldown);
+        }
     }
 
     void EndDash()
@@ -1287,6 +1423,160 @@ public class PlayerController : MonoBehaviour
             if (spriteRenderer != null)
                 spriteRenderer.enabled = true;
         }
+    }
+
+    // === GRAPPLE HOOK ===
+    void StartGrapple()
+    {
+        // Nisan yonunde raycast
+        Vector2 aimDir = CalculateAimDirection(UnityEngine.InputSystem.Keyboard.current);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, aimDir, grappleMaxDistance, groundLayer | wallLayer);
+
+        if (hit.collider == null) return; // Hedef bulunamadi
+
+        isGrappling = true;
+        grappleTarget = hit.point;
+
+        // Line renderer olustur
+        if (grappleLineRenderer == null)
+        {
+            grappleLineRenderer = gameObject.AddComponent<LineRenderer>();
+            grappleLineRenderer.startWidth = 0.05f;
+            grappleLineRenderer.endWidth = 0.05f;
+            grappleLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            grappleLineRenderer.startColor = new Color(0f, 1f, 1f, 0.8f);
+            grappleLineRenderer.endColor = new Color(0f, 1f, 1f, 0.4f);
+            grappleLineRenderer.positionCount = 2;
+            grappleLineRenderer.sortingOrder = 5;
+        }
+        grappleLineRenderer.enabled = true;
+
+        // Y velocity sifirla
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = 0f;
+
+        // Ses
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayJump();
+    }
+
+    void UpdateGrapple()
+    {
+        if (!isGrappling) return;
+
+        // Oyuncuyu hedefe cek
+        Vector2 direction = (grappleTarget - (Vector2)transform.position).normalized;
+        float distance = Vector2.Distance(transform.position, grappleTarget);
+
+        rb.linearVelocity = direction * grappleSpeed;
+
+        // Line renderer guncelle
+        if (grappleLineRenderer != null)
+        {
+            grappleLineRenderer.SetPosition(0, transform.position);
+            grappleLineRenderer.SetPosition(1, grappleTarget);
+        }
+
+        // Hedefe ulasti veya ziplama ile iptal
+        Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+        bool cancelGrapple = keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame);
+
+        if (distance < 0.5f || cancelGrapple)
+        {
+            EndGrapple(cancelGrapple);
+        }
+    }
+
+    void EndGrapple(bool cancelled = false)
+    {
+        isGrappling = false;
+        grappleCooldownTimer = grappleCooldown;
+        rb.gravityScale = 1f;
+
+        if (grappleLineRenderer != null)
+            grappleLineRenderer.enabled = false;
+
+        if (cancelled)
+        {
+            // Iptal edildiginde yukari ziplama momentum ver
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.5f, jumpForce * 0.8f);
+        }
+        else
+        {
+            rb.linearVelocity = rb.linearVelocity * 0.3f; // Yavaslat
+        }
+    }
+
+    // === GROUND POUND ===
+    void StartGroundPound()
+    {
+        isGroundPounding = true;
+
+        // Havada kisa duraklama
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = 0f;
+
+        StartCoroutine(GroundPoundSequence());
+    }
+
+    System.Collections.IEnumerator GroundPoundSequence()
+    {
+        // Kisa hava duraklama (0.15s)
+        yield return new WaitForSeconds(0.15f);
+
+        // Hizla asagi
+        rb.gravityScale = 1f;
+        rb.linearVelocity = new Vector2(0, -groundPoundSpeed);
+
+        // Yere dusmeyi bekle
+        float timeout = 2f;
+        while (!isGrounded && timeout > 0f)
+        {
+            timeout -= Time.deltaTime;
+            rb.linearVelocity = new Vector2(0, -groundPoundSpeed); // Sabit hiz
+            yield return null;
+        }
+
+        // Yere carpma efektleri
+        if (isGrounded)
+        {
+            // Alan hasari
+            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, groundPoundRadius);
+            foreach (var hit in hits)
+            {
+                if (hit.CompareTag("Enemy"))
+                {
+                    Enemy enemy = hit.GetComponent<Enemy>();
+                    if (enemy != null)
+                    {
+                        enemy.Die();
+                        if (GameManager.Instance != null)
+                            GameManager.Instance.EnemyKilled(enemy.transform.position);
+                    }
+
+                    EnemyHealth eh = hit.GetComponent<EnemyHealth>();
+                    if (eh != null)
+                    {
+                        eh.TakeDamage(groundPoundDamage);
+                    }
+                }
+            }
+
+            // Kamera sarsmasi
+            if (CameraFollow.Instance != null)
+                CameraFollow.Instance.ShakeOnExplosion();
+
+            // Patlama efekti
+            if (ParticleManager.Instance != null)
+                ParticleManager.Instance.PlayLandDust(transform.position);
+
+            // Ses
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayEnemyDeath();
+        }
+
+        isGroundPounding = false;
+        groundPoundCooldownTimer = groundPoundCooldown;
     }
 
     public bool IsDashing()

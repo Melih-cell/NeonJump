@@ -46,6 +46,13 @@ public class MiniBoss : MonoBehaviour
     private bool isGrounded;
     private bool facingRight = false;
 
+    // Shield system
+    private bool isShielded = false;
+    private float shieldTimer = 0f;
+    public float shieldDuration = 2f;
+    public Color shieldColor = new Color(0f, 0.8f, 1f, 0.4f);
+    private GameObject shieldVisual;
+
     // Attack state
     private enum AttackType { Charge, Slam, Projectile, JumpSlam }
     private AttackType currentAttack;
@@ -175,6 +182,17 @@ public class MiniBoss : MonoBehaviour
 
         attackTimer -= Time.deltaTime;
 
+        // Shield timer
+        if (isShielded)
+        {
+            shieldTimer -= Time.deltaTime;
+            if (shieldTimer <= 0f)
+            {
+                isShielded = false;
+                DestroyShieldVisual();
+            }
+        }
+
         if (!isAttacking)
         {
             // Oyuncuya don
@@ -233,6 +251,11 @@ public class MiniBoss : MonoBehaviour
         // Faz gecis efekti
         isAttacking = true;
 
+        // Kalkan aktiflestir
+        isShielded = true;
+        shieldTimer = shieldDuration;
+        CreateShieldVisual();
+
         // Screen shake
         if (CameraFollow.Instance != null)
             CameraFollow.Instance.Shake(0.4f, 0.5f);
@@ -257,6 +280,10 @@ public class MiniBoss : MonoBehaviour
 
         // Cooldown azalt (daha agresif)
         attackCooldown *= 0.8f;
+
+        // Kalkan kapat
+        isShielded = false;
+        DestroyShieldVisual();
 
         isAttacking = false;
         attackTimer = 0.5f; // Hizli saldiri
@@ -537,6 +564,19 @@ public class MiniBoss : MonoBehaviour
     {
         if (isDead) return;
 
+        // Kalkan aktifse hasari engelle
+        if (isShielded)
+        {
+            // Kalkan efekti
+            if (shieldVisual != null)
+            {
+                StartCoroutine(ShieldFlashEffect());
+            }
+            if (CameraFollow.Instance != null)
+                CameraFollow.Instance.Shake(0.1f, 0.05f);
+            return;
+        }
+
         currentHealth -= damage;
 
         // UI guncelle
@@ -679,6 +719,69 @@ public class MiniBoss : MonoBehaviour
             TakeDamage(proj.damage);
             Destroy(other.gameObject);
         }
+    }
+
+    void CreateShieldVisual()
+    {
+        if (shieldVisual != null) return;
+
+        shieldVisual = new GameObject("BossShield");
+        shieldVisual.transform.SetParent(transform);
+        shieldVisual.transform.localPosition = Vector3.zero;
+
+        SpriteRenderer sr = shieldVisual.AddComponent<SpriteRenderer>();
+        sr.sortingOrder = 10;
+
+        // Basit daire shield sprite
+        int size = 64;
+        Texture2D tex = new Texture2D(size, size);
+        Color[] pixels = new Color[size * size];
+        Vector2 center = new Vector2(size / 2f, size / 2f);
+        float outerRadius = size / 2f;
+        float innerRadius = outerRadius - 4f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dist = Vector2.Distance(new Vector2(x, y), center);
+                if (dist >= innerRadius && dist <= outerRadius)
+                    pixels[y * size + x] = Color.white;
+                else
+                    pixels[y * size + x] = Color.clear;
+            }
+        }
+        tex.SetPixels(pixels);
+        tex.filterMode = FilterMode.Point;
+        tex.Apply();
+
+        sr.sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16);
+        sr.color = shieldColor;
+
+        // Buyukluk
+        shieldVisual.transform.localScale = Vector3.one * 3f;
+    }
+
+    void DestroyShieldVisual()
+    {
+        if (shieldVisual != null)
+        {
+            Destroy(shieldVisual);
+            shieldVisual = null;
+        }
+    }
+
+    IEnumerator ShieldFlashEffect()
+    {
+        if (shieldVisual == null) yield break;
+        SpriteRenderer sr = shieldVisual.GetComponent<SpriteRenderer>();
+        if (sr == null) yield break;
+
+        Color original = sr.color;
+        sr.color = Color.white;
+        yield return new WaitForSeconds(0.1f);
+        if (sr != null)
+            sr.color = original;
     }
 
     void OnDrawGizmosSelected()

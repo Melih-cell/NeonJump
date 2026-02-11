@@ -178,6 +178,16 @@ public class CollectibleItem : MonoBehaviour
                     FloatingTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "+1", spriteRenderer.color);
                 }
 
+                // Degerli esya icin neon patlama efekti (ekipman, set parcasi, nadir malzemeler)
+                InventoryItem pickupItemInfo = InventoryItem.Create(itemType);
+                if (pickupItemInfo.category == ItemCategory.Equipment ||
+                    pickupItemInfo.category == ItemCategory.SetPiece ||
+                    itemType == ItemType.PlasmaCore || itemType == ItemType.EternalShard ||
+                    itemType == ItemType.VoidEssence)
+                {
+                    PlayRarityPickupEffect(transform.position);
+                }
+
                 Destroy(gameObject);
             }
             else
@@ -185,6 +195,21 @@ public class CollectibleItem : MonoBehaviour
                 // Envanter dolu - eşya alınamadı
                 // Belki bir ses veya görsel feedback
             }
+        }
+    }
+
+    void PlayRarityPickupEffect(Vector3 position)
+    {
+        // Neon patlama efekti
+        if (ParticleManager.Instance != null)
+        {
+            ParticleManager.Instance.PlayExplosion(position);
+        }
+
+        // Ekran sarsmasi (hafif)
+        if (CameraFollow.Instance != null)
+        {
+            CameraFollow.Instance.Shake(0.1f, 0.08f);
         }
     }
 

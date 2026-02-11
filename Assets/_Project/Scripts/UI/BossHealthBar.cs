@@ -96,45 +96,51 @@ public class BossHealthBar : MonoBehaviour
         bgRt.offsetMax = new Vector2(-100, 0);
 
         backgroundBar = bgObj.AddComponent<Image>();
-        backgroundBar.color = new Color(0.05f, 0.02f, 0.08f, 0.95f);
+        backgroundBar.color = new Color(0.03f, 0.01f, 0.06f, 0.95f);
 
-        // Damage fill (kirmizi, yuksek layer)
+        // Neon sinir cizgisi (bar etrafinda)
+        Outline bgOutline = bgObj.AddComponent<Outline>();
+        bgOutline.effectColor = new Color(0f, 1f, 1f, 0.5f);
+        bgOutline.effectDistance = new Vector2(1, 1);
+
+        // Damage fill (turuncu-kirmizi gecis efekti)
         GameObject dmgObj = new GameObject("DamageFill");
         dmgObj.transform.SetParent(bgObj.transform, false);
         RectTransform dmgRt = dmgObj.AddComponent<RectTransform>();
         dmgRt.anchorMin = new Vector2(0, 0);
         dmgRt.anchorMax = new Vector2(1, 1);
         dmgRt.pivot = new Vector2(0, 0.5f);
-        dmgRt.offsetMin = new Vector2(3, 3);
-        dmgRt.offsetMax = new Vector2(-3, -3);
+        dmgRt.offsetMin = new Vector2(2, 2);
+        dmgRt.offsetMax = new Vector2(-2, -2);
 
         damageFill = dmgObj.AddComponent<Image>();
-        damageFill.color = new Color(0.8f, 0.1f, 0.1f, 0.8f);
+        damageFill.color = new Color(1f, 0.4f, 0f, 0.7f);
 
-        // Health fill
+        // Health fill - magenta/cyan neon gradient
         GameObject fillObj = new GameObject("HealthFill");
         fillObj.transform.SetParent(bgObj.transform, false);
         RectTransform fillRt = fillObj.AddComponent<RectTransform>();
         fillRt.anchorMin = new Vector2(0, 0);
         fillRt.anchorMax = new Vector2(1, 1);
         fillRt.pivot = new Vector2(0, 0.5f);
-        fillRt.offsetMin = new Vector2(3, 3);
-        fillRt.offsetMax = new Vector2(-3, -3);
+        fillRt.offsetMin = new Vector2(2, 2);
+        fillRt.offsetMax = new Vector2(-2, -2);
 
         healthFill = fillObj.AddComponent<Image>();
-        healthFill.color = new Color(0.8f, 0f, 0.2f, 1f); // Kirmizi-mor
+        healthFill.color = new Color(0f, 0.9f, 0.9f, 1f); // Neon cyan
 
-        // Gradient efekti icin ikinci fill
+        // Gradient overlay (uste dogru aydinlik)
         GameObject gradientObj = new GameObject("GradientOverlay");
         gradientObj.transform.SetParent(fillObj.transform, false);
         RectTransform gradRt = gradientObj.AddComponent<RectTransform>();
-        gradRt.anchorMin = Vector2.zero;
+        gradRt.anchorMin = new Vector2(0, 0.5f);
         gradRt.anchorMax = Vector2.one;
         gradRt.offsetMin = Vector2.zero;
         gradRt.offsetMax = Vector2.zero;
 
         Image gradient = gradientObj.AddComponent<Image>();
-        gradient.color = new Color(1f, 0.3f, 0.5f, 0.3f);
+        gradient.color = new Color(1f, 1f, 1f, 0.15f);
+        gradient.raycastTarget = false;
 
         // Glow efekti
         GameObject glowObj = new GameObject("Glow");
@@ -142,11 +148,12 @@ public class BossHealthBar : MonoBehaviour
         RectTransform glowRt = glowObj.AddComponent<RectTransform>();
         glowRt.anchorMin = new Vector2(0, 0);
         glowRt.anchorMax = new Vector2(1, 1);
-        glowRt.offsetMin = new Vector2(-5, -5);
-        glowRt.offsetMax = new Vector2(5, 5);
+        glowRt.offsetMin = new Vector2(-4, -4);
+        glowRt.offsetMax = new Vector2(4, 4);
 
         glowEffect = glowObj.AddComponent<Image>();
-        glowEffect.color = new Color(1f, 0f, 0.3f, 0.3f);
+        glowEffect.color = new Color(0f, 1f, 1f, 0.2f);
+        glowEffect.raycastTarget = false;
 
         // Boss name
         GameObject nameObj = new GameObject("BossName");
@@ -159,15 +166,15 @@ public class BossHealthBar : MonoBehaviour
 
         bossNameText = nameObj.AddComponent<TextMeshProUGUI>();
         bossNameText.text = "BOSS";
-        bossNameText.fontSize = 28;
+        bossNameText.fontSize = 26;
         bossNameText.fontStyle = FontStyles.Bold;
         bossNameText.alignment = TextAlignmentOptions.Center;
-        bossNameText.color = new Color(1f, 0.2f, 0.3f);
+        bossNameText.color = new Color(0f, 1f, 1f, 1f);
 
-        // Name outline
+        // Name outline - koyu cyan glisten
         Outline nameOutline = nameObj.AddComponent<Outline>();
-        nameOutline.effectColor = new Color(0.5f, 0f, 0.1f);
-        nameOutline.effectDistance = new Vector2(2, 2);
+        nameOutline.effectColor = new Color(0f, 0.3f, 0.4f, 0.8f);
+        nameOutline.effectDistance = new Vector2(1, 1);
 
         // Health percent
         GameObject percentObj = new GameObject("HealthPercent");
@@ -203,7 +210,7 @@ public class BossHealthBar : MonoBehaviour
         topRt.offsetMax = Vector2.zero;
 
         Image topImg = topLine.AddComponent<Image>();
-        topImg.color = new Color(1f, 0f, 0.3f, 0.8f);
+        topImg.color = new Color(0f, 1f, 1f, 0.7f);
 
         // Alt cizgi
         GameObject botLine = new GameObject("BottomLine");
@@ -215,7 +222,7 @@ public class BossHealthBar : MonoBehaviour
         botRt.offsetMax = Vector2.zero;
 
         Image botImg = botLine.AddComponent<Image>();
-        botImg.color = new Color(1f, 0f, 0.3f, 0.8f);
+        botImg.color = new Color(0f, 1f, 1f, 0.7f);
     }
 
     void CreateFrameElement(string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 size, bool isLeft)
@@ -231,7 +238,7 @@ public class BossHealthBar : MonoBehaviour
         rt.anchoredPosition = isLeft ? new Vector2(10, 0) : new Vector2(-10, 0);
 
         Image img = obj.AddComponent<Image>();
-        img.color = new Color(1f, 0f, 0.3f, 0.9f);
+        img.color = new Color(0f, 0.8f, 0.9f, 0.85f);
 
         // Ic bosluk
         GameObject inner = new GameObject("Inner");
@@ -243,7 +250,7 @@ public class BossHealthBar : MonoBehaviour
         innerRt.offsetMax = Vector2.zero;
 
         Image innerImg = inner.AddComponent<Image>();
-        innerImg.color = new Color(0.05f, 0.02f, 0.08f, 1f);
+        innerImg.color = new Color(0.02f, 0.01f, 0.05f, 1f);
     }
 
     void UpdateHealthDisplay()
@@ -262,22 +269,30 @@ public class BossHealthBar : MonoBehaviour
         // Yuzde text
         healthPercentText.text = $"{Mathf.CeilToInt(healthPercent * 100)}%";
 
-        // Renk degisimi (dusuk canda daha parlak)
-        if (healthPercent < 0.3f)
+        // Renk degisimi - can durumuna gore cyan -> magenta -> kirmizi
+        if (healthPercent < 0.25f)
         {
-            float pulse = 0.7f + Mathf.Sin(Time.time * 8f) * 0.3f;
-            healthFill.color = new Color(1f * pulse, 0f, 0.2f * pulse, 1f);
-            glowEffect.color = new Color(1f, 0f, 0.3f, 0.5f * pulse);
+            // Kritik - kirmizi pulse
+            float pulse = 0.7f + Mathf.Sin(Time.time * 6f) * 0.3f;
+            healthFill.color = new Color(1f * pulse, 0.1f, 0.2f * pulse, 1f);
+            glowEffect.color = new Color(1f, 0.1f, 0.2f, 0.4f * pulse);
+        }
+        else if (healthPercent < 0.5f)
+        {
+            // Orta - magenta/pembe
+            healthFill.color = new Color(0.9f, 0.1f, 0.6f, 1f);
+            glowEffect.color = new Color(0.9f, 0.1f, 0.6f, 0.25f);
         }
         else
         {
-            healthFill.color = new Color(0.8f, 0f, 0.2f, 1f);
-            glowEffect.color = new Color(1f, 0f, 0.3f, 0.3f);
+            // Normal - neon cyan
+            healthFill.color = new Color(0f, 0.9f, 0.9f, 1f);
+            glowEffect.color = new Color(0f, 1f, 1f, 0.2f);
         }
 
-        // Boss name glow
-        float nameGlow = 0.8f + Mathf.Sin(Time.time * 2f) * 0.2f;
-        bossNameText.color = new Color(1f * nameGlow, 0.2f * nameGlow, 0.3f * nameGlow);
+        // Boss name hafif pulse
+        float nameGlow = 0.85f + Mathf.Sin(Time.time * 2f) * 0.15f;
+        bossNameText.color = new Color(0f, nameGlow, nameGlow);
     }
 
     // === PUBLIC METODLAR ===
@@ -348,12 +363,12 @@ public class BossHealthBar : MonoBehaviour
     {
         Color originalColor = backgroundBar.color;
 
-        // Beyaz flash
-        backgroundBar.color = new Color(1f, 1f, 1f, 0.8f);
+        // Cyan flash
+        backgroundBar.color = new Color(0f, 1f, 1f, 0.8f);
         yield return new WaitForSeconds(0.1f);
 
-        // Kirmizi flash
-        backgroundBar.color = new Color(1f, 0f, 0f, 0.8f);
+        // Magenta flash
+        backgroundBar.color = new Color(0.8f, 0f, 0.6f, 0.8f);
         yield return new WaitForSeconds(0.1f);
 
         // Normale don
@@ -384,7 +399,7 @@ public class BossHealthBar : MonoBehaviour
     {
         Color originalColor = backgroundBar.color;
 
-        backgroundBar.color = new Color(1f, 0.3f, 0.3f, 0.95f);
+        backgroundBar.color = new Color(0.8f, 0f, 0.4f, 0.95f);
         yield return new WaitForSeconds(damageFlashDuration);
 
         backgroundBar.color = originalColor;

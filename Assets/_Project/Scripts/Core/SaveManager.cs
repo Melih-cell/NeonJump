@@ -32,9 +32,67 @@ public class SaveData
     public int qualityLevel = 2;
     public int resolutionIndex = -1; // -1 = native
 
+    // Grafik ayarlari
+    public float brightness = 1f;
+
+    // Kontrol ayarlari
+    public float aimSensitivity = 1f;
+    public bool vibrationEnabled = true;
+
+    // Erisilebilirlik ayarlari
+    public int colorBlindMode = 0;
+    public float uiScale = 1f;
+    public bool screenShakeEnabled = true;
+
+    // Dil
+    public string language = "tr";
+
+    // HUD ayarlari
+    public string hudLayoutPreset = "normal";
+    public bool hudMinimapEnabled = true;
+    public float hudMinimapSize = 150f;
+
+    // Crafting
+    public string unlockedRecipes = "";
+
+    // Level ilerleme
+    public int[] levelStars = new int[20];
+    public bool[] levelsUnlocked = new bool[20];
+
     // Son oturum
     public string lastPlayDate = "";
     public int currentLevel = 1;
+
+    /// <summary>
+    /// Level verilerini baslat (ilk level acik)
+    /// </summary>
+    public void InitializeLevelData()
+    {
+        if (levelStars == null || levelStars.Length < 20)
+        {
+            int[] oldStars = levelStars;
+            levelStars = new int[20];
+            if (oldStars != null)
+            {
+                for (int i = 0; i < oldStars.Length && i < 20; i++)
+                    levelStars[i] = oldStars[i];
+            }
+        }
+
+        if (levelsUnlocked == null || levelsUnlocked.Length < 20)
+        {
+            bool[] oldUnlocked = levelsUnlocked;
+            levelsUnlocked = new bool[20];
+            if (oldUnlocked != null)
+            {
+                for (int i = 0; i < oldUnlocked.Length && i < 20; i++)
+                    levelsUnlocked[i] = oldUnlocked[i];
+            }
+        }
+
+        // Ilk level her zaman acik
+        levelsUnlocked[0] = true;
+    }
 }
 
 public class SaveManager : MonoBehaviour
@@ -348,6 +406,61 @@ public class SaveManager : MonoBehaviour
         };
     }
 
+    // === LEVEL ILERLEME ===
+
+    /// <summary>
+    /// Toplam kazanilan yildiz sayisini al
+    /// </summary>
+    public int GetTotalStars()
+    {
+        Data.InitializeLevelData();
+        int total = 0;
+        for (int i = 0; i < Data.levelStars.Length; i++)
+        {
+            total += Data.levelStars[i];
+        }
+        return total;
+    }
+
+    /// <summary>
+    /// Belirtilen level'i ac
+    /// </summary>
+    public void UnlockLevel(int levelIndex)
+    {
+        Data.InitializeLevelData();
+        if (levelIndex >= 0 && levelIndex < Data.levelsUnlocked.Length)
+        {
+            Data.levelsUnlocked[levelIndex] = true;
+            isDirty = true;
+        }
+    }
+
+    /// <summary>
+    /// Level yildiz sayisini ayarla
+    /// </summary>
+    public void SetLevelStars(int levelIndex, int stars)
+    {
+        Data.InitializeLevelData();
+        if (levelIndex >= 0 && levelIndex < Data.levelStars.Length)
+        {
+            Data.levelStars[levelIndex] = stars;
+            isDirty = true;
+        }
+    }
+
+    /// <summary>
+    /// Level yildiz sayisini al
+    /// </summary>
+    public int GetLevelStars(int levelIndex)
+    {
+        Data.InitializeLevelData();
+        if (levelIndex >= 0 && levelIndex < Data.levelStars.Length)
+        {
+            return Data.levelStars[levelIndex];
+        }
+        return 0;
+    }
+
     // === AYARLAR ===
 
     public void SaveSettings()
@@ -397,6 +510,54 @@ public class SaveManager : MonoBehaviour
             Screen.SetResolution(res.width, res.height, Data.fullscreen);
         }
 
+        isDirty = true;
+    }
+
+    public void SetHUDLayoutPreset(string preset)
+    {
+        Data.hudLayoutPreset = preset;
+        isDirty = true;
+    }
+
+    public void SetAimSensitivity(float value)
+    {
+        Data.aimSensitivity = value;
+        isDirty = true;
+    }
+
+    public void SetVibration(bool value)
+    {
+        Data.vibrationEnabled = value;
+        isDirty = true;
+    }
+
+    public void SetLanguage(string langCode)
+    {
+        Data.language = langCode;
+        isDirty = true;
+    }
+
+    public void SetBrightness(float value)
+    {
+        Data.brightness = value;
+        isDirty = true;
+    }
+
+    public void SetColorBlindMode(int mode)
+    {
+        Data.colorBlindMode = mode;
+        isDirty = true;
+    }
+
+    public void SetUIScale(float scale)
+    {
+        Data.uiScale = scale;
+        isDirty = true;
+    }
+
+    public void SetScreenShake(bool enabled)
+    {
+        Data.screenShakeEnabled = enabled;
         isDirty = true;
     }
 

@@ -35,6 +35,8 @@ public class AdvancedHUD : MonoBehaviour
     private SkillSlotUI dashSlot;
     private SkillSlotUI rollSlot;
     private SkillSlotUI jumpSlot;
+    private SkillSlotUI grappleSlot;
+    private SkillSlotUI groundPoundSlot;
 
     [Header("Combo Display")]
     private RectTransform comboContainer;
@@ -334,6 +336,8 @@ public class AdvancedHUD : MonoBehaviour
         dashSlot = CreateSkillSlot("Dash", "D", new Color(0f, 1f, 1f));
         rollSlot = CreateSkillSlot("Roll", "R", new Color(1f, 0.5f, 0f));
         jumpSlot = CreateSkillSlot("Jump", "J", new Color(0.5f, 1f, 0.5f));
+        grappleSlot = CreateSkillSlot("Grapple", "Q", new Color(0f, 0.8f, 1f));
+        groundPoundSlot = CreateSkillSlot("GPound", "S+J", new Color(1f, 0.3f, 0f));
     }
 
     SkillSlotUI CreateSkillSlot(string skillName, string keyLabel, Color color)
@@ -414,6 +418,14 @@ public class AdvancedHUD : MonoBehaviour
         bool canJump = player.JumpCount < player.MaxJumpCount || player.IsGrounded;
         jumpSlot.cooldownFill.fillAmount = canJump ? 0 : 1;
         jumpSlot.keyLabel.color = canJump ? jumpSlot.baseColor : new Color(0.5f, 0.5f, 0.5f);
+
+        // Grapple cooldown
+        float grappleCooldownPercent = player.GrappleCooldownTimer / player.GrappleCooldownMax;
+        UpdateSkillSlot(grappleSlot, grappleCooldownPercent, player.CanGrapple);
+
+        // Ground Pound cooldown
+        float gpCooldownPercent = player.GroundPoundCooldownTimer / player.GroundPoundCooldownMax;
+        UpdateSkillSlot(groundPoundSlot, gpCooldownPercent, player.CanGroundPound);
     }
 
     void UpdateSkillSlot(SkillSlotUI slot, float cooldownPercent, bool isReady)
@@ -527,10 +539,27 @@ public class AdvancedHUD : MonoBehaviour
             // Timer fill
             comboFill.rectTransform.anchorMax = new Vector2(comboTimer / maxComboTime, 1);
 
-            // Renk (combo seviyesine gore)
-            Color comboColor = GetComboColor(combo);
+            // Renk gecisleri: beyaz -> sari -> turuncu -> kirmizi
+            Color comboColor;
+            if (combo >= 20)
+                comboColor = new Color(1f, 0f, 0.3f); // Kirmizi
+            else if (combo >= 10)
+                comboColor = new Color(1f, 0.4f, 0f); // Turuncu
+            else if (combo >= 5)
+                comboColor = new Color(1f, 0.8f, 0f); // Sari
+            else
+                comboColor = Color.white;
+
             comboText.color = comboColor;
             comboFill.color = comboColor;
+
+            // Combo sayisina gore buyuyen pulse animasyonu
+            float pulseScale = 1f + Mathf.Min(combo * 0.02f, 0.4f);
+            float pulse = 1f + Mathf.Sin(Time.time * (5f + combo * 0.5f)) * 0.05f * pulseScale;
+            comboContainer.localScale = Vector3.one * pulse;
+
+            // Font boyutu artisi
+            comboText.fontSize = Mathf.Min(28 + combo, 48);
 
             comboDisplayTimer = 1f;
         }
@@ -728,7 +757,72 @@ public class AdvancedHUD : MonoBehaviour
 
     public void ShowDamageIndicator(Vector3 damageDirection)
     {
-        // Ekran kenarinda hasar yonu gosterici (sonra eklenebilir)
+        StartCoroutine(ShowDamageDirectionOverlay(damageDirection));
+    }
+
+    private IEnumerator ShowDamageDirectionOverlay(Vector3 damageDirection)
+    {
+        // Hangi kenar? Hasar yonune gore
+        string side;
+        Vector2 anchorMin, anchorMax;
+
+        if (Mathf.Abs(damageDirection.x) > Mathf.Abs(damageDirection.y))
+        {
+            if (damageDirection.x > 0)
+            {
+                side = "Right";
+                anchorMin = new Vector2(0.9f, 0f);
+                anchorMax = new Vector2(1f, 1f);
+            }
+            else
+            {
+                side = "Left";
+                anchorMin = new Vector2(0f, 0f);
+                anchorMax = new Vector2(0.1f, 1f);
+            }
+        }
+        else
+        {
+            if (damageDirection.y > 0)
+            {
+                side = "Top";
+                anchorMin = new Vector2(0f, 0.9f);
+                anchorMax = new Vector2(1f, 1f);
+            }
+            else
+            {
+                side = "Bottom";
+                anchorMin = new Vector2(0f, 0f);
+                anchorMax = new Vector2(1f, 0.1f);
+            }
+        }
+
+        // Overlay olustur
+        GameObject overlay = new GameObject($"DmgIndicator_{side}");
+        overlay.transform.SetParent(transform, false);
+
+        RectTransform rt = overlay.AddComponent<RectTransform>();
+        rt.anchorMin = anchorMin;
+        rt.anchorMax = anchorMax;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        Image img = overlay.AddComponent<Image>();
+        img.color = new Color(1f, 0f, 0f, 0.4f);
+        img.raycastTarget = false;
+
+        // 0.5s flash sonra sol
+        float duration = 0.5f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(0.4f, 0f, elapsed / duration);
+            img.color = new Color(1f, 0f, 0f, alpha);
+            yield return null;
+        }
+
+        Destroy(overlay);
     }
 }
 
