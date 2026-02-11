@@ -450,11 +450,13 @@ public class PlayerController : MonoBehaviour
             isFiring = firePressed;
         }
 
-        // === TAKLA / ROLL (K veya Left Shift - sadece yerde) ===
+        // === TAKLA / ROLL (K veya Left Shift veya Mobil - sadece yerde) ===
         rollCooldownTimer -= Time.deltaTime;
 
-        if ((keyboard != null && (keyboard.kKey.wasPressedThisFrame || keyboard.leftShiftKey.wasPressedThisFrame))
-            && !isRolling && !isDashing && rollCooldownTimer <= 0 && isGrounded)
+        bool rollInput = (keyboard != null && (keyboard.kKey.wasPressedThisFrame || keyboard.leftShiftKey.wasPressedThisFrame))
+                         || (hasMobile && MobileControls.Instance.RollPressed);
+
+        if (rollInput && !isRolling && !isDashing && rollCooldownTimer <= 0 && isGrounded)
         {
             StartRoll();
         }
@@ -499,10 +501,13 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // === GRAPPLE HOOK (Q) ===
+        // === GRAPPLE HOOK (Q veya Mobil) ===
         grappleCooldownTimer -= Time.deltaTime;
 
-        if (keyboard != null && keyboard.qKey.wasPressedThisFrame && !isGrappling && grappleCooldownTimer <= 0 && !isDashing && !isRolling)
+        bool grappleInput = (keyboard != null && keyboard.qKey.wasPressedThisFrame)
+                            || (hasMobile && MobileControls.Instance.GrapplePressed);
+
+        if (grappleInput && !isGrappling && grappleCooldownTimer <= 0 && !isDashing && !isRolling)
         {
             StartGrapple();
         }
@@ -513,13 +518,16 @@ public class PlayerController : MonoBehaviour
             UpdateGrapple();
         }
 
-        // === GROUND POUND (Asagi + Jump havadayken) ===
+        // === GROUND POUND (Asagi + Jump havadayken veya Mobil buton) ===
         groundPoundCooldownTimer -= Time.deltaTime;
 
         bool downPressed = (keyboard != null && (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed));
         bool jumpPressed = jumpInput;
 
-        if (downPressed && jumpPressed && !isGrounded && !isGroundPounding && groundPoundCooldownTimer <= 0 && !isDashing)
+        bool groundPoundKeyboard = downPressed && jumpPressed;
+        bool groundPoundMobile = hasMobile && MobileControls.Instance.GroundPoundPressed;
+
+        if ((groundPoundKeyboard || groundPoundMobile) && !isGrounded && !isGroundPounding && groundPoundCooldownTimer <= 0 && !isDashing)
         {
             StartGroundPound();
         }
@@ -1359,6 +1367,12 @@ public class PlayerController : MonoBehaviour
             if (spriteRenderer != null)
                 spriteRenderer.enabled = true;
         }
+
+        // Mobil buton cooldown gostergesi
+        if (MobileControls.Instance != null)
+        {
+            MobileControls.Instance.StartRollCooldown(rollCooldown);
+        }
     }
 
     // === DASH ===
@@ -1477,9 +1491,11 @@ public class PlayerController : MonoBehaviour
             grappleLineRenderer.SetPosition(1, grappleTarget);
         }
 
-        // Hedefe ulasti veya ziplama ile iptal
+        // Hedefe ulasti veya ziplama ile iptal (klavye veya mobil)
         Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
-        bool cancelGrapple = keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame);
+        bool hasMobileGrapple = MobileControls.Instance != null && MobileControls.Instance.IsEnabled;
+        bool cancelGrapple = (keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame))
+                             || (hasMobileGrapple && MobileControls.Instance.JumpPressed);
 
         if (distance < 0.5f || cancelGrapple)
         {
@@ -1504,6 +1520,12 @@ public class PlayerController : MonoBehaviour
         else
         {
             rb.linearVelocity = rb.linearVelocity * 0.3f; // Yavaslat
+        }
+
+        // Mobil buton cooldown gostergesi
+        if (MobileControls.Instance != null)
+        {
+            MobileControls.Instance.StartGrappleCooldown(grappleCooldown);
         }
     }
 
@@ -1577,6 +1599,12 @@ public class PlayerController : MonoBehaviour
 
         isGroundPounding = false;
         groundPoundCooldownTimer = groundPoundCooldown;
+
+        // Mobil buton cooldown gostergesi
+        if (MobileControls.Instance != null)
+        {
+            MobileControls.Instance.StartGroundPoundCooldown(groundPoundCooldown);
+        }
     }
 
     public bool IsDashing()

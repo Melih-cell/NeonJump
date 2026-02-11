@@ -88,8 +88,11 @@ public class PauseMenuController : MonoBehaviour
 
     void Update()
     {
-        // ESC veya P tusu ile pause
-        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+        // ESC, P tusu veya mobil pause butonu ile pause
+        bool pauseInput = Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P)
+            || (MobileControls.Instance != null && MobileControls.Instance.IsEnabled && MobileControls.Instance.PausePressed);
+
+        if (pauseInput)
         {
             if (isPaused)
             {

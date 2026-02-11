@@ -30,6 +30,10 @@ public class MobileControls : MonoBehaviour
     private RectTransform dashButton;
     private RectTransform reloadButton;
     private RectTransform weaponSwitchButton;
+    private RectTransform rollButton;
+    private RectTransform groundPoundButton;
+    private RectTransform grappleButton;
+    private RectTransform pauseButton;
 
     // Button glow images
     private Image jumpGlow;
@@ -37,6 +41,9 @@ public class MobileControls : MonoBehaviour
     private Image dashGlow;
     private Image reloadGlow;
     private Image switchGlow;
+    private Image rollGlow;
+    private Image groundPoundGlow;
+    private Image grappleGlow;
 
     // Button icon images (for tinting)
     private Image jumpIcon;
@@ -44,12 +51,30 @@ public class MobileControls : MonoBehaviour
     private Image dashIcon;
     private Image reloadIcon;
     private Image switchIcon;
+    private Image rollIcon;
+    private Image groundPoundIcon;
+    private Image grappleIcon;
 
     // === COOLDOWN ===
     private Image dashCooldownFill;
     private float dashCooldownDuration = 0.8f;
     private float dashCooldownTimer = 0f;
     private bool isDashOnCooldown = false;
+
+    private Image rollCooldownFill;
+    private float rollCooldownDuration = 1f;
+    private float rollCooldownTimer = 0f;
+    private bool isRollOnCooldown = false;
+
+    private Image grappleCooldownFill;
+    private float grappleCooldownDuration = 3f;
+    private float grappleCooldownTimer = 0f;
+    private bool isGrappleOnCooldown = false;
+
+    private Image groundPoundCooldownFill;
+    private float groundPoundCooldownDuration = 2f;
+    private float groundPoundCooldownTimer = 0f;
+    private bool isGroundPoundOnCooldown = false;
 
     // === SETTINGS ===
     private const string PREF_ENABLED = "MobileControls_Enabled";
@@ -66,6 +91,10 @@ public class MobileControls : MonoBehaviour
     private bool isDashPressed;
     private bool isReloadPressed;
     private bool isSwitchPressed;
+    private bool isRollPressed;
+    private bool isGrapplePressed;
+    private bool isGroundPoundPressed;
+    private bool isPausePressed;
 
     private Canvas canvas;
     private CanvasGroup mainCanvasGroup;
@@ -88,6 +117,9 @@ public class MobileControls : MonoBehaviour
     private float jumpButtonSize = 130f;
     private float actionButtonSize = 100f;
     private float smallButtonSize = 70f;
+    private float contextButtonSize = 90f;  // Roll/GroundPound
+    private float grappleButtonSize = 85f;
+    private float pauseButtonSize = 50f;
 
     // Public properties for PlayerController
     public Vector2 MoveInput => joystickInput;
@@ -96,6 +128,10 @@ public class MobileControls : MonoBehaviour
     public bool DashPressed => isDashPressed;
     public bool ReloadPressed => isReloadPressed;
     public bool SwitchWeaponPressed => isSwitchPressed;
+    public bool RollPressed => isRollPressed;
+    public bool GrapplePressed => isGrapplePressed;
+    public bool GroundPoundPressed => isGroundPoundPressed;
+    public bool PausePressed => isPausePressed;
 
     void Awake()
     {
@@ -149,10 +185,18 @@ public class MobileControls : MonoBehaviour
         isDashPressed = false;
         isReloadPressed = false;
         isSwitchPressed = false;
+        isRollPressed = false;
+        isGrapplePressed = false;
+        isGroundPoundPressed = false;
+        isPausePressed = false;
 
         HandleTouchInput();
         UpdateAnimations();
         UpdateDashCooldown();
+        UpdateRollCooldown();
+        UpdateGrappleCooldown();
+        UpdateGroundPoundCooldown();
+        UpdateContextualButtons();
     }
 
     // === CANVAS & SAFE AREA ===
@@ -318,6 +362,36 @@ public class MobileControls : MonoBehaviour
             MobileControlsVisualFactory.NeonPink,
             new Vector2(0.58f, 0.38f), smallButtonSize,
             out switchGlow, out switchIcon);
+
+        // === YENI BUTONLAR ===
+
+        // Roll/Takla - jump'in ustunde, sadece yerdeyken gorunur
+        rollButton = CreateActionButton("RollButton", "TAKLA",
+            MobileControlsVisualFactory.CreateRollIcon(32),
+            MobileControlsVisualFactory.NeonPurple,
+            new Vector2(0.88f, 0.38f), contextButtonSize,
+            out rollGlow, out rollIcon);
+        CreateCooldownOverlay(rollButton, out rollCooldownFill);
+
+        // Ground Pound - roll ile ayni pozisyon, sadece havadayken gorunur
+        groundPoundButton = CreateActionButton("GroundPoundButton", "EZME",
+            MobileControlsVisualFactory.CreateGroundPoundIcon(32),
+            MobileControlsVisualFactory.NeonRed,
+            new Vector2(0.88f, 0.38f), contextButtonSize,
+            out groundPoundGlow, out groundPoundIcon);
+        CreateCooldownOverlay(groundPoundButton, out groundPoundCooldownFill);
+        groundPoundButton.gameObject.SetActive(false); // Baslangicta gizli
+
+        // Grapple Hook - sol-orta alanda
+        grappleButton = CreateActionButton("GrappleButton", "KANCA",
+            MobileControlsVisualFactory.CreateGrappleIcon(32),
+            MobileControlsVisualFactory.NeonCyan,
+            new Vector2(0.42f, 0.30f), grappleButtonSize,
+            out grappleGlow, out grappleIcon);
+        CreateCooldownOverlay(grappleButton, out grappleCooldownFill);
+
+        // Pause butonu - sag ust kose, kucuk ve soluk
+        CreatePauseButton();
     }
 
     RectTransform CreateActionButton(string name, string label, Sprite iconSprite, Color neonColor,
@@ -402,10 +476,16 @@ public class MobileControls : MonoBehaviour
 
     void CreateDashCooldownOverlay()
     {
-        if (dashButton == null) return;
+        CreateCooldownOverlay(dashButton, out dashCooldownFill);
+    }
+
+    void CreateCooldownOverlay(RectTransform parentButton, out Image cooldownFill)
+    {
+        cooldownFill = null;
+        if (parentButton == null) return;
 
         GameObject cdObj = new GameObject("CooldownFill");
-        cdObj.transform.SetParent(dashButton.transform, false);
+        cdObj.transform.SetParent(parentButton.transform, false);
 
         RectTransform cdRt = cdObj.AddComponent<RectTransform>();
         cdRt.anchorMin = new Vector2(0.05f, 0.05f);
@@ -413,15 +493,54 @@ public class MobileControls : MonoBehaviour
         cdRt.offsetMin = Vector2.zero;
         cdRt.offsetMax = Vector2.zero;
 
-        dashCooldownFill = cdObj.AddComponent<Image>();
-        dashCooldownFill.sprite = MobileControlsVisualFactory.CreateRadialFillCircle(64);
-        dashCooldownFill.type = Image.Type.Filled;
-        dashCooldownFill.fillMethod = Image.FillMethod.Radial360;
-        dashCooldownFill.fillOrigin = (int)Image.Origin360.Top;
-        dashCooldownFill.fillClockwise = false;
-        dashCooldownFill.fillAmount = 0f;
-        dashCooldownFill.color = new Color(0f, 0f, 0f, 0.6f);
-        dashCooldownFill.raycastTarget = false;
+        cooldownFill = cdObj.AddComponent<Image>();
+        cooldownFill.sprite = MobileControlsVisualFactory.CreateRadialFillCircle(64);
+        cooldownFill.type = Image.Type.Filled;
+        cooldownFill.fillMethod = Image.FillMethod.Radial360;
+        cooldownFill.fillOrigin = (int)Image.Origin360.Top;
+        cooldownFill.fillClockwise = false;
+        cooldownFill.fillAmount = 0f;
+        cooldownFill.color = new Color(0f, 0f, 0f, 0.6f);
+        cooldownFill.raycastTarget = false;
+    }
+
+    void CreatePauseButton()
+    {
+        float scaledSize = pauseButtonSize * ButtonSizeScale;
+
+        GameObject btnObj = new GameObject("PauseButton");
+        btnObj.transform.SetParent(safeAreaPanel, false);
+
+        pauseButton = btnObj.AddComponent<RectTransform>();
+        pauseButton.anchorMin = pauseButton.anchorMax = new Vector2(0.95f, 0.93f);
+        pauseButton.pivot = new Vector2(0.5f, 0.5f);
+        pauseButton.anchoredPosition = Vector2.zero;
+        pauseButton.sizeDelta = new Vector2(scaledSize, scaledSize);
+
+        // Soluk arka plan
+        Image bgImg = btnObj.AddComponent<Image>();
+        bgImg.sprite = MobileControlsVisualFactory.CreateButtonCircle(64,
+            new Color(0.7f, 0.7f, 0.8f, 0.6f));
+        bgImg.type = Image.Type.Simple;
+        bgImg.preserveAspect = true;
+
+        // Pause ikonu
+        GameObject iconObj = new GameObject("Icon");
+        iconObj.transform.SetParent(btnObj.transform, false);
+
+        RectTransform iconRt = iconObj.AddComponent<RectTransform>();
+        iconRt.anchorMin = new Vector2(0.2f, 0.2f);
+        iconRt.anchorMax = new Vector2(0.8f, 0.8f);
+        iconRt.offsetMin = Vector2.zero;
+        iconRt.offsetMax = Vector2.zero;
+
+        Image iconImg = iconObj.AddComponent<Image>();
+        iconImg.sprite = MobileControlsVisualFactory.CreatePauseIcon(32);
+        iconImg.type = Image.Type.Simple;
+        iconImg.preserveAspect = true;
+        iconImg.color = new Color(0.9f, 0.9f, 0.9f, 0.8f);
+
+        buttonScaleTimers[pauseButton] = 0f;
     }
 
     // === TOUCH INPUT ===
@@ -486,10 +605,22 @@ public class MobileControls : MonoBehaviour
 
     string GetTouchedElement(Vector2 screenPos)
     {
-        // Butonlari once kontrol et (oncelik)
+        // Pause butonu - en yuksek oncelik (her zaman erisilebilir)
+        if (IsPointInButton(screenPos, pauseButton)) return "Pause";
+
+        // Ana aksiyon butonlari
         if (IsPointInButton(screenPos, jumpButton)) return "Jump";
         if (IsPointInButton(screenPos, fireButton)) return "Fire";
         if (IsPointInButton(screenPos, dashButton)) return "Dash";
+
+        // Baglamsal Roll/GroundPound (sadece aktif olan kontrol edilir)
+        if (rollButton != null && rollButton.gameObject.activeSelf && IsPointInButton(screenPos, rollButton)) return "Roll";
+        if (groundPoundButton != null && groundPoundButton.gameObject.activeSelf && IsPointInButton(screenPos, groundPoundButton)) return "GroundPound";
+
+        // Grapple
+        if (IsPointInButton(screenPos, grappleButton)) return "Grapple";
+
+        // Yardimci butonlar
         if (IsPointInButton(screenPos, reloadButton)) return "Reload";
         if (IsPointInButton(screenPos, weaponSwitchButton)) return "Switch";
 
@@ -551,6 +682,35 @@ public class MobileControls : MonoBehaviour
                 isSwitchPressed = true;
                 AnimateButtonPress(weaponSwitchButton, switchGlow, true);
                 break;
+
+            case "Roll":
+                if (!isRollOnCooldown)
+                {
+                    isRollPressed = true;
+                    AnimateButtonPress(rollButton, rollGlow, true);
+                }
+                break;
+
+            case "GroundPound":
+                if (!isGroundPoundOnCooldown)
+                {
+                    isGroundPoundPressed = true;
+                    AnimateButtonPress(groundPoundButton, groundPoundGlow, true);
+                }
+                break;
+
+            case "Grapple":
+                if (!isGrappleOnCooldown)
+                {
+                    isGrapplePressed = true;
+                    AnimateButtonPress(grappleButton, grappleGlow, true);
+                }
+                break;
+
+            case "Pause":
+                isPausePressed = true;
+                AnimateButtonPress(pauseButton, null, true);
+                break;
         }
     }
 
@@ -592,6 +752,22 @@ public class MobileControls : MonoBehaviour
 
             case "Switch":
                 AnimateButtonPress(weaponSwitchButton, switchGlow, false);
+                break;
+
+            case "Roll":
+                AnimateButtonPress(rollButton, rollGlow, false);
+                break;
+
+            case "GroundPound":
+                AnimateButtonPress(groundPoundButton, groundPoundGlow, false);
+                break;
+
+            case "Grapple":
+                AnimateButtonPress(grappleButton, grappleGlow, false);
+                break;
+
+            case "Pause":
+                AnimateButtonPress(pauseButton, null, false);
                 break;
         }
     }
@@ -776,6 +952,122 @@ public class MobileControls : MonoBehaviour
         }
     }
 
+    // === ROLL COOLDOWN ===
+
+    public void StartRollCooldown(float duration)
+    {
+        rollCooldownDuration = duration;
+        rollCooldownTimer = duration;
+        isRollOnCooldown = true;
+
+        if (rollCooldownFill != null)
+            rollCooldownFill.fillAmount = 1f;
+    }
+
+    void UpdateRollCooldown()
+    {
+        if (!isRollOnCooldown) return;
+
+        rollCooldownTimer -= Time.deltaTime;
+        if (rollCooldownTimer <= 0f)
+        {
+            rollCooldownTimer = 0f;
+            isRollOnCooldown = false;
+
+            if (rollCooldownFill != null)
+                rollCooldownFill.fillAmount = 0f;
+        }
+        else
+        {
+            if (rollCooldownFill != null)
+                rollCooldownFill.fillAmount = rollCooldownTimer / rollCooldownDuration;
+        }
+    }
+
+    // === GRAPPLE COOLDOWN ===
+
+    public void StartGrappleCooldown(float duration)
+    {
+        grappleCooldownDuration = duration;
+        grappleCooldownTimer = duration;
+        isGrappleOnCooldown = true;
+
+        if (grappleCooldownFill != null)
+            grappleCooldownFill.fillAmount = 1f;
+    }
+
+    void UpdateGrappleCooldown()
+    {
+        if (!isGrappleOnCooldown) return;
+
+        grappleCooldownTimer -= Time.deltaTime;
+        if (grappleCooldownTimer <= 0f)
+        {
+            grappleCooldownTimer = 0f;
+            isGrappleOnCooldown = false;
+
+            if (grappleCooldownFill != null)
+                grappleCooldownFill.fillAmount = 0f;
+        }
+        else
+        {
+            if (grappleCooldownFill != null)
+                grappleCooldownFill.fillAmount = grappleCooldownTimer / grappleCooldownDuration;
+        }
+    }
+
+    // === GROUND POUND COOLDOWN ===
+
+    public void StartGroundPoundCooldown(float duration)
+    {
+        groundPoundCooldownDuration = duration;
+        groundPoundCooldownTimer = duration;
+        isGroundPoundOnCooldown = true;
+
+        if (groundPoundCooldownFill != null)
+            groundPoundCooldownFill.fillAmount = 1f;
+    }
+
+    void UpdateGroundPoundCooldown()
+    {
+        if (!isGroundPoundOnCooldown) return;
+
+        groundPoundCooldownTimer -= Time.deltaTime;
+        if (groundPoundCooldownTimer <= 0f)
+        {
+            groundPoundCooldownTimer = 0f;
+            isGroundPoundOnCooldown = false;
+
+            if (groundPoundCooldownFill != null)
+                groundPoundCooldownFill.fillAmount = 0f;
+        }
+        else
+        {
+            if (groundPoundCooldownFill != null)
+                groundPoundCooldownFill.fillAmount = groundPoundCooldownTimer / groundPoundCooldownDuration;
+        }
+    }
+
+    // === BAGLAMSAL BUTON DEGISTIRME ===
+
+    void UpdateContextualButtons()
+    {
+        // Oyuncu state'ine gore Roll/GroundPound butonlarini degistir
+        if (GameManager.Instance == null || GameManager.Instance.player == null) return;
+
+        PlayerController player = GameManager.Instance.player.GetComponent<PlayerController>();
+        if (player == null) return;
+
+        bool isGrounded = player.IsGrounded;
+
+        // Roll: sadece yerde, GroundPound: sadece havada
+        if (rollButton != null)
+            rollButton.gameObject.SetActive(isGrounded);
+
+        if (groundPoundButton != null)
+            groundPoundButton.gameObject.SetActive(!isGrounded);
+    }
+
     // === AYARLAR ===
 
     void LoadSettings()
@@ -823,6 +1115,10 @@ public class MobileControls : MonoBehaviour
         if (dashButton != null) dashButton.sizeDelta = Vector2.one * actionButtonSize * ButtonSizeScale;
         if (reloadButton != null) reloadButton.sizeDelta = Vector2.one * smallButtonSize * ButtonSizeScale;
         if (weaponSwitchButton != null) weaponSwitchButton.sizeDelta = Vector2.one * smallButtonSize * ButtonSizeScale;
+        if (rollButton != null) rollButton.sizeDelta = Vector2.one * contextButtonSize * ButtonSizeScale;
+        if (groundPoundButton != null) groundPoundButton.sizeDelta = Vector2.one * contextButtonSize * ButtonSizeScale;
+        if (grappleButton != null) grappleButton.sizeDelta = Vector2.one * grappleButtonSize * ButtonSizeScale;
+        if (pauseButton != null) pauseButton.sizeDelta = Vector2.one * pauseButtonSize * ButtonSizeScale;
 
         // Joystick boyutu
         float jScale = joystickBgSize * ButtonSizeScale;

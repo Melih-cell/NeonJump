@@ -15,6 +15,8 @@ public static class MobileControlsVisualFactory
     public static readonly Color NeonOrange = new Color(1f, 0.5f, 0f, 0.9f);
     public static readonly Color NeonYellow = new Color(1f, 1f, 0f, 0.9f);
     public static readonly Color NeonPink = new Color(1f, 0f, 0.6f, 0.9f);
+    public static readonly Color NeonPurple = new Color(0.7f, 0f, 1f, 0.9f);
+    public static readonly Color NeonRed = new Color(1f, 0.15f, 0.15f, 0.9f);
     public static readonly Color DarkBg = new Color(0.05f, 0.05f, 0.12f, 0.55f);
     public static readonly Color DarkBgSolid = new Color(0.05f, 0.05f, 0.12f, 0.7f);
 
@@ -526,6 +528,240 @@ public static class MobileControlsVisualFactory
                 int py = botY + j;
                 if (px >= 0 && px < size && py >= 0 && py < size)
                     pixels[py * size + px] = white;
+            }
+        }
+
+        return CacheSprite(key, tex, pixels, size);
+    }
+
+    /// <summary>
+    /// Dairesel ok ikonu - Takla/Roll
+    /// </summary>
+    public static Sprite CreateRollIcon(int size = 32)
+    {
+        string key = $"icon_roll_{size}";
+        if (_cache.TryGetValue(key, out Sprite cached)) return cached;
+
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Color[] pixels = new Color[size * size];
+        Color white = Color.white;
+
+        int cx = size / 2;
+        int cy = size / 2;
+        int r = size / 3;
+
+        // 300 derece arc (saat yonunde, sag ustte bosluk)
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = x - cx + 0.5f;
+                float dy = y - cy + 0.5f;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                if (angle < 0) angle += 360f;
+
+                // 30-330 arasi ciz (sag tarafta bosluk)
+                if (Mathf.Abs(dist - r) < 1.8f && angle > 30f && angle < 330f)
+                {
+                    pixels[y * size + x] = white;
+                }
+            }
+        }
+
+        // Ok ucu (sag ustte, saat yonunde hareketi goster)
+        int arrowX = cx + (int)(r * Mathf.Cos(30f * Mathf.Deg2Rad));
+        int arrowY = cy + (int)(r * Mathf.Sin(30f * Mathf.Deg2Rad));
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = -i; j <= i; j++)
+            {
+                int px = arrowX - i;
+                int py = arrowY + j;
+                if (px >= 0 && px < size && py >= 0 && py < size)
+                    pixels[py * size + px] = white;
+            }
+        }
+
+        return CacheSprite(key, tex, pixels, size);
+    }
+
+    /// <summary>
+    /// Kanca ikonu - Grapple Hook
+    /// </summary>
+    public static Sprite CreateGrappleIcon(int size = 32)
+    {
+        string key = $"icon_grapple_{size}";
+        if (_cache.TryGetValue(key, out Sprite cached)) return cached;
+
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Color[] pixels = new Color[size * size];
+        Color white = Color.white;
+
+        int cx = size / 2;
+        int margin = size / 6;
+        int lineW = Mathf.Max(1, size / 14);
+
+        // Dikey ip cizgisi (usttten ortaya)
+        int topY = size - margin;
+        int midY = size / 2 + 2;
+        for (int y = midY; y <= topY; y++)
+        {
+            for (int lw = -lineW / 2; lw <= lineW / 2; lw++)
+            {
+                int px = cx + lw;
+                if (px >= 0 && px < size && y >= 0 && y < size)
+                    pixels[y * size + px] = white;
+            }
+        }
+
+        // Kanca (V seklinde alt kisim)
+        int hookBottom = margin + 2;
+        int hookMid = midY;
+        int hookWidth = size / 3;
+
+        // Sol col (asagi dogru)
+        for (int y = hookBottom; y <= hookMid; y++)
+        {
+            float t = (float)(y - hookBottom) / (hookMid - hookBottom);
+            int px = cx - (int)(hookWidth * (1f - t));
+            for (int lw = -lineW / 2; lw <= lineW / 2; lw++)
+            {
+                int drawX = px + lw;
+                if (drawX >= 0 && drawX < size && y >= 0 && y < size)
+                    pixels[y * size + drawX] = white;
+            }
+        }
+
+        // Sag col (asagi dogru)
+        for (int y = hookBottom; y <= hookMid; y++)
+        {
+            float t = (float)(y - hookBottom) / (hookMid - hookBottom);
+            int px = cx + (int)(hookWidth * (1f - t));
+            for (int lw = -lineW / 2; lw <= lineW / 2; lw++)
+            {
+                int drawX = px + lw;
+                if (drawX >= 0 && drawX < size && y >= 0 && y < size)
+                    pixels[y * size + drawX] = white;
+            }
+        }
+
+        // Alt yatay cizgi (V'nin tabanini birlestir)
+        for (int x = cx - 2; x <= cx + 2; x++)
+        {
+            if (x >= 0 && x < size && hookBottom >= 0 && hookBottom < size)
+                pixels[hookBottom * size + x] = white;
+        }
+
+        return CacheSprite(key, tex, pixels, size);
+    }
+
+    /// <summary>
+    /// Asagi ok + darbe cizgileri - Ground Pound
+    /// </summary>
+    public static Sprite CreateGroundPoundIcon(int size = 32)
+    {
+        string key = $"icon_groundpound_{size}";
+        if (_cache.TryGetValue(key, out Sprite cached)) return cached;
+
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Color[] pixels = new Color[size * size];
+        Color white = Color.white;
+
+        int cx = size / 2;
+        int margin = size / 6;
+
+        // Asagi ok ucu (ucgen)
+        int tipY = margin;
+        int baseY = size / 2;
+        for (int y = tipY; y <= baseY; y++)
+        {
+            float t = (float)(y - tipY) / (baseY - tipY);
+            int halfWidth = Mathf.RoundToInt(Mathf.Lerp(0f, size / 3f, t));
+            for (int x = cx - halfWidth; x <= cx + halfWidth; x++)
+            {
+                if (x >= 0 && x < size)
+                    pixels[y * size + x] = white;
+            }
+        }
+
+        // Ok govdesi (dikdortgen - yukari)
+        int bodyWidth = size / 6;
+        int bodyTop = size - margin;
+        for (int y = baseY; y < bodyTop; y++)
+        {
+            for (int x = cx - bodyWidth; x <= cx + bodyWidth; x++)
+            {
+                if (x >= 0 && x < size)
+                    pixels[y * size + x] = white;
+            }
+        }
+
+        // Darbe cizgileri (alt tarafta yanlara dogru)
+        int impactY = tipY - 1;
+        if (impactY < 0) impactY = 0;
+
+        // Sol darbe cizgisi
+        for (int i = 0; i < 4; i++)
+        {
+            int px = cx - size / 4 - i;
+            int py = impactY + i;
+            if (px >= 0 && px < size && py >= 0 && py < size)
+                pixels[py * size + px] = white;
+            if (px + 1 < size)
+                pixels[py * size + px + 1] = white;
+        }
+
+        // Sag darbe cizgisi
+        for (int i = 0; i < 4; i++)
+        {
+            int px = cx + size / 4 + i;
+            int py = impactY + i;
+            if (px >= 0 && px < size && py >= 0 && py < size)
+                pixels[py * size + px] = white;
+            if (px - 1 >= 0)
+                pixels[py * size + px - 1] = white;
+        }
+
+        return CacheSprite(key, tex, pixels, size);
+    }
+
+    /// <summary>
+    /// Pause ikonu - iki dikey cubuk
+    /// </summary>
+    public static Sprite CreatePauseIcon(int size = 32)
+    {
+        string key = $"icon_pause_{size}";
+        if (_cache.TryGetValue(key, out Sprite cached)) return cached;
+
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Color[] pixels = new Color[size * size];
+        Color white = Color.white;
+
+        int margin = size / 5;
+        int barWidth = Mathf.Max(2, size / 6);
+        int gap = Mathf.Max(1, size / 8);
+        int cx = size / 2;
+
+        // Sol cubuk
+        int leftBarX = cx - gap - barWidth;
+        for (int y = margin; y < size - margin; y++)
+        {
+            for (int x = leftBarX; x < leftBarX + barWidth; x++)
+            {
+                if (x >= 0 && x < size && y >= 0 && y < size)
+                    pixels[y * size + x] = white;
+            }
+        }
+
+        // Sag cubuk
+        int rightBarX = cx + gap;
+        for (int y = margin; y < size - margin; y++)
+        {
+            for (int x = rightBarX; x < rightBarX + barWidth; x++)
+            {
+                if (x >= 0 && x < size && y >= 0 && y < size)
+                    pixels[y * size + x] = white;
             }
         }
 
