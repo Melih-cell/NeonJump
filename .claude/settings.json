@@ -1,13 +1,17 @@
 {
   "mcpServers": {
     "mcp-unity": {
-      "command": "node",
+      "command": "/root/.local/bin/uvx",
       "args": [
-        "C:/Users/pc/mcp-unity/Server~/build/index.js"
+        "--from",
+        "mcpforunityserver",
+        "mcp-for-unity",
+        "--transport",
+        "stdio"
       ],
       "env": {
-        "UNITY_HOST": "localhost",
-        "LOGGING": "true"
+        "UNITY_MCP_HTTP_URL": "http://127.0.0.1:8080",
+        "UNITY_MCP_SKIP_STARTUP_CONNECT": "true"
       }
     }
   }
