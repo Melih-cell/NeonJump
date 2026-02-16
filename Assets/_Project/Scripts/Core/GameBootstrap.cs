@@ -256,6 +256,20 @@ public static class GameBootstrap
         // UIManager olustur - kendi Neon HUD'ini olusturacak
         GameObject uiManagerObj = new GameObject("UIManager");
         uiManagerObj.AddComponent<UIManager>();
+
+        // MobileControls olustur - gorunurlugu kendi Start() metodu kontrol eder
+        if (Object.FindFirstObjectByType<MobileControls>() == null)
+        {
+            GameObject mobileCtrlObj = new GameObject("MobileControls");
+            mobileCtrlObj.AddComponent<MobileControls>();
+        }
+
+        // NeonHUD olustur
+        if (Object.FindFirstObjectByType<NeonHUD>() == null)
+        {
+            GameObject neonHudObj = new GameObject("NeonHUD");
+            neonHudObj.AddComponent<NeonHUD>();
+        }
     }
 }
 

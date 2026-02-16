@@ -49,6 +49,19 @@ public class SettingsUI : MonoBehaviour
     public TMP_Text sensitivityText;
     public Toggle vibrationToggle;
 
+    [Header("Mobil Kontrol Ayarlari")]
+    public GameObject mobileControlsPanel;
+    public Slider buttonSizeSlider;
+    public TMP_Text buttonSizeText;
+    public Slider controlsOpacitySlider;
+    public TMP_Text controlsOpacityText;
+    public Slider joystickSensitivitySlider;
+    public TMP_Text joystickSensitivityText;
+    public Toggle hapticFeedbackToggle;
+    public TMP_Dropdown performanceModeDropdown;
+    public Toggle aimAssistToggle;
+    public Toggle mobileEasyModeToggle;
+
     [Header("Erisilebilirlik Ayarlari")]
     public TMP_Dropdown colorBlindDropdown;
     public Slider uiScaleSlider;
@@ -94,6 +107,8 @@ public class SettingsUI : MonoBehaviour
         SetupQualityLevels();
         SetupColorBlindModes();
         SetupLanguages();
+        SetupMobileControls();
+        SetupPerformanceModes();
         LoadSettings();
         AddListeners();
         ShowTab(SettingsTab.Audio);
@@ -179,6 +194,59 @@ public class SettingsUI : MonoBehaviour
         languageDropdown.AddOptions(options);
     }
 
+    void SetupMobileControls()
+    {
+        bool isMobile = Application.isMobilePlatform ||
+                        UnityEngine.InputSystem.Touchscreen.current != null;
+
+        #if UNITY_EDITOR
+        isMobile = true; // Editor'de test icin goster
+        #endif
+
+        if (mobileControlsPanel != null)
+            mobileControlsPanel.SetActive(isMobile);
+
+        // Slider ayarlari
+        if (buttonSizeSlider != null)
+        {
+            buttonSizeSlider.minValue = 0.5f;
+            buttonSizeSlider.maxValue = 1.5f;
+        }
+
+        if (controlsOpacitySlider != null)
+        {
+            controlsOpacitySlider.minValue = 0.3f;
+            controlsOpacitySlider.maxValue = 1.0f;
+        }
+
+        if (joystickSensitivitySlider != null)
+        {
+            joystickSensitivitySlider.minValue = 0.5f;
+            joystickSensitivitySlider.maxValue = 2.0f;
+        }
+    }
+
+    void SetupPerformanceModes()
+    {
+        if (performanceModeDropdown == null) return;
+
+        performanceModeDropdown.ClearOptions();
+        var options = new List<string>();
+
+        if (LocalizationManager.Instance != null)
+        {
+            options.Add(LocalizationManager.Instance.Get("perf_balanced"));
+            options.Add(LocalizationManager.Instance.Get("perf_performance"));
+            options.Add(LocalizationManager.Instance.Get("perf_quality"));
+        }
+        else
+        {
+            options.AddRange(new[] { "Dengeli", "Performans", "Kalite" });
+        }
+
+        performanceModeDropdown.AddOptions(options);
+    }
+
     void LoadSettings()
     {
         if (SaveManager.Instance == null || SaveManager.Instance.Data == null)
@@ -201,6 +269,20 @@ public class SettingsUI : MonoBehaviour
         // Kontroller
         if (sensitivitySlider != null) sensitivitySlider.value = data.aimSensitivity;
         if (vibrationToggle != null) vibrationToggle.isOn = data.vibrationEnabled;
+        if (aimAssistToggle != null) aimAssistToggle.isOn = data.aimAssistEnabled;
+        if (mobileEasyModeToggle != null) mobileEasyModeToggle.isOn = data.mobileEasyMode;
+
+        // Mobil Kontrol Ayarlari
+        if (buttonSizeSlider != null)
+            buttonSizeSlider.value = PlayerPrefs.GetFloat("MobileButtonSize", 1f);
+        if (controlsOpacitySlider != null)
+            controlsOpacitySlider.value = PlayerPrefs.GetFloat("MobileControlsOpacity", 0.8f);
+        if (joystickSensitivitySlider != null)
+            joystickSensitivitySlider.value = PlayerPrefs.GetFloat("JoystickSensitivity", 1f);
+        if (hapticFeedbackToggle != null)
+            hapticFeedbackToggle.isOn = PlayerPrefs.GetInt("HapticFeedback", 1) == 1;
+        if (performanceModeDropdown != null)
+            performanceModeDropdown.value = PlayerPrefs.GetInt("PerformanceMode", 0);
 
         // Erisilebilirlik
         if (colorBlindDropdown != null) colorBlindDropdown.value = data.colorBlindMode;
@@ -251,6 +333,10 @@ public class SettingsUI : MonoBehaviour
             sensitivitySlider.onValueChanged.AddListener(OnSensitivityChanged);
         if (vibrationToggle != null)
             vibrationToggle.onValueChanged.AddListener(OnVibrationChanged);
+        if (aimAssistToggle != null)
+            aimAssistToggle.onValueChanged.AddListener(OnAimAssistChanged);
+        if (mobileEasyModeToggle != null)
+            mobileEasyModeToggle.onValueChanged.AddListener(OnMobileEasyModeChanged);
 
         // Erisilebilirlik
         if (colorBlindDropdown != null)
@@ -263,6 +349,18 @@ public class SettingsUI : MonoBehaviour
         // Dil
         if (languageDropdown != null)
             languageDropdown.onValueChanged.AddListener(OnLanguageChanged);
+
+        // Mobil Kontrol Ayarlari
+        if (buttonSizeSlider != null)
+            buttonSizeSlider.onValueChanged.AddListener(OnButtonSizeChanged);
+        if (controlsOpacitySlider != null)
+            controlsOpacitySlider.onValueChanged.AddListener(OnControlsOpacityChanged);
+        if (joystickSensitivitySlider != null)
+            joystickSensitivitySlider.onValueChanged.AddListener(OnJoystickSensitivityChanged);
+        if (hapticFeedbackToggle != null)
+            hapticFeedbackToggle.onValueChanged.AddListener(OnHapticFeedbackChanged);
+        if (performanceModeDropdown != null)
+            performanceModeDropdown.onValueChanged.AddListener(OnPerformanceModeChanged);
 
         // Genel butonlar
         if (applyButton != null)
@@ -409,6 +507,35 @@ public class SettingsUI : MonoBehaviour
             SaveManager.Instance.SetVibration(value);
     }
 
+    void OnAimAssistChanged(bool value)
+    {
+        if (SaveManager.Instance != null && SaveManager.Instance.Data != null)
+        {
+            SaveManager.Instance.Data.aimAssistEnabled = value;
+            SaveManager.Instance.SaveSettings();
+        }
+
+        // PlayerController'a da aninda yansit
+        PlayerController pc = FindFirstObjectByType<PlayerController>();
+        if (pc != null)
+        {
+            pc.aimAssistEnabled = value;
+        }
+    }
+
+    void OnMobileEasyModeChanged(bool value)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetMobileEasyMode(value);
+        }
+        else if (SaveManager.Instance != null && SaveManager.Instance.Data != null)
+        {
+            SaveManager.Instance.Data.mobileEasyMode = value;
+            SaveManager.Instance.SaveSettings();
+        }
+    }
+
     void OnColorBlindChanged(int index)
     {
         if (AccessibilitySettings.Instance != null)
@@ -440,6 +567,67 @@ public class SettingsUI : MonoBehaviour
         // Dropdown metinlerini guncelle
         SetupQualityLevels();
         SetupColorBlindModes();
+        SetupPerformanceModes();
+    }
+
+    void OnButtonSizeChanged(float value)
+    {
+        if (buttonSizeText != null)
+            buttonSizeText.text = Mathf.RoundToInt(value * 100) + "%";
+
+        if (MobileControls.Instance != null)
+            MobileControls.Instance.SetButtonSize(value);
+
+        PlayerPrefs.SetFloat("MobileButtonSize", value);
+    }
+
+    void OnControlsOpacityChanged(float value)
+    {
+        if (controlsOpacityText != null)
+            controlsOpacityText.text = Mathf.RoundToInt(value * 100) + "%";
+
+        if (MobileControls.Instance != null)
+            MobileControls.Instance.SetOpacity(value);
+
+        PlayerPrefs.SetFloat("MobileControlsOpacity", value);
+    }
+
+    void OnJoystickSensitivityChanged(float value)
+    {
+        if (joystickSensitivityText != null)
+            joystickSensitivityText.text = value.ToString("F1") + "x";
+
+        PlayerPrefs.SetFloat("JoystickSensitivity", value);
+    }
+
+    void OnHapticFeedbackChanged(bool value)
+    {
+        PlayerPrefs.SetInt("HapticFeedback", value ? 1 : 0);
+
+        #if UNITY_ANDROID
+        if (value) Handheld.Vibrate();
+        #endif
+    }
+
+    void OnPerformanceModeChanged(int index)
+    {
+        PlayerPrefs.SetInt("PerformanceMode", index);
+
+        switch (index)
+        {
+            case 0: // Dengeli
+                Application.targetFrameRate = 60;
+                QualitySettings.SetQualityLevel(2);
+                break;
+            case 1: // Performans
+                Application.targetFrameRate = 30;
+                QualitySettings.SetQualityLevel(0);
+                break;
+            case 2: // Kalite
+                Application.targetFrameRate = 60;
+                QualitySettings.SetQualityLevel(4);
+                break;
+        }
     }
 
     void UpdateAllTexts()
@@ -456,6 +644,14 @@ public class SettingsUI : MonoBehaviour
             sensitivityText.text = sensitivitySlider.value.ToString("F1") + "x";
         if (uiScaleSlider != null && uiScaleText != null)
             uiScaleText.text = Mathf.RoundToInt(uiScaleSlider.value * 100) + "%";
+
+        // Mobil Kontrol Metinleri
+        if (buttonSizeSlider != null && buttonSizeText != null)
+            buttonSizeText.text = Mathf.RoundToInt(buttonSizeSlider.value * 100) + "%";
+        if (controlsOpacitySlider != null && controlsOpacityText != null)
+            controlsOpacityText.text = Mathf.RoundToInt(controlsOpacitySlider.value * 100) + "%";
+        if (joystickSensitivitySlider != null && joystickSensitivityText != null)
+            joystickSensitivityText.text = joystickSensitivitySlider.value.ToString("F1") + "x";
     }
 
     // === PANEL KONTROLU ===
@@ -506,6 +702,15 @@ public class SettingsUI : MonoBehaviour
         // Kontroller
         if (sensitivitySlider != null) sensitivitySlider.value = 1f;
         if (vibrationToggle != null) vibrationToggle.isOn = true;
+        if (aimAssistToggle != null) aimAssistToggle.isOn = true;
+        if (mobileEasyModeToggle != null) mobileEasyModeToggle.isOn = false;
+
+        // Mobil Kontrol Ayarlari
+        if (buttonSizeSlider != null) buttonSizeSlider.value = 1f;
+        if (controlsOpacitySlider != null) controlsOpacitySlider.value = 0.8f;
+        if (joystickSensitivitySlider != null) joystickSensitivitySlider.value = 1f;
+        if (hapticFeedbackToggle != null) hapticFeedbackToggle.isOn = true;
+        if (performanceModeDropdown != null) performanceModeDropdown.value = 0;
 
         // Erisilebilirlik
         if (colorBlindDropdown != null) colorBlindDropdown.value = 0;

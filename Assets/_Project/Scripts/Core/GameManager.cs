@@ -84,6 +84,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Mobil kolay mod aktif mi
+    private bool isMobileEasyMode = false;
+    // Kolay modda dusman hasari carpani
+    private float easyModeDamageMultiplier = 0.5f;
+    // Kolay modda ekstra can bonusu
+    private int easyModeExtraHealth = 2;
+
+    /// <summary>
+    /// Mobil kolay mod aktif mi?
+    /// </summary>
+    public bool IsMobileEasyMode => isMobileEasyMode;
+
     void Start()
     {
         // Upgrade'lerden bonus can al
@@ -91,6 +103,9 @@ public class GameManager : MonoBehaviour
         {
             maxHealth = UpgradeManager.Instance.GetAdjustedMaxHealth(maxHealth);
         }
+
+        // Mobil kolay mod kontrolu
+        ApplyMobileDifficultyScaling();
 
         // Tüm değişkenleri sıfırla
         score = 0;
@@ -136,8 +151,88 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // === MOBILE LIFECYCLE ===
+
+    void OnApplicationPause(bool pauseStatus)
+    {
+        // Uygulama minimize edildiginde oyunu duraklat
+        if (pauseStatus && !isGameOver && !hasWon)
+        {
+            PauseGame();
+        }
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        // Odak kaybedildiginde oyunu duraklat (mobilde app switch)
+        if (!hasFocus && !isGameOver && !hasWon)
+        {
+            PauseGame();
+        }
+    }
+
+    private bool isPaused = false;
+
+    public void PauseGame()
+    {
+        if (isPaused || isGameOver || hasWon) return;
+        isPaused = true;
+        Time.timeScale = 0f;
+
+        // Pil tasarrufu: pause'da frame rate dusur
+        MobileOptimizer.SetMenuFrameRate();
+
+        // PauseMenuController varsa goster
+        if (PauseMenuController.Instance != null)
+        {
+            PauseMenuController.Instance.Pause();
+        }
+    }
+
+    public void ResumeGame()
+    {
+        if (!isPaused) return;
+        isPaused = false;
+        Time.timeScale = 1f;
+
+        // Pil tasarrufu: oyun devam edince frame rate yukselt
+        MobileOptimizer.SetGameplayFrameRate();
+
+        if (PauseMenuController.Instance != null)
+        {
+            PauseMenuController.Instance.Resume();
+        }
+    }
+
+    public bool IsPaused() => isPaused;
+
     void Update()
     {
+        // Android geri butonu destegi
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (isGameOver || hasWon)
+                {
+                    // Ana menuye don
+                    Time.timeScale = 1f;
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+                    return;
+                }
+                else if (isPaused)
+                {
+                    ResumeGame();
+                    return;
+                }
+                else
+                {
+                    PauseGame();
+                    return;
+                }
+            }
+        }
+
         if (isGameOver || hasWon)
         {
             if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
@@ -260,6 +355,9 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver) return;
 
+        // Mobil kolay modda hasar azalt
+        damage = GetAdjustedDamage(damage);
+
         health -= damage;
 
         // Hasar alinca combo sifirlanir
@@ -340,6 +438,9 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void ShowGameOverUI()
     {
+        // Pil tasarrufu: game over ekraninda frame rate dusur
+        MobileOptimizer.SetMenuFrameRate();
+
         if (player != null)
         {
             Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
@@ -367,13 +468,16 @@ public class GameManager : MonoBehaviour
             SaveManager.Instance.Save();
         }
 
-        Debug.Log("Game Over! Skor: " + score);
+        Debug.Log($"Game Over! Skor: {score}");
     }
 
     public void Win()
     {
         if (hasWon) return;
         hasWon = true;
+
+        // Pil tasarrufu: kazanma ekraninda frame rate dusur
+        MobileOptimizer.SetMenuFrameRate();
 
         if (UIManager.Instance != null)
             UIManager.Instance.ShowWin(score);
@@ -394,7 +498,7 @@ public class GameManager : MonoBehaviour
             SaveManager.Instance.Save();
         }
 
-        Debug.Log("Kazandin! Skor: " + score);
+        Debug.Log($"Kazandin! Skor: {score}");
     }
 
     public void EnemyKilled(Vector3 position)
@@ -453,7 +557,7 @@ public class GameManager : MonoBehaviour
             // Buyuk combo'larda ekstra geri bildirim
             if (currentCombo >= 5)
             {
-                UIManager.Instance.ShowComboText("x" + comboMultiplier + " COMBO!", position);
+                UIManager.Instance.ShowComboText($"x{comboMultiplier} COMBO!", position);
             }
         }
 
@@ -495,6 +599,7 @@ public class GameManager : MonoBehaviour
     public void RestartGame()
     {
         Time.timeScale = 1f;
+        MobileOptimizer.SetGameplayFrameRate();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -512,4 +617,61 @@ public class GameManager : MonoBehaviour
     // AdvancedHUD icin property'ler
     public float currentHealth => health;
     public int MaxHealth => maxHealth;
+
+    #region Mobile Difficulty Scaling
+
+    /// <summary>
+    /// Mobil kolay mod parametrelerini uygula.
+    /// SaveManager'dan ayari okur, mobil platformda ekstra can ve daha az hasar verir.
+    /// </summary>
+    void ApplyMobileDifficultyScaling()
+    {
+        bool isMobile = Application.isMobilePlatform;
+        #if UNITY_EDITOR
+        if (MobileControls.Instance != null && MobileControls.Instance.IsEnabled)
+            isMobile = true;
+        #endif
+
+        if (!isMobile) return;
+
+        // SaveManager'dan kolay mod ayarini al
+        if (SaveManager.Instance != null && SaveManager.Instance.Data != null)
+        {
+            isMobileEasyMode = SaveManager.Instance.Data.mobileEasyMode;
+        }
+
+        if (isMobileEasyMode)
+        {
+            maxHealth += easyModeExtraHealth; // +2 can
+        }
+    }
+
+    /// <summary>
+    /// Dusman hasarini mobil kolay moda gore ayarla.
+    /// Kolay modda hasar %50 azalir (minimum 1).
+    /// </summary>
+    public int GetAdjustedDamage(int baseDamage)
+    {
+        if (isMobileEasyMode)
+        {
+            return Mathf.Max(1, Mathf.RoundToInt(baseDamage * easyModeDamageMultiplier));
+        }
+        return baseDamage;
+    }
+
+    /// <summary>
+    /// Mobil kolay modu ac/kapa ve kaydet
+    /// </summary>
+    public void SetMobileEasyMode(bool enabled)
+    {
+        isMobileEasyMode = enabled;
+
+        if (SaveManager.Instance != null && SaveManager.Instance.Data != null)
+        {
+            SaveManager.Instance.Data.mobileEasyMode = enabled;
+            SaveManager.Instance.SaveSettings();
+        }
+    }
+
+    #endregion
 }

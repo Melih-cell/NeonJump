@@ -112,10 +112,51 @@ public class AdvancedHUD : MonoBehaviour
             CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
 
             canvasObj.AddComponent<GraphicRaycaster>();
             transform.SetParent(canvasObj.transform, false);
         }
+
+        // Mobil DPI ayari
+        bool isMobile = Application.isMobilePlatform ||
+                        UnityEngine.InputSystem.Touchscreen.current != null;
+        if (isMobile)
+        {
+            CanvasScaler cs = canvas.GetComponent<CanvasScaler>();
+            if (cs != null)
+            {
+                cs.referenceResolution = new Vector2(1280, 720);
+                cs.matchWidthOrHeight = 0.5f;
+            }
+        }
+
+        // Safe Area paneli ekle
+        GameObject safeAreaObj = new GameObject("SafeAreaPanel");
+        safeAreaObj.transform.SetParent(transform, false);
+        RectTransform safeRt = safeAreaObj.AddComponent<RectTransform>();
+        safeRt.anchorMin = Vector2.zero;
+        safeRt.anchorMax = Vector2.one;
+        safeRt.offsetMin = Vector2.zero;
+        safeRt.offsetMax = Vector2.zero;
+        safeAreaObj.AddComponent<SafeAreaHandler>();
+    }
+
+    /// <summary>
+    /// Screen DPI'a gore font boyutu olcekler.
+    /// Mobilde okunabilirlik icin minimum boyut uygular.
+    /// </summary>
+    float GetScaledFontSize(float baseFontSize)
+    {
+        bool isMobile = Application.isMobilePlatform ||
+                        UnityEngine.InputSystem.Touchscreen.current != null;
+        if (!isMobile) return baseFontSize;
+
+        // Yuksek DPI ekranlarda font boyutunu arttir
+        float dpiScale = Mathf.Clamp(Screen.dpi / 160f, 1f, 2.5f);
+        float scaled = baseFontSize * dpiScale;
+        // Mobilde minimum font boyutu 14
+        return Mathf.Max(scaled, 14f);
     }
 
     // === HEALTH BAR ===
@@ -188,7 +229,7 @@ public class AdvancedHUD : MonoBehaviour
 
         healthText = textObj.AddComponent<TextMeshProUGUI>();
         healthText.text = "100 / 100";
-        healthText.fontSize = 18;
+        healthText.fontSize = GetScaledFontSize(18);
         healthText.fontStyle = FontStyles.Bold;
         healthText.alignment = TextAlignmentOptions.Center;
         healthText.color = Color.white;
@@ -284,7 +325,7 @@ public class AdvancedHUD : MonoBehaviour
 
         ammoText = textObj.AddComponent<TextMeshProUGUI>();
         ammoText.text = "∞";
-        ammoText.fontSize = 32;
+        ammoText.fontSize = GetScaledFontSize(32);
         ammoText.fontStyle = FontStyles.Bold;
         ammoText.alignment = TextAlignmentOptions.Right;
         ammoText.color = new Color(1f, 0.8f, 0f);
@@ -596,7 +637,7 @@ public class AdvancedHUD : MonoBehaviour
 
         scoreText = scoreObj.AddComponent<TextMeshProUGUI>();
         scoreText.text = "0";
-        scoreText.fontSize = 42;
+        scoreText.fontSize = GetScaledFontSize(42);
         scoreText.fontStyle = FontStyles.Bold;
         scoreText.alignment = TextAlignmentOptions.Center;
         scoreText.color = new Color(0f, 1f, 1f);
@@ -692,7 +733,7 @@ public class AdvancedHUD : MonoBehaviour
 
         coinText = textObj.AddComponent<TextMeshProUGUI>();
         coinText.text = "0";
-        coinText.fontSize = 22;
+        coinText.fontSize = GetScaledFontSize(22);
         coinText.fontStyle = FontStyles.Bold;
         coinText.alignment = TextAlignmentOptions.Left;
         coinText.color = new Color(1f, 0.9f, 0.3f);

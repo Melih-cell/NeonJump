@@ -119,6 +119,27 @@ public class GameSetup : MonoBehaviour
             cm.AddComponent<ComboManager>();
         }
 
+        // 18. MobileControls - gorunurlugu kendi Start() metodu kontrol eder
+        if (FindObjectOfType<MobileControls>() == null)
+        {
+            GameObject mobileCtrlObj = new GameObject("MobileControls");
+            mobileCtrlObj.AddComponent<MobileControls>();
+        }
+
+        // 19. NeonHUD
+        if (FindObjectOfType<NeonHUD>() == null)
+        {
+            GameObject neonHudObj = new GameObject("NeonHUD");
+            neonHudObj.AddComponent<NeonHUD>();
+        }
+
+        // 20. MobileTouchTutorial - ilk oyunda dokunmatik kontrol ipuclari
+        if (FindObjectOfType<MobileTouchTutorial>() == null)
+        {
+            GameObject tutorialObj = new GameObject("MobileTouchTutorial");
+            tutorialObj.AddComponent<MobileTouchTutorial>();
+        }
+
         // Oyun muzigini baslat
         if (AudioManager.Instance != null)
         {

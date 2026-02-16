@@ -5,8 +5,8 @@ public class CameraFollow : MonoBehaviour
     public static CameraFollow Instance;
 
     public Transform target;
-    public float smoothSpeed = 5f;
-    public Vector3 offset = new Vector3(2f, 1f, -10f);
+    public float smoothSpeed = 8f;
+    public Vector3 offset = new Vector3(2f, 2.5f, -10f);
 
     [Header("Camera Bounds")]
     public float minX = -100f;
@@ -31,6 +31,34 @@ public class CameraFollow : MonoBehaviour
     public bool enableChromaticShake = false;
     private float chromaticAmount = 0f;
 
+    [Header("Mobile Camera Settings")]
+    [Tooltip("Mobilde kamera ek zoom out miktari (negatif = zoom out)")]
+    public float mobileZoomOutOffset = -2.5f;
+    [Tooltip("Hareket yonune look-ahead mesafesi")]
+    public float lookAheadDistance = 3.5f;
+    [Tooltip("Look-ahead yumusaklik hizi")]
+    public float lookAheadSmooth = 5f;
+    [Tooltip("Mobilde screen shake carpani (0.5 = %50 daha az)")]
+    [Range(0f, 1f)]
+    public float mobileShakeMultiplier = 0.5f;
+
+    [Header("Dead Zone")]
+    [Tooltip("Yatay dead zone mesafesi - bu araliktaki hareketlerde kamera sabit kalir")]
+    public float deadZoneX = 0.5f;
+    [Tooltip("Dikey dead zone mesafesi - bu araliktaki hareketlerde kamera sabit kalir")]
+    public float deadZoneY = 0.3f;
+
+    [Header("Asymmetric Y Follow")]
+    [Tooltip("Yukari hareket (ziplama) icin smooth carpani")]
+    public float upSmoothMultiplier = 0.5f;
+    [Tooltip("Asagi hareket (dusus) icin smooth carpani")]
+    public float downSmoothMultiplier = 1.3f;
+
+    private float currentLookAhead = 0f;
+    private bool isMobilePlatform = false;
+    private float baseOrthographicSize;
+    private Vector3 lastTargetPosition;
+
     // Ölüm durumunda kamerayı dondur
     private bool isFrozen = false;
     private Vector3 frozenPosition;
@@ -38,6 +66,33 @@ public class CameraFollow : MonoBehaviour
     void Awake()
     {
         Instance = this;
+    }
+
+    void Start()
+    {
+        // lastTargetPosition'i baslat
+        if (target != null)
+            lastTargetPosition = target.position;
+
+        // Mobil platform tespiti
+        isMobilePlatform = Application.isMobilePlatform;
+
+        #if UNITY_EDITOR
+        // Editor'da MobileControls aktifse mobil gibi davran
+        if (MobileControls.Instance != null && MobileControls.Instance.IsEnabled)
+            isMobilePlatform = true;
+        #endif
+
+        // Ana kamera varsa ortographic size'i kaydet ve mobil zoom out uygula
+        Camera cam = GetComponent<Camera>();
+        if (cam != null)
+        {
+            baseOrthographicSize = cam.orthographicSize;
+            if (isMobilePlatform)
+            {
+                cam.orthographicSize = baseOrthographicSize - mobileZoomOutOffset;
+            }
+        }
     }
 
     void OnDestroy()
@@ -65,7 +120,46 @@ public class CameraFollow : MonoBehaviour
         // Hedef pozisyon
         Vector3 desiredPosition = GetTargetPosition();
 
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
+        // Dead zone kontrolu - kucuk hareketlerde kamera sabit kalsin
+        float deltaX = desiredPosition.x - transform.position.x;
+        float deltaY = desiredPosition.y - transform.position.y;
+
+        float targetX = transform.position.x;
+        float targetY = transform.position.y;
+
+        if (Mathf.Abs(deltaX) > deadZoneX)
+        {
+            targetX = desiredPosition.x - Mathf.Sign(deltaX) * deadZoneX;
+        }
+
+        if (Mathf.Abs(deltaY) > deadZoneY)
+        {
+            targetY = desiredPosition.y - Mathf.Sign(deltaY) * deadZoneY;
+        }
+
+        // Asimetrik Y takip: yukari yavaş, asagi hizli
+        float ySmooth = smoothSpeed;
+        if (target != null)
+        {
+            float yVelocity = target.position.y - lastTargetPosition.y;
+            if (yVelocity > 0.01f)
+            {
+                // Yukari hareket (ziplama) - yavas takip, stabil kamera
+                ySmooth = smoothSpeed * upSmoothMultiplier;
+            }
+            else if (yVelocity < -0.01f)
+            {
+                // Asagi hareket (dusus) - hizli takip, oyuncuyu kaybetmesin
+                ySmooth = smoothSpeed * downSmoothMultiplier;
+            }
+            lastTargetPosition = target.position;
+        }
+
+        Vector3 smoothedPosition = new Vector3(
+            Mathf.Lerp(transform.position.x, targetX, smoothSpeed * Time.deltaTime),
+            Mathf.Lerp(transform.position.y, targetY, ySmooth * Time.deltaTime),
+            desiredPosition.z
+        );
 
         // Screen Shake uygula
         UpdateShake();
@@ -128,6 +222,12 @@ public class CameraFollow : MonoBehaviour
     // Ekrani salla
     public void Shake(float intensity, float duration)
     {
+        // Mobilde screen shake azalt
+        if (isMobilePlatform)
+        {
+            intensity *= mobileShakeMultiplier;
+        }
+
         // Daha guclu sarsinti varsa degistirme
         if (intensity > shakeIntensity || shakeTimer <= 0)
         {
@@ -163,6 +263,12 @@ public class CameraFollow : MonoBehaviour
     // Yonlu sarsinti (darbe veya patlama icin)
     public void DirectionalShake(float intensity, float duration, Vector2 direction)
     {
+        // Mobilde screen shake azalt
+        if (isMobilePlatform)
+        {
+            intensity *= mobileShakeMultiplier;
+        }
+
         if (intensity > shakeIntensity || shakeTimer <= 0)
         {
             shakeIntensity = intensity;
@@ -268,8 +374,17 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return transform.position;
 
+        // Look-ahead: oyuncunun hareket yonune dogru kamerayi kaydir
+        float targetLookAhead = 0f;
+        Rigidbody2D targetRb = target.GetComponent<Rigidbody2D>();
+        if (targetRb != null && Mathf.Abs(targetRb.linearVelocity.x) > 0.5f)
+        {
+            targetLookAhead = Mathf.Sign(targetRb.linearVelocity.x) * lookAheadDistance;
+        }
+        currentLookAhead = Mathf.Lerp(currentLookAhead, targetLookAhead, lookAheadSmooth * Time.deltaTime);
+
         Vector3 desiredPosition = new Vector3(
-            target.position.x + offset.x,
+            target.position.x + offset.x + currentLookAhead,
             target.position.y + offset.y,
             offset.z
         );

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class ParticleManager : MonoBehaviour
 {
@@ -11,6 +12,9 @@ public class ParticleManager : MonoBehaviour
     public ParticleSystem landDustPrefab;
     public ParticleSystem damageEffectPrefab;
 
+    // Aktif particle system sayisini takip et
+    private int _activeParticleCount;
+
     void Awake()
     {
         Instance = this;
@@ -22,12 +26,67 @@ public class ParticleManager : MonoBehaviour
             Instance = null;
     }
 
+    /// <summary>
+    /// Mobil particle limitlerine gore count degerini ayarlar.
+    /// MobileOptimizer varsa carpani uygular, yoksa orijinal degeri dondurur.
+    /// </summary>
+    int GetMobileParticleCount(int originalCount)
+    {
+        if (MobileOptimizer.Instance != null)
+        {
+            return Mathf.Max(1, Mathf.RoundToInt(originalCount * MobileOptimizer.Instance.ParticleCountMultiplier));
+        }
+        return originalCount;
+    }
+
+    /// <summary>
+    /// Yeni particle system olusturulmadan once limit kontrolu yapar.
+    /// Limit asilmissa false dondurur ve efekt atlanir.
+    /// </summary>
+    bool CanSpawnParticle()
+    {
+        if (MobileOptimizer.Instance != null)
+        {
+            if (_activeParticleCount >= MobileOptimizer.Instance.MaxActiveParticleSystems)
+                return false;
+        }
+        _activeParticleCount++;
+        return true;
+    }
+
+    /// <summary>
+    /// Particle system yok edildiginde sayaci azalt.
+    /// </summary>
+    void OnParticleDestroyed()
+    {
+        _activeParticleCount = Mathf.Max(0, _activeParticleCount - 1);
+    }
+
+    /// <summary>
+    /// Particle GameObject'i olusturup auto-destroy ile takip eden yardimci.
+    /// </summary>
+    void ScheduleDestroy(GameObject obj, float delay)
+    {
+        Destroy(obj, delay);
+        // Destroy callback icin basit bir coroutine yerine
+        // LeanTween gibi bir kutuphanemiz yok, biz de StartCoroutine kullaniyoruz
+        StartCoroutine(TrackParticleLifetime(delay));
+    }
+
+    IEnumerator TrackParticleLifetime(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        OnParticleDestroyed();
+    }
+
     public void PlayCoinCollect(Vector3 position)
     {
+        if (!CanSpawnParticle()) return;
+
         if (coinCollectPrefab != null)
         {
             ParticleSystem ps = Instantiate(coinCollectPrefab, position, Quaternion.identity);
-            Destroy(ps.gameObject, 2f);
+            ScheduleDestroy(ps.gameObject, 2f);
         }
         else
         {
@@ -37,131 +96,147 @@ public class ParticleManager : MonoBehaviour
 
     public void PlayEnemyDeath(Vector3 position)
     {
+        if (!CanSpawnParticle()) return;
+
         if (enemyDeathPrefab != null)
         {
             ParticleSystem ps = Instantiate(enemyDeathPrefab, position, Quaternion.identity);
-            Destroy(ps.gameObject, 2f);
+            ScheduleDestroy(ps.gameObject, 2f);
         }
         else
         {
-            CreateSimpleParticle(position, Color.red, 30);
+            CreateSimpleParticle(position, Color.red, GetMobileParticleCount(30));
         }
     }
 
     public void PlayJumpDust(Vector3 position)
     {
+        if (!CanSpawnParticle()) return;
+
         if (jumpDustPrefab != null)
         {
             ParticleSystem ps = Instantiate(jumpDustPrefab, position, Quaternion.identity);
-            Destroy(ps.gameObject, 2f);
+            ScheduleDestroy(ps.gameObject, 2f);
         }
         else
         {
-            CreateSimpleParticle(position, new Color(0.7f, 0.6f, 0.5f), 10);
+            CreateSimpleParticle(position, new Color(0.7f, 0.6f, 0.5f), GetMobileParticleCount(10));
         }
     }
 
     public void PlayLandDust(Vector3 position)
     {
+        if (!CanSpawnParticle()) return;
+
         if (landDustPrefab != null)
         {
             ParticleSystem ps = Instantiate(landDustPrefab, position, Quaternion.identity);
-            Destroy(ps.gameObject, 2f);
+            ScheduleDestroy(ps.gameObject, 2f);
         }
         else
         {
-            CreateSimpleParticle(position, new Color(0.7f, 0.6f, 0.5f), 15);
+            CreateSimpleParticle(position, new Color(0.7f, 0.6f, 0.5f), GetMobileParticleCount(15));
         }
     }
 
     public void PlayDamageEffect(Vector3 position)
     {
+        if (!CanSpawnParticle()) return;
+
         if (damageEffectPrefab != null)
         {
             ParticleSystem ps = Instantiate(damageEffectPrefab, position, Quaternion.identity);
-            Destroy(ps.gameObject, 2f);
+            ScheduleDestroy(ps.gameObject, 2f);
         }
         else
         {
-            CreateSimpleParticle(position, Color.white, 25);
+            CreateSimpleParticle(position, Color.white, GetMobileParticleCount(25));
         }
     }
 
     public void PlayPowerUpCollect(Vector3 position)
     {
-        // Renkli parlama efekti
-        CreateSimpleParticle(position, new Color(0.5f, 1f, 0.5f), 20);
+        if (!CanSpawnParticle()) return;
+        CreateSimpleParticle(position, new Color(0.5f, 1f, 0.5f), GetMobileParticleCount(20));
     }
 
     public void PlayItemUse(Vector3 position, Color color)
     {
-        CreateSimpleParticle(position, color, 15);
+        if (!CanSpawnParticle()) return;
+        CreateSimpleParticle(position, color, GetMobileParticleCount(15));
     }
 
     // === YENI EFEKTLER ===
 
     public void PlayExplosion(Vector3 position)
     {
+        if (!CanSpawnParticle()) return;
+
+        // Mobilde azaltilmis efekt: daha az katman
+        bool reduced = MobileOptimizer.Instance != null && MobileOptimizer.Instance.IsReducedEffects;
+
         // Ana patlama
-        CreateExplosionParticle(position, new Color(1f, 0.5f, 0f), 50); // Turuncu
-        CreateExplosionParticle(position, new Color(1f, 0.8f, 0f), 30); // Sari
-        CreateExplosionParticle(position, new Color(1f, 0.2f, 0f), 20); // Kirmizi
+        CreateExplosionParticle(position, new Color(1f, 0.5f, 0f), GetMobileParticleCount(50));
 
-        // Duman
-        CreateSmokeParticle(position, 15);
+        if (!reduced)
+        {
+            CreateExplosionParticle(position, new Color(1f, 0.8f, 0f), GetMobileParticleCount(30));
+            CreateExplosionParticle(position, new Color(1f, 0.2f, 0f), GetMobileParticleCount(20));
+            CreateSmokeParticle(position, GetMobileParticleCount(15));
+        }
 
-        // Kivilcimlar
-        CreateSparkParticle(position, 25);
+        CreateSparkParticle(position, GetMobileParticleCount(25));
     }
 
     public void PlayDashEffect(Vector3 position, int direction)
     {
-        // Dash izi efekti - neon mavisi
+        if (!CanSpawnParticle()) return;
         CreateDashTrail(position, direction, new Color(0f, 0.8f, 1f, 0.8f));
     }
 
     public void PlayRollEffect(Vector3 position, int direction)
     {
-        // Takla tozu efekti
+        if (!CanSpawnParticle()) return;
         CreateRollDust(position, direction);
     }
 
     public void PlaySpeedBoostEffect(Vector3 position)
     {
-        // Hiz efekti - cizgiler
+        if (!CanSpawnParticle()) return;
         CreateSpeedLines(position, new Color(0f, 1f, 0.5f));
     }
 
     public void PlayShieldEffect(Vector3 position)
     {
-        // Kalkan kirilma efekti
+        if (!CanSpawnParticle()) return;
         CreateShieldBreak(position);
     }
 
     public void PlayHealEffect(Vector3 position)
     {
-        // Iyilesme efekti - yesil parcaciklar yukari
+        if (!CanSpawnParticle()) return;
         CreateHealParticle(position);
     }
 
     public void PlayComboEffect(Vector3 position, int comboLevel)
     {
-        // Combo seviyesine gore efekt
+        if (!CanSpawnParticle()) return;
+
         Color comboColor = comboLevel switch
         {
-            >= 10 => new Color(1f, 0f, 1f),     // Mor - maksimum
-            >= 7 => new Color(1f, 0.5f, 0f),    // Turuncu
-            >= 5 => new Color(1f, 1f, 0f),      // Sari
-            >= 3 => new Color(0f, 1f, 1f),      // Cyan
-            _ => new Color(1f, 1f, 1f)           // Beyaz
+            >= 10 => new Color(1f, 0f, 1f),
+            >= 7 => new Color(1f, 0.5f, 0f),
+            >= 5 => new Color(1f, 1f, 0f),
+            >= 3 => new Color(0f, 1f, 1f),
+            _ => new Color(1f, 1f, 1f)
         };
 
-        CreateComboParticle(position, comboColor, comboLevel * 5);
+        CreateComboParticle(position, comboColor, GetMobileParticleCount(comboLevel * 5));
     }
 
     public void PlayDeathEffect(Vector3 position)
     {
-        // Ölüm efekti - kırmızı patlama ve parçacıklar
+        if (!CanSpawnParticle()) return;
         CreateDeathParticle(position);
     }
 
@@ -202,7 +277,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
     }
 
     void CreateSmokeParticle(Vector3 position, int count)
@@ -238,7 +313,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 3f);
+        ScheduleDestroy(particleObj, 3f);
     }
 
     void CreateSparkParticle(Vector3 position, int count)
@@ -276,7 +351,7 @@ public class ParticleManager : MonoBehaviour
         renderer.material = new Material(Shader.Find("Sprites/Default"));
         renderer.trailMaterial = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
     }
 
     void CreateDashTrail(Vector3 position, int direction, Color color)
@@ -314,7 +389,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1f);
+        ScheduleDestroy(particleObj, 1f);
     }
 
     void CreateRollDust(Vector3 position, int direction)
@@ -348,7 +423,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1f);
+        ScheduleDestroy(particleObj, 1f);
     }
 
     void CreateSpeedLines(Vector3 position, Color color)
@@ -379,7 +454,7 @@ public class ParticleManager : MonoBehaviour
         renderer.renderMode = ParticleSystemRenderMode.Stretch;
         renderer.lengthScale = 3f;
 
-        Destroy(particleObj, 1f);
+        ScheduleDestroy(particleObj, 1f);
     }
 
     void CreateShieldBreak(Vector3 position)
@@ -409,7 +484,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1.5f);
+        ScheduleDestroy(particleObj, 1.5f);
     }
 
     void CreateHealParticle(Vector3 position)
@@ -447,7 +522,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
     }
 
     void CreateComboParticle(Vector3 position, Color color, int count)
@@ -477,7 +552,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
     }
 
     void CreateSimpleParticle(Vector3 position, Color color, int count)
@@ -508,7 +583,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
     }
 
     void CreateDeathParticle(Vector3 position)
@@ -553,7 +628,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
 
         // İkinci katman - turuncu kıvılcımlar
         CreateExplosionParticle(position, new Color(1f, 0.5f, 0f), 25);
@@ -566,21 +641,21 @@ public class ParticleManager : MonoBehaviour
     /// </summary>
     public void PlayRobotBombExplosion(Vector3 position, float radius, Color color)
     {
-        // Ana patlama dalgasi
+        if (!CanSpawnParticle()) return;
+
+        bool reduced = MobileOptimizer.Instance != null && MobileOptimizer.Instance.IsReducedEffects;
+
         CreateShockwaveEffect(position, radius, color);
+        CreateExplosionParticle(position, color, GetMobileParticleCount(60));
 
-        // Ates parcaciklari
-        CreateExplosionParticle(position, color, 60);
-        CreateExplosionParticle(position, new Color(1f, 1f, 0.5f), 30); // Sari cekirdek
+        if (!reduced)
+        {
+            CreateExplosionParticle(position, new Color(1f, 1f, 0.5f), GetMobileParticleCount(30));
+            CreateSmokeParticle(position, GetMobileParticleCount(25));
+        }
 
-        // Duman
-        CreateSmokeParticle(position, 25);
-
-        // Kivilcimlar
-        CreateSparkParticle(position, 40);
-
-        // Enkaz parcalari
-        CreateDebrisParticle(position, 15);
+        CreateSparkParticle(position, GetMobileParticleCount(40));
+        CreateDebrisParticle(position, GetMobileParticleCount(15));
     }
 
     /// <summary>
@@ -588,14 +663,11 @@ public class ParticleManager : MonoBehaviour
     /// </summary>
     public void PlayRobotRocketExplosion(Vector3 position, Color color)
     {
-        // Yonlu patlama
-        CreateDirectionalExplosion(position, color, 40);
+        if (!CanSpawnParticle()) return;
 
-        // Ates izi
-        CreateFireTrail(position, 20);
-
-        // Kivilcimlar
-        CreateSparkParticle(position, 30);
+        CreateDirectionalExplosion(position, color, GetMobileParticleCount(40));
+        CreateFireTrail(position, GetMobileParticleCount(20));
+        CreateSparkParticle(position, GetMobileParticleCount(30));
     }
 
     /// <summary>
@@ -603,10 +675,9 @@ public class ParticleManager : MonoBehaviour
     /// </summary>
     public void PlayRobotLaserHit(Vector3 position)
     {
-        // Elektrik carpmasi efekti
-        CreateElectricSpark(position, new Color(0f, 1f, 1f), 25);
+        if (!CanSpawnParticle()) return;
 
-        // Parlama
+        CreateElectricSpark(position, new Color(0f, 1f, 1f), GetMobileParticleCount(25));
         CreateFlashEffect(position, new Color(1f, 1f, 1f, 0.8f));
     }
 
@@ -615,6 +686,7 @@ public class ParticleManager : MonoBehaviour
     /// </summary>
     public void PlayRobotChargeEffect(Vector3 position, Vector2 direction, Color color)
     {
+        if (!CanSpawnParticle()) return;
         CreateChargeTrail(position, direction, color);
     }
 
@@ -623,10 +695,11 @@ public class ParticleManager : MonoBehaviour
     /// </summary>
     public void PlayDroneExplosion(Vector3 position)
     {
-        // Kucuk elektrikli patlama
-        CreateElectricSpark(position, new Color(0f, 0.8f, 1f), 15);
-        CreateExplosionParticle(position, new Color(1f, 0.5f, 0f), 20);
-        CreateDebrisParticle(position, 8);
+        if (!CanSpawnParticle()) return;
+
+        CreateElectricSpark(position, new Color(0f, 0.8f, 1f), GetMobileParticleCount(15));
+        CreateExplosionParticle(position, new Color(1f, 0.5f, 0f), GetMobileParticleCount(20));
+        CreateDebrisParticle(position, GetMobileParticleCount(8));
     }
 
     // === YARDIMCI EFEKT METODLARI ===
@@ -669,7 +742,7 @@ public class ParticleManager : MonoBehaviour
         renderer.material = new Material(Shader.Find("Sprites/Default"));
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
 
-        Destroy(particleObj, 1f);
+        ScheduleDestroy(particleObj, 1f);
     }
 
     void CreateDebrisParticle(Vector3 position, int count)
@@ -703,7 +776,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 2f);
+        ScheduleDestroy(particleObj, 2f);
     }
 
     void CreateDirectionalExplosion(Vector3 position, Color color, int count)
@@ -742,7 +815,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1.5f);
+        ScheduleDestroy(particleObj, 1.5f);
     }
 
     void CreateFireTrail(Vector3 position, int count)
@@ -780,7 +853,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1.5f);
+        ScheduleDestroy(particleObj, 1.5f);
     }
 
     void CreateElectricSpark(Vector3 position, Color color, int count)
@@ -824,7 +897,7 @@ public class ParticleManager : MonoBehaviour
         renderer.material = new Material(Shader.Find("Sprites/Default"));
         renderer.trailMaterial = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1f);
+        ScheduleDestroy(particleObj, 1f);
     }
 
     void CreateFlashEffect(Vector3 position, Color color)
@@ -857,7 +930,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 0.5f);
+        ScheduleDestroy(particleObj, 0.5f);
     }
 
     void CreateChargeTrail(Vector3 position, Vector2 direction, Color color)
@@ -900,7 +973,7 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, 1f);
+        ScheduleDestroy(particleObj, 1f);
     }
 
     /// <summary>
@@ -908,6 +981,8 @@ public class ParticleManager : MonoBehaviour
     /// </summary>
     public void PlayNeonGlow(Vector3 position, Color color, float duration = 0.5f)
     {
+        if (!CanSpawnParticle()) return;
+
         GameObject particleObj = new GameObject("NeonGlow");
         particleObj.transform.position = position;
 
@@ -948,6 +1023,6 @@ public class ParticleManager : MonoBehaviour
         var renderer = particleObj.GetComponent<ParticleSystemRenderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
 
-        Destroy(particleObj, duration + 0.5f);
+        ScheduleDestroy(particleObj, duration + 0.5f);
     }
 }

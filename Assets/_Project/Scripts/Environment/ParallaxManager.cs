@@ -46,6 +46,12 @@ public class ParallaxManager : MonoBehaviour
         }
         cameraTransform = mainCamera.transform;
 
+        // Mobilde katman sayisini azalt (performans icin)
+        if (Application.isMobilePlatform && numberOfLayers > 2)
+        {
+            numberOfLayers = 2;
+        }
+
         // Ekran boyutlarini hesapla
         CalculateScreenSize();
 
@@ -274,6 +280,12 @@ public class ParallaxManager : MonoBehaviour
     {
         int lightCount = Mathf.RoundToInt(depthT * 12);
 
+        // Mobilde neon isik sayisini yarisina indir
+        if (Application.isMobilePlatform)
+        {
+            lightCount = Mathf.Max(1, lightCount / 2);
+        }
+
         for (int i = 0; i < lightCount; i++)
         {
             GameObject lightObj = new GameObject($"Neon_{i}");
@@ -353,16 +365,29 @@ public class NeonFlicker : MonoBehaviour
 
     private SpriteRenderer sr;
     private float offset;
+    private float _updateInterval;
+    private float _updateTimer;
 
     void Start()
     {
         sr = GetComponent<SpriteRenderer>();
         offset = Random.Range(0f, 100f);
+
+        // Mobilde daha seyrek guncelle (her 3-4 frame'de bir)
+        _updateInterval = Application.isMobilePlatform ? 0.05f : 0f;
     }
 
     void Update()
     {
         if (sr == null) return;
+
+        // Mobilde throttle uygula
+        if (_updateInterval > 0f)
+        {
+            _updateTimer += Time.deltaTime;
+            if (_updateTimer < _updateInterval) return;
+            _updateTimer = 0f;
+        }
 
         float noise = Mathf.PerlinNoise(Time.time * flickerSpeed + offset, offset * 0.5f);
         float brightness = Mathf.Lerp(minBrightness, 1f, noise);

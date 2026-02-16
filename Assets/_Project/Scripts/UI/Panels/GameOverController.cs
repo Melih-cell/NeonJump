@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections;
 
@@ -55,19 +56,48 @@ public class GameOverController : MonoBehaviour
 
     private bool isNewRecord = false;
     private int finalScore = 0;
+    private bool isMobile = false;
 
     void Awake()
     {
         Instance = this;
+
+        isMobile = Application.isMobilePlatform ||
+                   UnityEngine.InputSystem.Touchscreen.current != null;
     }
 
     void Start()
     {
         SetupListeners();
+        if (isMobile) ApplyMobileButtonSizes();
 
         // Baslangicta gizle
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Mobil cihazlarda butonlarin minimum 48dp dokunmatik hedef boyutunu saglar
+    /// </summary>
+    void ApplyMobileButtonSizes()
+    {
+        float dpiScale = Screen.dpi > 0 ? Screen.dpi / 160f : 1f;
+        float minHeight = Mathf.Max(80f, 48f * dpiScale);
+
+        Button[] buttons = { retryButton, mainMenuButton };
+        foreach (var btn in buttons)
+        {
+            if (btn == null) continue;
+            RectTransform rt = btn.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                Vector2 size = rt.sizeDelta;
+                if (size.y < minHeight)
+                {
+                    rt.sizeDelta = new Vector2(Mathf.Max(size.x, 300f), minHeight);
+                }
+            }
+        }
     }
 
     void Update()

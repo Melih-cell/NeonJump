@@ -18,11 +18,11 @@ public class WeaponHotbar : MonoBehaviour
     public float bottomMargin = 25f;
 
     [Header("Colors - Cyberpunk Theme")]
-    public Color activeSlotColor = new Color(0f, 1f, 1f, 1f);
-    public Color inactiveSlotColor = new Color(0.12f, 0.08f, 0.2f, 0.9f);
+    public Color activeSlotColor = new Color(0.4f, 0.75f, 0.85f, 0.85f);
+    public Color inactiveSlotColor = new Color(0.1f, 0.1f, 0.15f, 0.85f);
     public Color emptySlotColor = new Color(0.06f, 0.03f, 0.12f, 0.7f);
     public Color lowAmmoColor = new Color(1f, 0.3f, 0.3f, 1f);
-    public Color neonCyanColor = new Color(0f, 1f, 1f, 0.6f);
+    public Color neonCyanColor = new Color(0.3f, 0.55f, 0.65f, 0.35f);
 
     // UI References
     private Canvas canvas;
@@ -102,6 +102,7 @@ public class WeaponHotbar : MonoBehaviour
             CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
 
             canvasObj.AddComponent<GraphicRaycaster>();
         }
@@ -121,7 +122,7 @@ public class WeaponHotbar : MonoBehaviour
 
         // Panel arka plan - koyu mor-siyah cyberpunk
         Image panelBg = hotbarPanel.AddComponent<Image>();
-        panelBg.color = new Color(0.05f, 0.02f, 0.1f, 0.85f);
+        panelBg.color = new Color(0.06f, 0.06f, 0.1f, 0.8f);
 
         // Neon cyan sinir cercevesi
         GameObject frameObj = new GameObject("NeonFrame");
@@ -132,7 +133,7 @@ public class WeaponHotbar : MonoBehaviour
         frameRect.offsetMin = new Vector2(-2, -2);
         frameRect.offsetMax = new Vector2(2, 2);
         Image frameImg = frameObj.AddComponent<Image>();
-        frameImg.color = neonCyanColor;
+        frameImg.color = new Color(0.25f, 0.45f, 0.55f, 0.3f);
         frameImg.raycastTarget = false;
         // Frame'i arkaya gonder (panel BG'nin arkasinda olmamali)
         frameObj.transform.SetAsFirstSibling();
@@ -147,11 +148,19 @@ public class WeaponHotbar : MonoBehaviour
         topLineRect.anchoredPosition = Vector2.zero;
         topLineRect.sizeDelta = new Vector2(0, 1);
         Image topLineImg = topLineObj.AddComponent<Image>();
-        topLineImg.color = new Color(0f, 1f, 1f, 0.8f);
+        topLineImg.color = new Color(0.3f, 0.55f, 0.65f, 0.4f);
         topLineImg.raycastTarget = false;
 
         // Slotlari olustur
         CreateSlots();
+
+        // Mobilde hotbar'i gizle - WeaponUI zaten slotlari gosteriyor
+        bool isMobile = Application.isMobilePlatform ||
+                        (MobileControls.Instance != null && MobileControls.Instance.IsEnabled);
+        if (isMobile)
+        {
+            hotbarPanel.SetActive(false);
+        }
     }
 
     void CreateSlots()
@@ -184,7 +193,7 @@ public class WeaponHotbar : MonoBehaviour
                 sepRect.anchoredPosition = new Vector2(sepX, 5);
                 sepRect.sizeDelta = new Vector2(1, slotSize * 0.7f);
                 Image sepImg = sepObj.AddComponent<Image>();
-                sepImg.color = new Color(0f, 1f, 1f, 0.4f);
+                sepImg.color = new Color(0.3f, 0.5f, 0.6f, 0.2f);
                 sepImg.raycastTarget = false;
             }
         }
@@ -303,7 +312,7 @@ public class WeaponHotbar : MonoBehaviour
         slot.weaponNameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         slot.weaponNameText.fontSize = 11;
         slot.weaponNameText.fontStyle = FontStyle.Bold;
-        slot.weaponNameText.color = new Color(0f, 1f, 1f, 1f);
+        slot.weaponNameText.color = new Color(0.4f, 0.75f, 0.85f, 0.85f);
         slot.weaponNameText.alignment = TextAnchor.MiddleCenter;
         slot.weaponNameText.enabled = false;
 
@@ -372,11 +381,7 @@ public class WeaponHotbar : MonoBehaviour
             else if (scroll < 0) SelectNextWeapon();
         }
 
-        // Mobil silah degistirme butonu
-        if (MobileControls.Instance != null && MobileControls.Instance.SwitchWeaponPressed)
-        {
-            SelectNextWeapon();
-        }
+        // Silah degistirme artik sadece klavye/scroll ile yapilir
     }
 
     void SelectSlot(int slotIndex)
@@ -622,7 +627,7 @@ public class WeaponHotbar : MonoBehaviour
                 // Rarity glow overlay - sadece aktifken belirgin
                 if (slot.rarityGlow != null)
                 {
-                    float glowAlpha = isActive ? 0.12f : 0.05f;
+                    float glowAlpha = isActive ? 0.07f : 0.03f;
                     slot.rarityGlow.color = new Color(rarityColor2.r, rarityColor2.g, rarityColor2.b, glowAlpha);
                 }
 
@@ -645,7 +650,7 @@ public class WeaponHotbar : MonoBehaviour
             }
 
             // Slot numarasi rengi (aktifken neon cyan)
-            slot.slotNumberText.color = isActive ? new Color(0f, 1f, 1f, 1f) : new Color(0.6f, 0.5f, 0.8f, 0.6f);
+            slot.slotNumberText.color = isActive ? new Color(0.4f, 0.75f, 0.85f, 0.85f) : new Color(0.6f, 0.5f, 0.8f, 0.6f);
         }
     }
 
@@ -667,7 +672,7 @@ public class WeaponHotbar : MonoBehaviour
             else
             {
                 float colorPulse = (Mathf.Sin(Time.time * 3f) + 1f) * 0.5f;
-                slot.border.color = Color.Lerp(activeSlotColor, new Color(0f, 1f, 1f, 0.8f), colorPulse * 0.3f);
+                slot.border.color = Color.Lerp(activeSlotColor, new Color(0.3f, 0.55f, 0.65f, 0.7f), colorPulse * 0.3f);
             }
         }
     }

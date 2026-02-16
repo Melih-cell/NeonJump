@@ -137,7 +137,7 @@ public class MainMenuManager : MonoBehaviour
     public void PlayGame()
     {
         PlayButtonSound();
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene("1");
     }
 
     public void OpenSettings()
@@ -245,7 +245,10 @@ public class MainMenuManager : MonoBehaviour
             GameObject canvasObj = new GameObject("MainMenuCanvas");
             canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObj.AddComponent<CanvasScaler>();
+            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
             canvasObj.AddComponent<GraphicRaycaster>();
         }
 
@@ -345,7 +348,13 @@ public class MainMenuManager : MonoBehaviour
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = position;
-        rt.sizeDelta = new Vector2(250, 50);
+
+        // Mobilde minimum 48dp buton yuksekligi
+        bool isMobile = Application.isMobilePlatform ||
+                        UnityEngine.InputSystem.Touchscreen.current != null;
+        float minHeight = isMobile ? Mathf.Max(60f, 48f * (Screen.dpi > 0 ? Screen.dpi / 160f : 1f)) : 50f;
+        float btnWidth = isMobile ? 300f : 250f;
+        rt.sizeDelta = new Vector2(btnWidth, minHeight);
 
         // Arka plan
         Image img = btnObj.AddComponent<Image>();

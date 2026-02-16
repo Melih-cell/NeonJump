@@ -6,10 +6,10 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 8f;
-    public float jumpForce = 7f;
-    public float bounceForce = 6f;
-    public float fallMultiplier = 2.5f;  // Dusus hizlandirici
-    public float lowJumpMultiplier = 2f; // Kisa ziplama
+    public float jumpForce = 18f;
+    public float bounceForce = 13f;
+    public float fallMultiplier = 3.5f;  // Dusus hizlandirici
+    public float lowJumpMultiplier = 3f; // Kisa ziplama
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -18,9 +18,9 @@ public class PlayerController : MonoBehaviour
 
     [Header("Wall Jump Settings")]
     public float wallCheckDistance = 0.5f; // Duvar algılama mesafesi
-    public float wallSlideSpeed = 2f; // Kayma hizi
+    public float wallSlideSpeed = 3f; // Kayma hizi
     public float wallJumpForceX = 2f;
-    public float wallJumpForceY = 7f;
+    public float wallJumpForceY = 18f;
     public float wallJumpDuration = 0.15f;
     public LayerMask wallLayer; // Wall layer - Inspector'dan ayarla
     private bool isWallSliding = false;
@@ -41,6 +41,36 @@ public class PlayerController : MonoBehaviour
     [Header("Jump Settings")]
     public float coyoteTime = 0.1f;
     public float jumpBufferTime = 0.1f;
+
+    [Header("Mobile Tuning")]
+    [Tooltip("Mobilde coyote time suresi (dokunmatik zamanlama daha zor)")]
+    public float mobileCoyoteTime = 0.15f;
+    [Tooltip("Mobilde jump buffer suresi")]
+    public float mobileJumpBufferTime = 0.2f;
+    [Tooltip("Mobilde wall jump penceresi")]
+    public float mobileWallJumpDuration = 0.2f;
+
+    [Header("Aim Assist (Mobile)")]
+    [Tooltip("Aim assist aciyor/kapatiyor")]
+    public bool aimAssistEnabled = true;
+    [Tooltip("Aim assist cone acisi (derece)")]
+    public float aimAssistConeAngle = 15f;
+    [Tooltip("Silah menzilinin yuzde kaci icinde aim assist calisir")]
+    [Range(0f, 1f)]
+    public float aimAssistRangePercent = 0.8f;
+    [Tooltip("Aim assist kuvveti - 0 ile 1 arasi")]
+    [Range(0f, 1f)]
+    public float aimAssistStrength = 0.6f;
+
+    [Header("Edge Grab Assist (Mobile)")]
+    [Tooltip("Mobilde platform kenarinda otomatik tutunma")]
+    public bool edgeGrabAssistEnabled = true;
+    [Tooltip("Kenar algilama mesafesi")]
+    public float edgeGrabCheckDistance = 0.3f;
+    [Tooltip("Kenar tutunma suresi (ekstra coyote time)")]
+    public float edgeGrabHangTime = 0.1f;
+    private bool isEdgeGrabbing = false;
+    private float edgeGrabTimer = 0f;
 
     [Header("Animation")]
     public Sprite idleSprite;
@@ -177,10 +207,14 @@ public class PlayerController : MonoBehaviour
         // Rigidbody ayarlari
         rb.freezeRotation = true;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        rb.gravityScale = 3.5f; // Yuksek gravity = agir, keskin platformer fizigi
 
         // Baslangic degerleri
         isGrounded = true;
         coyoteTimeCounter = coyoteTime;
+
+        // Mobil platform tespiti - parametreleri ayarla
+        ApplyMobileTuning();
 
         // Cache base stats for equipment modifiers
         baseMoveSpeed = moveSpeed;
@@ -398,6 +432,8 @@ public class PlayerController : MonoBehaviour
         Mouse mouse = Mouse.current;
         bool firePressed = (keyboard != null && keyboard.jKey.isPressed) || (mouse != null && mouse.leftButton.isPressed)
                            || (hasMobile && MobileControls.Instance.FireHeld);
+        // Mobil tek atis icin: FireHeld'i fireJustPressed olarak kullan (her frame true gelir,
+        // ama WeaponManager fire rate ile kontrol ediyor - tek atisliklar icin sorun yok)
         bool fireJustPressed = (keyboard != null && keyboard.jKey.wasPressedThisFrame) || (mouse != null && mouse.leftButton.wasPressedThisFrame)
                                || (hasMobile && MobileControls.Instance.FireHeld);
 
@@ -429,8 +465,11 @@ public class PlayerController : MonoBehaviour
 
             if (shouldFire && !isRolling)
             {
+                // Aim assist uygula (mobilde)
+                Vector2 assistedAim = ApplyAimAssist(aimDirection);
+
                 // WeaponManager'dan ates et
-                if (WeaponManager.Instance.TryFire(aimDirection))
+                if (WeaponManager.Instance.TryFire(assistedAim))
                 {
                     // Ates sesi
                     if (AudioManager.Instance != null)
@@ -450,11 +489,13 @@ public class PlayerController : MonoBehaviour
             isFiring = firePressed;
         }
 
-        // === TAKLA / ROLL (K veya Left Shift - sadece yerde) ===
+        // === TAKLA / ROLL (K veya Left Shift veya Mobil - sadece yerde) ===
         rollCooldownTimer -= Time.deltaTime;
 
-        if ((keyboard != null && (keyboard.kKey.wasPressedThisFrame || keyboard.leftShiftKey.wasPressedThisFrame))
-            && !isRolling && !isDashing && rollCooldownTimer <= 0 && isGrounded)
+        bool rollInput = (keyboard != null && (keyboard.kKey.wasPressedThisFrame || keyboard.leftShiftKey.wasPressedThisFrame))
+                         || (hasMobile && MobileControls.Instance.RollPressed);
+
+        if (rollInput && !isRolling && !isDashing && rollCooldownTimer <= 0 && isGrounded)
         {
             StartRoll();
         }
@@ -499,10 +540,12 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // === GRAPPLE HOOK (Q) ===
+        // === GRAPPLE HOOK (Q veya Mobil) ===
         grappleCooldownTimer -= Time.deltaTime;
 
-        if (keyboard != null && keyboard.qKey.wasPressedThisFrame && !isGrappling && grappleCooldownTimer <= 0 && !isDashing && !isRolling)
+        bool grappleInput = (keyboard != null && keyboard.qKey.wasPressedThisFrame);
+
+        if (grappleInput && !isGrappling && grappleCooldownTimer <= 0 && !isDashing && !isRolling)
         {
             StartGrapple();
         }
@@ -513,13 +556,13 @@ public class PlayerController : MonoBehaviour
             UpdateGrapple();
         }
 
-        // === GROUND POUND (Asagi + Jump havadayken) ===
+        // === GROUND POUND (Asagi + Jump havadayken VEYA Mobil buton) ===
         groundPoundCooldownTimer -= Time.deltaTime;
 
         bool downPressed = (keyboard != null && (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed));
         bool jumpPressed = jumpInput;
 
-        if (downPressed && jumpPressed && !isGrounded && !isGroundPounding && groundPoundCooldownTimer <= 0 && !isDashing)
+        if ((downPressed && jumpPressed) && !isGrounded && !isGroundPounding && groundPoundCooldownTimer <= 0 && !isDashing)
         {
             StartGroundPound();
         }
@@ -752,9 +795,34 @@ public class PlayerController : MonoBehaviour
         // Collision-based zemin kontrolü
         isGrounded = groundContactCount > 0;
 
+        // Edge Grab Assist - platformdan dusme aninda kisa sureligine tutun
+        if (edgeGrabAssistEnabled && wasGrounded && !isGrounded && rb.linearVelocity.y <= 0 && !isWallJumping && !isDashing)
+        {
+            // Platform kenarindan dustu - edge grab baslat
+            isEdgeGrabbing = true;
+            edgeGrabTimer = edgeGrabHangTime;
+        }
+
+        if (isEdgeGrabbing)
+        {
+            edgeGrabTimer -= Time.fixedDeltaTime;
+            if (edgeGrabTimer > 0 && rb.linearVelocity.y < 0)
+            {
+                // Dusmeyi yavaslatarak tutunma hissi olustur
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f);
+                // Coyote time'i da uzat
+                coyoteTimeCounter = Mathf.Max(coyoteTimeCounter, edgeGrabTimer);
+            }
+            else
+            {
+                isEdgeGrabbing = false;
+            }
+        }
+
         if (isGrounded)
         {
             currentJumpCount = 0;
+            isEdgeGrabbing = false;
         }
 
         // Yere inis efekti
@@ -837,12 +905,21 @@ public class PlayerController : MonoBehaviour
         {
             // Ziplama tusunu birakirsan kisa zipla
             Keyboard keyboard = Keyboard.current;
-            bool jumpHeld = keyboard != null && (keyboard.spaceKey.isPressed || keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed);
+            bool jumpHeld = (keyboard != null && (keyboard.spaceKey.isPressed || keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed));
 
-            if (!jumpHeld)
+            // Mobilde jump butonu one-shot oldugu icin kisa ziplama uygulanmaz (tam ziplama)
+            bool mobileJumping = MobileControls.Instance != null && MobileControls.Instance.IsEnabled;
+
+            if (!jumpHeld && !mobileJumping)
             {
                 rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
             }
+        }
+
+        // Max fall speed limiti - cok hizli dusmeyi engelle (ground pound haric)
+        if (rb.linearVelocity.y < -25f && !isGroundPounding)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, -25f);
         }
     }
 
@@ -1136,7 +1213,7 @@ public class PlayerController : MonoBehaviour
 
         // Fizik ayarlarını geri yükle
         rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.gravityScale = 1f;
+        rb.gravityScale = 3.5f;
 
         // Collider'ı aç
         if (boxCollider != null)
@@ -1345,6 +1422,12 @@ public class PlayerController : MonoBehaviour
         {
             AudioManager.Instance.PlayRoll();
         }
+
+        // Mobil cooldown gostergesi
+        if (MobileControls.Instance != null)
+        {
+            MobileControls.Instance.StartRollCooldown(rollCooldown);
+        }
     }
 
     void EndRoll()
@@ -1458,6 +1541,7 @@ public class PlayerController : MonoBehaviour
         // Ses
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayJump();
+
     }
 
     void UpdateGrapple()
@@ -1478,8 +1562,10 @@ public class PlayerController : MonoBehaviour
         }
 
         // Hedefe ulasti veya ziplama ile iptal
-        Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
-        bool cancelGrapple = keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame);
+        Keyboard kb = UnityEngine.InputSystem.Keyboard.current;
+        bool hasMobileCtrl = MobileControls.Instance != null && MobileControls.Instance.IsEnabled;
+        bool cancelGrapple = (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame))
+                             || (hasMobileCtrl && MobileControls.Instance.JumpPressed);
 
         if (distance < 0.5f || cancelGrapple)
         {
@@ -1491,7 +1577,7 @@ public class PlayerController : MonoBehaviour
     {
         isGrappling = false;
         grappleCooldownTimer = grappleCooldown;
-        rb.gravityScale = 1f;
+        rb.gravityScale = 3.5f;
 
         if (grappleLineRenderer != null)
             grappleLineRenderer.enabled = false;
@@ -1525,7 +1611,7 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(0.15f);
 
         // Hizla asagi
-        rb.gravityScale = 1f;
+        rb.gravityScale = 3.5f;
         rb.linearVelocity = new Vector2(0, -groundPoundSpeed);
 
         // Yere dusmeyi bekle
@@ -1744,4 +1830,115 @@ public class PlayerController : MonoBehaviour
             return MobileAimDirection.normalized;
         return GetDefaultAimDirection();
     }
+
+    #region Mobile Tuning
+
+    /// <summary>
+    /// Mobil platformda hareket parametrelerini ayarla.
+    /// Dokunmatik kontroller daha az hassas oldugu icin tolerans degerleri artirilir.
+    /// </summary>
+    void ApplyMobileTuning()
+    {
+        bool isMobile = Application.isMobilePlatform;
+
+        // Editor'da test icin MobileControls aktifse de mobil parametreleri kullan
+        #if UNITY_EDITOR
+        if (MobileControls.Instance != null && MobileControls.Instance.IsEnabled)
+            isMobile = true;
+        #endif
+
+        if (isMobile)
+        {
+            coyoteTime = mobileCoyoteTime;        // 0.1 -> 0.15
+            jumpBufferTime = mobileJumpBufferTime; // 0.1 -> 0.2
+            wallJumpDuration = mobileWallJumpDuration; // 0.15 -> 0.2
+            edgeGrabAssistEnabled = true;
+
+            // Aim assist ayarini SaveManager'dan yukle
+            if (SaveManager.Instance != null && SaveManager.Instance.Data != null)
+            {
+                aimAssistEnabled = SaveManager.Instance.Data.aimAssistEnabled;
+            }
+        }
+        else
+        {
+            // PC'de aim assist ve edge grab kapali
+            aimAssistEnabled = false;
+            edgeGrabAssistEnabled = false;
+        }
+    }
+
+    /// <summary>
+    /// Aim assist uygula - mobilde en yakin dusmana dogru hafif cekim.
+    /// Verilen atis yonunu, cone acisi icindeki en yakin dusmana dogru ayarlar.
+    /// </summary>
+    public Vector2 ApplyAimAssist(Vector2 originalDirection)
+    {
+        // Aim assist kapali veya mobil degilse bypass
+        if (!aimAssistEnabled)
+            return originalDirection;
+
+        bool isMobile = Application.isMobilePlatform;
+        #if UNITY_EDITOR
+        if (MobileControls.Instance != null && MobileControls.Instance.IsEnabled)
+            isMobile = true;
+        #endif
+
+        if (!isMobile)
+            return originalDirection;
+
+        // Silah menzilini al
+        float weaponRange = 15f;
+        if (WeaponManager.Instance != null)
+        {
+            var currentWeapon = WeaponManager.Instance.GetCurrentWeapon();
+            if (currentWeapon != null)
+                weaponRange = currentWeapon.GetEffectiveRange();
+        }
+
+        float assistRange = weaponRange * aimAssistRangePercent;
+        float halfConeRad = aimAssistConeAngle * Mathf.Deg2Rad;
+
+        // En yakin dusmani bul (cone icinde)
+        Transform bestTarget = null;
+        float bestDistance = float.MaxValue;
+
+        // Sahnedeki dusmanlari ara
+        EnemyBase[] enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+        Vector2 playerPos = (Vector2)transform.position;
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy == null || !enemy.gameObject.activeInHierarchy) continue;
+
+            Vector2 toEnemy = (Vector2)enemy.transform.position - playerPos;
+            float distance = toEnemy.magnitude;
+
+            // Menzil kontrolu
+            if (distance > assistRange || distance < 0.5f) continue;
+
+            // Cone acisi kontrolu
+            float angle = Vector2.Angle(originalDirection, toEnemy);
+            if (angle > aimAssistConeAngle) continue;
+
+            // En yakin dusmani sec
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestTarget = enemy.transform;
+            }
+        }
+
+        // Hedef bulunamadiysa orijinal yonu dondur
+        if (bestTarget == null)
+            return originalDirection;
+
+        // Orijinal yon ile dusman yonunu karistir (aim assist kuvvetine gore)
+        Vector2 toTarget = ((Vector2)bestTarget.position - playerPos).normalized;
+        Vector2 assistedDirection = Vector2.Lerp(originalDirection.normalized, toTarget, aimAssistStrength).normalized;
+
+        return assistedDirection;
+    }
+
+    #endregion
 }

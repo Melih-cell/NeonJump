@@ -39,6 +39,16 @@ public class MainMenuSetup : MonoBehaviour
 
         canvasObj.AddComponent<GraphicRaycaster>();
 
+        // Safe area handling - notch'lu cihazlar icin
+        GameObject safeArea = new GameObject("SafeArea");
+        safeArea.transform.SetParent(canvasObj.transform, false);
+        RectTransform safeAreaRT = safeArea.AddComponent<RectTransform>();
+        safeAreaRT.anchorMin = Vector2.zero;
+        safeAreaRT.anchorMax = Vector2.one;
+        safeAreaRT.offsetMin = Vector2.zero;
+        safeAreaRT.offsetMax = Vector2.zero;
+        safeArea.AddComponent<SafeAreaHandler>();
+
         // EventSystem
         if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
         {
@@ -184,7 +194,13 @@ public class MainMenuSetup : MonoBehaviour
         RectTransform rt = buttonObj.AddComponent<RectTransform>();
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = position;
-        rt.sizeDelta = new Vector2(320, 70);
+
+        // Mobilde minimum 48dp dokunmatik boyut
+        bool isMobile = Application.isMobilePlatform ||
+                        UnityEngine.InputSystem.Touchscreen.current != null;
+        float minHeight = isMobile ? Mathf.Max(80f, 48f * (Screen.dpi > 0 ? Screen.dpi / 160f : 1f)) : 70f;
+        float btnWidth = isMobile ? 380f : 320f;
+        rt.sizeDelta = new Vector2(btnWidth, minHeight);
 
         Image img = buttonObj.AddComponent<Image>();
         img.color = normalColor;

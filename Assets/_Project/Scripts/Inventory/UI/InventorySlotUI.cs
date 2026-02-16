@@ -51,6 +51,9 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private static GameObject dragIcon;
     private Canvas parentCanvas;
 
+    // Mobil platform flag
+    private bool _isMobile = false;
+
     // Events
     public static event Action<InventorySlotUI> OnSlotClicked;
     public static event Action<InventorySlotUI> OnSlotRightClicked;
@@ -63,6 +66,8 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         originalScale = transform.localScale;
         targetScale = originalScale;
         parentCanvas = GetComponentInParent<Canvas>();
+        _isMobile = Application.isMobilePlatform ||
+            (MobileControls.Instance != null && MobileControls.Instance.IsEnabled);
     }
 
     void Start()
@@ -318,6 +323,12 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlayButton();
+
+            // Mobilde secili slotu highlight yap
+            if (_isMobile)
+            {
+                SetSelected(true);
+            }
         }
         else if (eventData.button == PointerEventData.InputButton.Right)
         {
@@ -329,6 +340,7 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (_isMobile) return; // Mobilde drag&drop devre disi
         if (currentItem == null) return;
 
         isDragging = true;
@@ -348,6 +360,7 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (_isMobile) return;
         if (dragIcon != null)
         {
             dragIcon.transform.position = eventData.position;
@@ -356,6 +369,7 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (_isMobile) return;
         isDragging = false;
 
         // Drag icon'u yok et
@@ -376,6 +390,7 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnDrop(PointerEventData eventData)
     {
+        if (_isMobile) return;
         if (dragSourceSlot == null || dragSourceSlot == this) return;
 
         // Gecerlilik kontrolu ve gorsel geri bildirim

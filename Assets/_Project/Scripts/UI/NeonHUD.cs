@@ -104,6 +104,7 @@ public class NeonHUD : MonoBehaviour
     void Start()
     {
         CreateMainCanvas();
+        CreateSafeAreaRoot();
         CreateHealthPanel();
         CreateScorePanel();
         CreateCoinPanel();
@@ -116,6 +117,31 @@ public class NeonHUD : MonoBehaviour
         CreateMiniMap();
 
         StartCoroutine(DelayedInit());
+    }
+
+    // Safe area root - tum HUD elementleri bunun icine yerlesir
+    private RectTransform safeAreaRoot;
+
+    void CreateSafeAreaRoot()
+    {
+        GameObject safeObj = new GameObject("SafeAreaRoot");
+        safeObj.transform.SetParent(transform, false);
+        safeAreaRoot = safeObj.AddComponent<RectTransform>();
+        safeAreaRoot.anchorMin = Vector2.zero;
+        safeAreaRoot.anchorMax = Vector2.one;
+        safeAreaRoot.offsetMin = Vector2.zero;
+        safeAreaRoot.offsetMax = Vector2.zero;
+        safeObj.AddComponent<SafeAreaHandler>();
+    }
+
+    /// <summary>
+    /// Screen DPI'a gore font boyutu olcekler.
+    /// </summary>
+    float GetMobileFontSize(float baseFontSize)
+    {
+        if (!isMobile) return baseFontSize;
+        float dpiScale = Mathf.Clamp(Screen.dpi / 160f, 1f, 2.5f);
+        return Mathf.Max(baseFontSize * dpiScale, 14f);
     }
 
     IEnumerator DelayedInit()
@@ -248,7 +274,7 @@ public class NeonHUD : MonoBehaviour
 
         healthText = healthTextObj.AddComponent<TextMeshProUGUI>();
         healthText.text = "100 / 100";
-        healthText.fontSize = 16;
+        healthText.fontSize = GetMobileFontSize(16);
         healthText.fontStyle = FontStyles.Bold;
         healthText.alignment = TextAlignmentOptions.Center;
         healthText.color = Color.white;
@@ -329,7 +355,7 @@ public class NeonHUD : MonoBehaviour
 
         scoreText = scoreValueObj.AddComponent<TextMeshProUGUI>();
         scoreText.text = "0";
-        scoreText.fontSize = 36;
+        scoreText.fontSize = GetMobileFontSize(36);
         scoreText.fontStyle = FontStyles.Bold;
         scoreText.alignment = TextAlignmentOptions.Center;
         scoreText.color = Color.white;
@@ -425,7 +451,7 @@ public class NeonHUD : MonoBehaviour
 
         coinText = coinTextObj.AddComponent<TextMeshProUGUI>();
         coinText.text = "0";
-        coinText.fontSize = 24;
+        coinText.fontSize = GetMobileFontSize(24);
         coinText.fontStyle = FontStyles.Bold;
         coinText.alignment = TextAlignmentOptions.Left;
         coinText.color = new Color(1f, 0.9f, 0.3f);
@@ -473,7 +499,7 @@ public class NeonHUD : MonoBehaviour
 
         ammoText = ammoObj.AddComponent<TextMeshProUGUI>();
         ammoText.text = "12 / 48";
-        ammoText.fontSize = 28;
+        ammoText.fontSize = GetMobileFontSize(28);
         ammoText.fontStyle = FontStyles.Bold;
         ammoText.alignment = TextAlignmentOptions.Center;
         ammoText.color = Color.white;
@@ -566,11 +592,11 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
-    // === SKILL PANEL - Sag Alt ===
+    // === SKILL PANEL - Sag Alt (Mobilde gizli - butonlarda cooldown gosteriliyor) ===
 
     void CreateSkillPanel()
     {
-        float yOffset = isMobile ? 150 : 20;
+        float yOffset = isMobile ? 250 : 20;
 
         skillPanel = CreatePanel("SkillPanel",
             new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0),
@@ -822,8 +848,11 @@ public class NeonHUD : MonoBehaviour
 
     RectTransform CreatePanel(string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 position, Vector2 size)
     {
+        // Safe area varsa HUD panellerini onun altina koy
+        Transform parentTransform = safeAreaRoot != null ? safeAreaRoot : transform;
+
         GameObject panelObj = new GameObject(name);
-        panelObj.transform.SetParent(transform, false);
+        panelObj.transform.SetParent(parentTransform, false);
 
         RectTransform rt = panelObj.AddComponent<RectTransform>();
         rt.anchorMin = anchorMin;

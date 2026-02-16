@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using TMPro;
 
@@ -27,16 +28,11 @@ public class RuntimeUISetup : MonoBehaviour
             neonHudObj.AddComponent<NeonHUD>();
         }
 
-        // Mobil kontroller (sadece mobilde aktif olur)
+        // Mobil kontroller - her zaman olustur, gorunurlugu MobileControls.Start() kontrol eder
         if (MobileControls.Instance == null)
         {
-            bool isMobile = Application.isMobilePlatform ||
-                            UnityEngine.InputSystem.Touchscreen.current != null;
-            if (isMobile)
-            {
-                GameObject mobileCtrlObj = new GameObject("MobileControls");
-                mobileCtrlObj.AddComponent<MobileControls>();
-            }
+            GameObject mobileCtrlObj = new GameObject("MobileControls");
+            mobileCtrlObj.AddComponent<MobileControls>();
         }
     }
 
@@ -49,7 +45,18 @@ public class RuntimeUISetup : MonoBehaviour
         CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
         canvasObj.AddComponent<GraphicRaycaster>();
+
+        // Safe area handling - notch'lu cihazlar icin
+        GameObject safeArea = new GameObject("SafeArea");
+        safeArea.transform.SetParent(canvasObj.transform, false);
+        RectTransform safeAreaRT = safeArea.AddComponent<RectTransform>();
+        safeAreaRT.anchorMin = Vector2.zero;
+        safeAreaRT.anchorMax = Vector2.one;
+        safeAreaRT.offsetMin = Vector2.zero;
+        safeAreaRT.offsetMax = Vector2.zero;
+        safeArea.AddComponent<SafeAreaHandler>();
 
         // EventSystem - Yeni Input System ile uyumlu
         if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
@@ -255,7 +262,12 @@ public class RuntimeUISetup : MonoBehaviour
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = position;
-        rt.sizeDelta = new Vector2(250, 50);
+        // Mobilde minimum 48dp dokunmatik hedef boyutu
+        bool isMobile = Application.isMobilePlatform ||
+                        UnityEngine.InputSystem.Touchscreen.current != null;
+        float minHeight = isMobile ? Mathf.Max(60f, 48f * (Screen.dpi > 0 ? Screen.dpi / 160f : 1f)) : 50f;
+        float btnWidth = isMobile ? 300f : 250f;
+        rt.sizeDelta = new Vector2(btnWidth, minHeight);
 
         Image img = buttonObj.AddComponent<Image>();
         img.color = new Color(0.3f, 0.2f, 0.5f, 1f);

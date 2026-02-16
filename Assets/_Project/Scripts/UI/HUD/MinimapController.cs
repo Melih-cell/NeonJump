@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections.Generic;
 
 /// <summary>
@@ -51,10 +52,14 @@ public class MinimapController : MonoBehaviour
     // Kayitli objeler
     private Dictionary<Transform, MinimapMarker> trackedObjects = new Dictionary<Transform, MinimapMarker>();
     private bool isExpanded = false;
+    private bool isMobile = false;
+    private Button toggleButton;
 
     void Awake()
     {
         Instance = this;
+        isMobile = Application.isMobilePlatform ||
+                   UnityEngine.InputSystem.Touchscreen.current != null;
     }
 
     void Start()
@@ -236,6 +241,57 @@ public class MinimapController : MonoBehaviour
 
         // Player marker'i ucgen yap (basit)
         // Sprite olmadigi icin daire kalacak
+
+        // Mobil icin toggle butonu ekle
+        if (isMobile)
+        {
+            CreateMobileToggleButton();
+        }
+    }
+
+    void CreateMobileToggleButton()
+    {
+        if (minimapFrame == null) return;
+
+        // Minimap cercevesinin alt kisminade toggle butonu
+        GameObject toggleObj = new GameObject("MinimapToggle");
+        toggleObj.transform.SetParent(minimapFrame, false);
+
+        RectTransform toggleRt = toggleObj.AddComponent<RectTransform>();
+        toggleRt.anchorMin = new Vector2(0.5f, 0f);
+        toggleRt.anchorMax = new Vector2(0.5f, 0f);
+        toggleRt.pivot = new Vector2(0.5f, 1f);
+        toggleRt.anchoredPosition = new Vector2(0, -5);
+        // Minimum 48dp dokunmatik boyut
+        float minTouchSize = 48f * (Screen.dpi > 0 ? Screen.dpi / 160f : 1f);
+        toggleRt.sizeDelta = new Vector2(Mathf.Max(80, minTouchSize), Mathf.Max(30, minTouchSize * 0.6f));
+
+        Image toggleBg = toggleObj.AddComponent<Image>();
+        toggleBg.color = new Color(0.05f, 0.05f, 0.15f, 0.85f);
+
+        Outline toggleOutline = toggleObj.AddComponent<Outline>();
+        toggleOutline.effectColor = new Color(0f, 1f, 1f, 0.6f);
+        toggleOutline.effectDistance = new Vector2(1, 1);
+
+        toggleButton = toggleObj.AddComponent<Button>();
+        toggleButton.targetGraphic = toggleBg;
+        toggleButton.onClick.AddListener(ToggleExpanded);
+
+        // Toggle text
+        GameObject textObj = new GameObject("ToggleText");
+        textObj.transform.SetParent(toggleObj.transform, false);
+        RectTransform textRt = textObj.AddComponent<RectTransform>();
+        textRt.anchorMin = Vector2.zero;
+        textRt.anchorMax = Vector2.one;
+        textRt.offsetMin = Vector2.zero;
+        textRt.offsetMax = Vector2.zero;
+
+        TMPro.TextMeshProUGUI toggleText = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        toggleText.text = "HARITA";
+        toggleText.fontSize = 12;
+        toggleText.fontStyle = TMPro.FontStyles.Bold;
+        toggleText.alignment = TMPro.TextAlignmentOptions.Center;
+        toggleText.color = new Color(0f, 1f, 1f, 0.8f);
     }
 
     void LateUpdate()
@@ -330,18 +386,23 @@ public class MinimapController : MonoBehaviour
 
     void HandleInput()
     {
-        // M tusu ile buyut/kucult
+        // M tusu ile buyut/kucult (PC)
         if (Input.GetKeyDown(KeyCode.M))
         {
             ToggleExpanded();
         }
 
-        // Scroll ile zoom
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (Input.GetKey(KeyCode.LeftControl) && Mathf.Abs(scroll) > 0.01f)
+        // Scroll ile zoom (PC)
+        if (!isMobile)
         {
-            zoom = Mathf.Clamp(zoom + scroll * 0.5f, 0.5f, 3f);
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (Input.GetKey(KeyCode.LeftControl) && Mathf.Abs(scroll) > 0.01f)
+            {
+                zoom = Mathf.Clamp(zoom + scroll * 0.5f, 0.5f, 3f);
+            }
         }
+
+        // Mobilde pinch zoom (opsiyonel ileride eklenebilir)
     }
 
     // === PUBLIC METODLAR ===

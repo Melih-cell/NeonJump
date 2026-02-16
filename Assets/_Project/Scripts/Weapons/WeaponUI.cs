@@ -26,12 +26,20 @@ public class WeaponUI : MonoBehaviour
     public Color activeSlotColor = new Color(1f, 0.8f, 0.2f);
     public Color inactiveSlotColor = new Color(0.4f, 0.4f, 0.4f);
     public Color emptySlotColor = new Color(0.2f, 0.2f, 0.2f);
-    public Color lowAmmoColor = new Color(1f, 0.3f, 0.3f);
+    public Color lowAmmoColor = new Color(1f, 0.4f, 0.4f);
     public Color reloadColor = new Color(0.3f, 0.8f, 1f);
 
     private Canvas canvas;
     private GameObject weaponPanel;
     private Coroutine reloadCoroutine;
+    private bool _isMobileCached;
+    private Button[] slotButtons; // Mobilde dokunarak silah degistirme icin slot butonlari
+
+    private bool IsMobileUI()
+    {
+        return Application.isMobilePlatform ||
+               (MobileControls.Instance != null && MobileControls.Instance.IsEnabled);
+    }
 
     void Awake()
     {
@@ -53,54 +61,76 @@ public class WeaponUI : MonoBehaviour
 
     void CreateUI()
     {
-        // Canvas bul veya oluştur
-        canvas = FindFirstObjectByType<Canvas>();
+        // Mobilde kendi Canvas'imizi olustur (MobileControls Canvas'i blocksRaycasts=false kullanir,
+        // slot butonlari calismaz). Masaustunde mevcut Canvas'i kullan.
+        bool isMobile = IsMobileUI();
+        if (!isMobile)
+        {
+            canvas = FindFirstObjectByType<Canvas>();
+        }
         if (canvas == null)
         {
-            GameObject canvasObj = new GameObject("WeaponCanvas");
+            GameObject canvasObj = new GameObject("WeaponUICanvas");
             canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
+            canvas.sortingOrder = 99; // MobileControls(100)'un hemen altinda
 
             CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
 
             canvasObj.AddComponent<GraphicRaycaster>();
         }
 
-        // Ana panel - sağ alt köşe
+        // Ana panel
         weaponPanel = new GameObject("WeaponPanel");
         weaponPanel.transform.SetParent(canvas.transform, false);
 
         RectTransform panelRect = weaponPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(1, 0);
-        panelRect.anchorMax = new Vector2(1, 0);
-        panelRect.pivot = new Vector2(1, 0);
-        panelRect.anchoredPosition = new Vector2(-20, 20);
-        panelRect.sizeDelta = new Vector2(280, 140);
+
+        _isMobileCached = isMobile;
+        if (isMobile)
+        {
+            // Mobil: Sol ust kose - envanter butonunun altinda, joystick ile cakismaz
+            panelRect.anchorMin = new Vector2(0, 1);
+            panelRect.anchorMax = new Vector2(0, 1);
+            panelRect.pivot = new Vector2(0, 1);
+            panelRect.anchoredPosition = new Vector2(15, -120);
+            panelRect.sizeDelta = new Vector2(200, 75);
+        }
+        else
+        {
+            // Masaustu: Sag alt kose (mevcut)
+            panelRect.anchorMin = new Vector2(1, 0);
+            panelRect.anchorMax = new Vector2(1, 0);
+            panelRect.pivot = new Vector2(1, 0);
+            panelRect.anchoredPosition = new Vector2(-20, 20);
+            panelRect.sizeDelta = new Vector2(280, 140);
+        }
 
         // Panel arka planı
         Image panelBg = weaponPanel.AddComponent<Image>();
-        panelBg.color = new Color(0, 0, 0, 0.7f);
+        panelBg.color = new Color(0.06f, 0.06f, 0.1f, 0.8f);
 
-        // Silah adı
-        CreateWeaponNameText();
-
-        // Level ve rarity göstergesi
-        CreateLevelDisplay();
-
-        // Mermi göstergesi
-        CreateAmmoText();
-
-        // Reload bar
-        CreateReloadBar();
-
-        // Slot göstergeleri
-        CreateSlotIndicators();
-
-        // Rarity glow efekti
-        CreateRarityGlow();
+        if (isMobile)
+        {
+            // Mobil kompakt duzen: ust kisimda 3 slot yan yana, altinda bilgi satiri
+            CreateSlotIndicators();
+            CreateMobileInfoLine();
+            CreateReloadBar();
+            CreateRarityGlow();
+        }
+        else
+        {
+            // Masaustu: mevcut duzen
+            CreateWeaponNameText();
+            CreateLevelDisplay();
+            CreateAmmoText();
+            CreateReloadBar();
+            CreateSlotIndicators();
+            CreateRarityGlow();
+        }
     }
 
     void CreateLevelDisplay()
@@ -119,7 +149,7 @@ public class WeaponUI : MonoBehaviour
         levelText = levelObj.AddComponent<Text>();
         levelText.text = "+1 | Siradan";
         levelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        levelText.fontSize = 14;
+        levelText.fontSize = IsMobileUI() ? 10 : 14;
         levelText.fontStyle = FontStyle.Italic;
         levelText.color = new Color(0.8f, 0.8f, 0.8f);
         levelText.alignment = TextAnchor.MiddleCenter;
@@ -160,7 +190,7 @@ public class WeaponUI : MonoBehaviour
                 float dist = Vector2.Distance(new Vector2(x, y), center) / (size / 2f);
                 float alpha = Mathf.Clamp01(1f - dist);
                 alpha = alpha * alpha; // Yumuşak geçiş
-                colors[y * size + x] = new Color(1, 1, 1, alpha * 0.3f);
+                colors[y * size + x] = new Color(1, 1, 1, alpha * 0.18f);
             }
         }
 
@@ -168,6 +198,65 @@ public class WeaponUI : MonoBehaviour
         tex.filterMode = FilterMode.Bilinear;
         tex.Apply();
         return tex;
+    }
+
+    /// <summary>
+    /// Mobil kompakt bilgi satiri: silah adi ve mermi yan yana, slotlarin altinda
+    /// </summary>
+    void CreateMobileInfoLine()
+    {
+        // Bilgi satiri container - panelin alt %30'u
+        GameObject infoLine = new GameObject("MobileInfoLine");
+        infoLine.transform.SetParent(weaponPanel.transform, false);
+
+        RectTransform infoRect = infoLine.AddComponent<RectTransform>();
+        infoRect.anchorMin = new Vector2(0, 0);
+        infoRect.anchorMax = new Vector2(1, 0.32f);
+        infoRect.pivot = new Vector2(0.5f, 0);
+        infoRect.anchoredPosition = Vector2.zero;
+        infoRect.sizeDelta = Vector2.zero;
+
+        // Silah adi (sol taraf)
+        GameObject nameObj = new GameObject("WeaponName");
+        nameObj.transform.SetParent(infoLine.transform, false);
+
+        RectTransform nameRect = nameObj.AddComponent<RectTransform>();
+        nameRect.anchorMin = new Vector2(0, 0);
+        nameRect.anchorMax = new Vector2(0.45f, 1);
+        nameRect.pivot = new Vector2(0, 0.5f);
+        nameRect.anchoredPosition = new Vector2(6, 0);
+        nameRect.sizeDelta = Vector2.zero;
+
+        weaponNameText = nameObj.AddComponent<Text>();
+        weaponNameText.text = "TABANCA";
+        weaponNameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        weaponNameText.fontSize = 11;
+        weaponNameText.fontStyle = FontStyle.Bold;
+        weaponNameText.color = activeSlotColor;
+        weaponNameText.alignment = TextAnchor.MiddleLeft;
+
+        // Mermi bilgisi (sag taraf)
+        GameObject ammoObj = new GameObject("AmmoText");
+        ammoObj.transform.SetParent(infoLine.transform, false);
+
+        RectTransform ammoRect = ammoObj.AddComponent<RectTransform>();
+        ammoRect.anchorMin = new Vector2(0.45f, 0);
+        ammoRect.anchorMax = new Vector2(1, 1);
+        ammoRect.pivot = new Vector2(1, 0.5f);
+        ammoRect.anchoredPosition = new Vector2(-6, 0);
+        ammoRect.sizeDelta = Vector2.zero;
+
+        ammoText = ammoObj.AddComponent<Text>();
+        ammoText.text = "12/48";
+        ammoText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        ammoText.fontSize = 13;
+        ammoText.fontStyle = FontStyle.Bold;
+        ammoText.color = Color.white;
+        ammoText.alignment = TextAnchor.MiddleRight;
+
+        // Level ve stats text'leri mobilde gizli, referansları null bırak
+        levelText = null;
+        statsText = null;
     }
 
     void CreateWeaponNameText()
@@ -185,14 +274,14 @@ public class WeaponUI : MonoBehaviour
         weaponNameText = nameObj.AddComponent<Text>();
         weaponNameText.text = "TABANCA";
         weaponNameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        weaponNameText.fontSize = 20;
+        weaponNameText.fontSize = IsMobileUI() ? 15 : 20;
         weaponNameText.fontStyle = FontStyle.Bold;
         weaponNameText.color = activeSlotColor;
         weaponNameText.alignment = TextAnchor.MiddleCenter;
 
         // Gölge efekti
         Shadow shadow = nameObj.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0, 0, 0, 0.5f);
+        shadow.effectColor = new Color(0, 0, 0, 0.3f);
         shadow.effectDistance = new Vector2(2, -2);
     }
 
@@ -211,26 +300,37 @@ public class WeaponUI : MonoBehaviour
         ammoText = ammoObj.AddComponent<Text>();
         ammoText.text = "12 / 48";
         ammoText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        ammoText.fontSize = 32;
+        ammoText.fontSize = IsMobileUI() ? 24 : 32;
         ammoText.fontStyle = FontStyle.Bold;
         ammoText.color = Color.white;
         ammoText.alignment = TextAnchor.MiddleCenter;
 
         // Outline efekti
         Outline outline = ammoObj.AddComponent<Outline>();
-        outline.effectColor = new Color(0, 0, 0, 0.8f);
+        outline.effectColor = new Color(0, 0, 0, 0.48f);
         outline.effectDistance = new Vector2(1, -1);
     }
 
     void CreateReloadBar()
     {
+        bool isMobile = IsMobileUI();
+
         // Reload bar container
         reloadBar = new GameObject("ReloadBar");
         reloadBar.transform.SetParent(weaponPanel.transform, false);
 
         RectTransform barRect = reloadBar.AddComponent<RectTransform>();
-        barRect.anchorMin = new Vector2(0.1f, 0.4f);
-        barRect.anchorMax = new Vector2(0.9f, 0.5f);
+        if (isMobile)
+        {
+            // Mobil: slotlarin altinda ince cizgi
+            barRect.anchorMin = new Vector2(0.05f, 0.28f);
+            barRect.anchorMax = new Vector2(0.95f, 0.34f);
+        }
+        else
+        {
+            barRect.anchorMin = new Vector2(0.1f, 0.4f);
+            barRect.anchorMax = new Vector2(0.9f, 0.5f);
+        }
         barRect.anchoredPosition = Vector2.zero;
         barRect.sizeDelta = Vector2.zero;
 
@@ -252,41 +352,58 @@ public class WeaponUI : MonoBehaviour
         reloadFill = fillObj.AddComponent<Image>();
         reloadFill.color = reloadColor;
 
-        // "RELOADING" text
-        GameObject reloadTextObj = new GameObject("ReloadText");
-        reloadTextObj.transform.SetParent(reloadBar.transform, false);
+        if (!isMobile)
+        {
+            // Masaustunde "RELOADING" text goster, mobilde yer yok
+            GameObject reloadTextObj = new GameObject("ReloadText");
+            reloadTextObj.transform.SetParent(reloadBar.transform, false);
 
-        RectTransform textRect = reloadTextObj.AddComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.anchoredPosition = Vector2.zero;
-        textRect.sizeDelta = Vector2.zero;
+            RectTransform textRect = reloadTextObj.AddComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.sizeDelta = Vector2.zero;
 
-        Text reloadText = reloadTextObj.AddComponent<Text>();
-        reloadText.text = "RELOADING...";
-        reloadText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        reloadText.fontSize = 14;
-        reloadText.fontStyle = FontStyle.Bold;
-        reloadText.color = Color.white;
-        reloadText.alignment = TextAnchor.MiddleCenter;
+            Text reloadText = reloadTextObj.AddComponent<Text>();
+            reloadText.text = "RELOADING...";
+            reloadText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            reloadText.fontSize = 14;
+            reloadText.fontStyle = FontStyle.Bold;
+            reloadText.color = Color.white;
+            reloadText.alignment = TextAnchor.MiddleCenter;
+        }
 
         reloadBar.SetActive(false);
     }
 
     void CreateSlotIndicators()
     {
+        bool isMobile = IsMobileUI();
+
         GameObject slotsContainer = new GameObject("SlotsContainer");
         slotsContainer.transform.SetParent(weaponPanel.transform, false);
 
         RectTransform containerRect = slotsContainer.AddComponent<RectTransform>();
-        containerRect.anchorMin = new Vector2(0, 0);
-        containerRect.anchorMax = new Vector2(1, 0.35f);
-        containerRect.pivot = new Vector2(0.5f, 0);
-        containerRect.anchoredPosition = new Vector2(0, 8);
-        containerRect.sizeDelta = new Vector2(-20, 0);
+        if (isMobile)
+        {
+            // Mobil: panelin ust %68'i, slotlar yan yana
+            containerRect.anchorMin = new Vector2(0, 0.32f);
+            containerRect.anchorMax = new Vector2(1, 1);
+            containerRect.pivot = new Vector2(0.5f, 1);
+            containerRect.anchoredPosition = Vector2.zero;
+            containerRect.sizeDelta = new Vector2(-8, 0);
+        }
+        else
+        {
+            containerRect.anchorMin = new Vector2(0, 0);
+            containerRect.anchorMax = new Vector2(1, 0.35f);
+            containerRect.pivot = new Vector2(0.5f, 0);
+            containerRect.anchoredPosition = new Vector2(0, 8);
+            containerRect.sizeDelta = new Vector2(-20, 0);
+        }
 
         HorizontalLayoutGroup layout = slotsContainer.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 8;
+        layout.spacing = isMobile ? 4 : 8;
         layout.childAlignment = TextAnchor.MiddleCenter;
         layout.childControlWidth = false;
         layout.childControlHeight = false;
@@ -297,6 +414,7 @@ public class WeaponUI : MonoBehaviour
         slotBorders = new Image[3];
         slotIcons = new Image[3];
         slotLevelBars = new Image[3];
+        slotButtons = new Button[3];
         string[] slotLabels = { "1", "2", "3" };
         string[] slotNames = { "Primary", "Secondary", "Special" };
 
@@ -307,11 +425,29 @@ public class WeaponUI : MonoBehaviour
             slotObj.transform.SetParent(slotsContainer.transform, false);
 
             RectTransform slotRect = slotObj.AddComponent<RectTransform>();
-            slotRect.sizeDelta = new Vector2(75, 40);
+            slotRect.sizeDelta = IsMobileUI() ? new Vector2(55, 50) : new Vector2(75, 40);
 
             // Border
             slotBorders[i] = slotObj.AddComponent<Image>();
             slotBorders[i].color = inactiveSlotColor;
+
+            // Mobilde dokunarak silah degistirme butonu ekle
+            if (isMobile)
+            {
+                Button btn = slotObj.AddComponent<Button>();
+                btn.targetGraphic = slotBorders[i];
+                // Buton renk gecislerini devre disi birak (renkleri kendimiz yonetiyoruz)
+                ColorBlock colors = btn.colors;
+                colors.normalColor = Color.white;
+                colors.highlightedColor = Color.white;
+                colors.pressedColor = new Color(0.8f, 0.8f, 0.8f);
+                colors.selectedColor = Color.white;
+                btn.colors = colors;
+
+                int slotIndex = i; // Closure icin lokal kopyala
+                btn.onClick.AddListener(() => OnMobileSlotTapped(slotIndex));
+                slotButtons[i] = btn;
+            }
 
             // İç kısım
             GameObject innerObj = new GameObject("Inner");
@@ -354,7 +490,7 @@ public class WeaponUI : MonoBehaviour
             Text labelText = labelObj.AddComponent<Text>();
             labelText.text = slotLabels[i];
             labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            labelText.fontSize = 18;
+            labelText.fontSize = IsMobileUI() ? 13 : 18;
             labelText.fontStyle = FontStyle.Bold;
             labelText.color = new Color(1, 1, 1, 0.7f);
             labelText.alignment = TextAnchor.MiddleCenter;
@@ -504,7 +640,7 @@ public class WeaponUI : MonoBehaviour
             if (current.rarity >= WeaponRarity.Rare)
             {
                 Color glowColor = WeaponRarityHelper.GetRarityColor(current.rarity);
-                float pulse = (Mathf.Sin(Time.time * 2f) * 0.15f) + 0.25f;
+                float pulse = (Mathf.Sin(Time.time * 2f) * 0.05f) + 0.10f;
                 rarityGlow.color = new Color(glowColor.r, glowColor.g, glowColor.b, pulse);
             }
             else
@@ -543,7 +679,7 @@ public class WeaponUI : MonoBehaviour
     {
         if (ammoText == null) return;
 
-        ammoText.text = $"{current} / {reserve}";
+        ammoText.text = IsMobileUI() ? $"{current}/{reserve}" : $"{current} / {reserve}";
 
         // Düşük mermi uyarısı
         WeaponInstance weapon = WeaponManager.Instance?.GetCurrentWeapon();
@@ -675,6 +811,22 @@ public class WeaponUI : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Mobilde slot'a dokunarak silah degistir.
+    /// SlotIndicators sirasi: 0=Primary, 1=Secondary, 2=Special
+    /// WeaponManager slot sirasi: 0=Primary, 1=Secondary, 2=Special
+    /// </summary>
+    void OnMobileSlotTapped(int slotIndex)
+    {
+        if (WeaponManager.Instance == null) return;
+
+        WeaponManager.Instance.SwitchToSlot(slotIndex);
+
+        // Ses efekti
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayButton();
     }
 
     void OnDestroy()

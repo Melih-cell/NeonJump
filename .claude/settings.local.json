@@ -12,7 +12,30 @@
       "mcp__mcp-unity__get_console_logs",
       "Bash(node --version:*)",
       "Bash(node build/index.js:*)",
-      "mcp__mcp-registry__search_mcp_registry"
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(curl:*)",
+      "mcp__mcp-unity__manage_editor",
+      "mcp__mcp-unity__manage_scene",
+      "mcp__mcp-unity__read_console",
+      "mcp__mcp-unity__refresh_unity",
+      "mcp__mcp-unity__validate_script",
+      "Bash(npm --version:*)",
+      "Bash(node -e:*)",
+      "Bash(tasklist:*)",
+      "Bash(netstat:*)",
+      "Bash(UNITY_HOST=localhost LOGGING=true timeout 8 node:*)",
+      "Bash(cmd /c \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.cmd\")",
+      "Bash(bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
+      "WebFetch(domain:gofastmcp.com)",
+      "Bash(claude mcp:*)",
+      "Bash(CLAUDECODE= claude mcp list:*)",
+      "Bash(CLAUDECODE= claude mcp --help)",
+      "Bash(CLAUDECODE= claude mcp get mcp-unity)",
+      "Bash(CLAUDECODE= claude mcp remove:*)",
+      "Bash(CLAUDECODE= claude mcp add -s local -e UNITY_HOST=localhost -e LOGGING=true mcp-unity -- bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
+      "Bash(CLAUDECODE= claude mcp add -s local -e UNITY_HOST=localhost -e LOGGING=true mcp-unity bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
+      "Bash(CLAUDECODE= claude mcp add -s local mcp-unity bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
+      "Bash(git add:*)"
     ]
   }
 }

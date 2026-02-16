@@ -38,6 +38,8 @@ public class SaveData
     // Kontrol ayarlari
     public float aimSensitivity = 1f;
     public bool vibrationEnabled = true;
+    public bool aimAssistEnabled = true; // Mobil aim assist (varsayilan acik)
+    public bool mobileEasyMode = false; // Mobil kolay mod (daha fazla can, daha az hasar)
 
     // Erisilebilirlik ayarlari
     public int colorBlindMode = 0;

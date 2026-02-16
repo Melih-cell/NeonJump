@@ -72,7 +72,7 @@ public class LevelSelectPanel : MonoBehaviour
             {
                 levelNumber = i + 1,
                 levelName = $"Level {i + 1}",
-                sceneName = "SampleScene",  // Tum leveller ayni sahneyi yukluyebilir (simdilik)
+                sceneName = "1",  // Tum leveller ayni sahneyi yukluyebilir (simdilik)
                 requiredStars = i * 2,      // Her level icin 2 yildiz daha gerekli
                 isUnlocked = (i == 0),      // Sadece ilk level acik
                 earnedStars = 0

@@ -18,16 +18,12 @@ public class Projectile : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // Debug log
-        Debug.Log($"Projectile hit: {other.name}, Tag: {other.tag}, isPlayerBullet: {isPlayerBullet}");
-
         // Player mermisi ise
         if (isPlayerBullet)
         {
             // Dusmana carpti
             if (other.CompareTag("Enemy"))
             {
-                Debug.Log("Hit enemy! Checking for EnemyHealth...");
                 // Oncelikle EnemyHealth dene (yeni sistem)
                 EnemyHealth enemyHealth = other.GetComponent<EnemyHealth>();
                 if (enemyHealth != null)

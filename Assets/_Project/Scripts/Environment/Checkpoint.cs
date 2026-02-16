@@ -7,9 +7,17 @@ public class Checkpoint : MonoBehaviour
     public Color inactiveColor = new Color(0.5f, 0.5f, 0.5f);
     public Color activeColor = new Color(0f, 1f, 0.5f);
 
+    [Header("Proximity Glow (Mobile)")]
+    [Tooltip("Oyuncu yaklasinca checkpoint parlama mesafesi")]
+    public float proximityGlowDistance = 5f;
+    [Tooltip("Parlama hizi")]
+    public float glowPulseSpeed = 3f;
+
     private SpriteRenderer spriteRenderer;
     private static Checkpoint lastCheckpoint;
     private static Vector3 lastCheckpointPosition;
+    private Transform playerTransform;
+    private float baseGlowAlpha = 0f;
 
     void Start()
     {
@@ -72,6 +80,38 @@ public class Checkpoint : MonoBehaviour
         if (spriteRenderer != null)
         {
             spriteRenderer.color = isActivated ? activeColor : inactiveColor;
+        }
+    }
+
+    void Update()
+    {
+        // Aktive edilmemis checkpoint'ler icin yakinlik parlama efekti
+        if (isActivated || spriteRenderer == null) return;
+
+        // Oyuncu referansini bul
+        if (playerTransform == null)
+        {
+            PlayerController pc = FindFirstObjectByType<PlayerController>();
+            if (pc != null) playerTransform = pc.transform;
+            else return;
+        }
+
+        float distance = Vector2.Distance(transform.position, playerTransform.position);
+
+        if (distance < proximityGlowDistance)
+        {
+            // Mesafeye gore parlama siddeti
+            float proximity = 1f - (distance / proximityGlowDistance);
+            float pulse = 0.5f + Mathf.Sin(Time.time * glowPulseSpeed) * 0.5f;
+            float glow = proximity * pulse;
+
+            // Renk: inaktif renkten parlak neon yesile gecis
+            Color glowColor = Color.Lerp(inactiveColor, new Color(0f, 1f, 0.8f), glow * 0.6f);
+            spriteRenderer.color = glowColor;
+        }
+        else
+        {
+            spriteRenderer.color = inactiveColor;
         }
     }
 

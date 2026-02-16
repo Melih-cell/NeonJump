@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,10 +22,20 @@ public class NotificationManager : MonoBehaviour
     private RectTransform notificationContainer;
     private Queue<UINotificationData> pendingNotifications = new Queue<UINotificationData>();
     private List<GameObject> activeNotifications = new List<GameObject>();
+    private bool isMobile;
+    private float mobileFontScale = 1f;
 
     void Awake()
     {
         Instance = this;
+
+        isMobile = Application.isMobilePlatform ||
+                   UnityEngine.InputSystem.Touchscreen.current != null;
+        if (isMobile)
+        {
+            mobileFontScale = Mathf.Clamp(Screen.dpi / 160f, 1f, 2.5f);
+        }
+
         SetupUI();
     }
 
@@ -48,7 +59,8 @@ public class NotificationManager : MonoBehaviour
 
             CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.referenceResolution = isMobile ? new Vector2(1280, 720) : new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
 
             canvasObj.AddComponent<GraphicRaycaster>();
         }
@@ -61,8 +73,9 @@ public class NotificationManager : MonoBehaviour
         notificationContainer.anchorMin = new Vector2(1, 1);
         notificationContainer.anchorMax = new Vector2(1, 1);
         notificationContainer.pivot = new Vector2(1, 1);
+        float containerWidth = isMobile ? 420f : 350f;
         notificationContainer.anchoredPosition = new Vector2(-20, -80);
-        notificationContainer.sizeDelta = new Vector2(350, 400);
+        notificationContainer.sizeDelta = new Vector2(containerWidth, 400);
 
         VerticalLayoutGroup vlg = containerObj.AddComponent<VerticalLayoutGroup>();
         vlg.spacing = 10;
@@ -191,10 +204,17 @@ public class NotificationManager : MonoBehaviour
         notifObj.transform.SetParent(notificationContainer, false);
         activeNotifications.Add(notifObj);
 
-        // Layout Element
+        // Layout Element (mobilde daha buyuk)
         LayoutElement le = notifObj.AddComponent<LayoutElement>();
-        le.preferredHeight = data.type == NotificationType.Achievement ? 80 : 60;
-        le.preferredWidth = 330;
+        float baseHeight = data.type == NotificationType.Achievement ? 80 : 60;
+        float baseWidth = 330;
+        if (isMobile)
+        {
+            baseHeight *= 1.2f;
+            baseWidth = 400f;
+        }
+        le.preferredHeight = baseHeight;
+        le.preferredWidth = baseWidth;
 
         // Arka plan
         Image bg = notifObj.AddComponent<Image>();
@@ -270,7 +290,7 @@ public class NotificationManager : MonoBehaviour
 
         TextMeshProUGUI tmp = titleObj.AddComponent<TextMeshProUGUI>();
         tmp.text = data.title;
-        tmp.fontSize = 16;
+        tmp.fontSize = isMobile ? Mathf.Max(16 * mobileFontScale, 14f) : 16;
         tmp.fontStyle = FontStyles.Bold;
         tmp.color = GetTitleColor(data.type);
         tmp.alignment = TextAlignmentOptions.Left;
@@ -290,7 +310,7 @@ public class NotificationManager : MonoBehaviour
 
         TextMeshProUGUI tmp = msgObj.AddComponent<TextMeshProUGUI>();
         tmp.text = data.message;
-        tmp.fontSize = 14;
+        tmp.fontSize = isMobile ? Mathf.Max(14 * mobileFontScale, 12f) : 14;
         tmp.color = new Color(0.9f, 0.9f, 0.9f);
         tmp.alignment = TextAlignmentOptions.Left;
     }

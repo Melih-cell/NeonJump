@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,10 +20,21 @@ public class FloatingTextManager : MonoBehaviour
     private Canvas canvas;
     private Queue<GameObject> textPool = new Queue<GameObject>();
     private List<GameObject> activeTexts = new List<GameObject>();
+    private bool isMobile;
+    private float mobileFontScale = 1f;
 
     void Awake()
     {
         Instance = this;
+
+        isMobile = Application.isMobilePlatform ||
+                   UnityEngine.InputSystem.Touchscreen.current != null;
+        if (isMobile)
+        {
+            float dpiScale = Mathf.Clamp(Screen.dpi / 160f, 1f, 2.5f);
+            mobileFontScale = dpiScale;
+        }
+
         SetupCanvas();
         CreatePool();
     }
@@ -45,7 +57,8 @@ public class FloatingTextManager : MonoBehaviour
 
         CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.referenceResolution = isMobile ? new Vector2(1280, 720) : new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
     }
 
     void CreatePool()
@@ -67,14 +80,16 @@ public class FloatingTextManager : MonoBehaviour
         rt.sizeDelta = new Vector2(200, 50);
 
         TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
-        tmp.fontSize = 32;
+        float baseFontSize = isMobile ? Mathf.Max(32 * mobileFontScale, 18f) : 32;
+        tmp.fontSize = baseFontSize;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.fontStyle = FontStyles.Bold;
 
-        // Outline efekti
+        // Outline efekti (mobilde daha kalin)
         Outline outline = obj.AddComponent<Outline>();
         outline.effectColor = Color.black;
-        outline.effectDistance = new Vector2(2, -2);
+        float outlineSize = isMobile ? 3f : 2f;
+        outline.effectDistance = new Vector2(outlineSize, -outlineSize);
 
         return obj;
     }
@@ -190,7 +205,8 @@ public class FloatingTextManager : MonoBehaviour
         // Text ve renk
         tmp.text = text;
         tmp.color = color;
-        tmp.fontSize = Mathf.RoundToInt(32 * scale);
+        float baseSize = isMobile ? Mathf.Max(32 * mobileFontScale, 18f) : 32;
+        tmp.fontSize = Mathf.RoundToInt(baseSize * scale);
 
         // Outline rengi
         outline.effectColor = new Color(0, 0, 0, 0.8f);

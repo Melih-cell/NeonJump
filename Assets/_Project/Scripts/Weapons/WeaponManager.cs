@@ -207,20 +207,29 @@ public class WeaponManager : MonoBehaviour
 
     void HandleWeaponSwitch()
     {
-        // Silah degistirme artik WeaponHotbar tarafindan yonetiliyor
-        // Bu fonksiyon bos birakildi - eski kod kaldirildi
+        // Klavye ile silah degistirme (mobil buton kaldirildi)
     }
 
     void HandleReloadInput()
     {
         var keyboard = UnityEngine.InputSystem.Keyboard.current;
 
-        bool reloadInput = (keyboard != null && keyboard.rKey.wasPressedThisFrame)
-                           || (MobileControls.Instance != null && MobileControls.Instance.ReloadPressed);
+        // Klavye ile reload (R tusu)
+        bool reloadInput = (keyboard != null && keyboard.rKey.wasPressedThisFrame);
 
         if (reloadInput && !isReloading)
         {
             TryReload();
+        }
+
+        // Otomatik reload: mermi bitince otomatik reload baslat
+        if (!isReloading)
+        {
+            WeaponInstance weapon = GetCurrentWeapon();
+            if (weapon != null && weapon.currentAmmo <= 0 && weapon.CanReload())
+            {
+                TryReload();
+            }
         }
     }
 

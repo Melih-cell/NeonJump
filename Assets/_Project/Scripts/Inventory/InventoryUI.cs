@@ -6,12 +6,13 @@ using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Gelişmiş Envanter UI Sistemi
-/// - Hızlı erişim slotları (5,6,7,8 tuşları)
-/// - Tam envanter paneli (Tab/I tuşu)
-/// - Tooltip sistemi
-/// - Aktif efekt göstergesi
-/// - Eşya toplama bildirimi
+/// Gelismis Envanter UI Sistemi
+/// - Hizli erisim slotlari (5,6,7,8 tuslari)
+/// - Tam envanter paneli (Tab/I tusu + mobil buton)
+/// - Tooltip sistemi (masaustu: fare takip, mobil: slot ustune sabit)
+/// - Aktif efekt gostergesi
+/// - Esya toplama bildirimi
+/// - Mobil uyumlu: scroll, responsive boyut, kapatma butonu
 /// </summary>
 public class InventoryUI : MonoBehaviour
 {
@@ -39,13 +40,32 @@ public class InventoryUI : MonoBehaviour
     private TextMeshProUGUI tooltipDesc;
     private Image tooltipIcon;
     private bool isTooltipVisible = false;
+    private RectTransform _lastTappedSlotRt; // Mobilde tooltip pozisyonu icin
 
     // Full inventory state
     private bool isInventoryOpen = false;
 
+    // Mobil alt detay paneli
+    private GameObject _mobileDetailPanel;
+    private Image _mobileDetailIcon;
+    private TextMeshProUGUI _mobileDetailName;
+    private TextMeshProUGUI _mobileDetailDesc;
+    private Button _mobileDetailUseBtn;
+    private Button _mobileDetailEquipBtn;
+    private Button _mobileDetailDropBtn;
+    private ItemType _selectedItemType;
+    private InventorySlotSimpleUI _selectedSlot;
+
     // Notification queue
     private Queue<NotificationData> notificationQueue = new Queue<NotificationData>();
     private bool isShowingNotification = false;
+
+    // Mobil
+    private bool _isMobile = false;
+    private GameObject _mobileInventoryButton;
+    private GameObject _closeButton;
+    private ScrollRect _inventoryScrollRect;
+    private GridLayoutGroup _itemGrid;
 
     void Awake()
     {
@@ -60,12 +80,22 @@ public class InventoryUI : MonoBehaviour
 
     void Start()
     {
+        _isMobile = IsMobilePlatform();
+
         CreateMainCanvas();
         CreateQuickSlots();
         CreateFullInventoryPanel();
-        CreateTooltip();
+        if (!_isMobile)
+        {
+            CreateTooltip();
+        }
         CreateActiveEffectsPanel();
         CreateNotificationPanel();
+
+        if (_isMobile)
+        {
+            CreateMobileInventoryButton();
+        }
 
         // Event'lere abone ol
         if (InventoryManager.Instance != null)
@@ -81,6 +111,22 @@ public class InventoryUI : MonoBehaviour
     {
         HandleInput();
         UpdateActiveEffects();
+
+        // Masaustunde: mobil tooltip dismiss
+        if (!_isMobile && isTooltipVisible)
+        {
+            // Masaustunde tooltip zaten hover ile kapaniyor
+        }
+    }
+
+    /// <summary>
+    /// Mobil platform tespiti: gercek mobil veya MobileControls aktifse true
+    /// </summary>
+    bool IsMobilePlatform()
+    {
+        if (Application.isMobilePlatform) return true;
+        if (MobileControls.Instance != null && MobileControls.Instance.IsEnabled) return true;
+        return false;
     }
 
     void HandleInput()
@@ -88,13 +134,13 @@ public class InventoryUI : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        // Envanter aç/kapa (Tab veya I)
+        // Envanter ac/kapa (Tab veya I)
         if (keyboard.tabKey.wasPressedThisFrame || keyboard.iKey.wasPressedThisFrame)
         {
             ToggleFullInventory();
         }
 
-        // Hızlı slot kullanımı (5, 6, 7, 8 tuşları)
+        // Hizli slot kullanimi (5, 6, 7, 8 tuslari)
         if (keyboard.digit5Key.wasPressedThisFrame) UseQuickSlot(0);
         if (keyboard.digit6Key.wasPressedThisFrame) UseQuickSlot(1);
         if (keyboard.digit7Key.wasPressedThisFrame) UseQuickSlot(2);
@@ -104,6 +150,25 @@ public class InventoryUI : MonoBehaviour
         if (keyboard.escapeKey.wasPressedThisFrame && isInventoryOpen)
         {
             CloseFullInventory();
+        }
+    }
+
+    /// <summary>
+    /// Mobilde baska bir yere dokunulunca tooltip'i kapat
+    /// </summary>
+    void HandleMobileTooltipDismiss()
+    {
+        if (Touchscreen.current == null) return;
+        var touch = Touchscreen.current.primaryTouch;
+        if (touch.press.wasPressedThisFrame)
+        {
+            // Tooltip paneline dokunuldu mu kontrol et
+            Vector2 touchPos = touch.position.ReadValue();
+            RectTransform tooltipRt = tooltipPanel.GetComponent<RectTransform>();
+            if (!RectTransformUtility.RectangleContainsScreenPoint(tooltipRt, touchPos, null))
+            {
+                HideTooltip();
+            }
         }
     }
 
@@ -142,7 +207,7 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
-    // === HIZLI ERİŞİM SLOTLARI ===
+    // === HIZLI ERISIM SLOTLARI ===
 
     void CreateQuickSlots()
     {
@@ -150,23 +215,36 @@ public class InventoryUI : MonoBehaviour
         quickSlotsPanel.transform.SetParent(mainCanvas.transform, false);
 
         RectTransform panelRt = quickSlotsPanel.AddComponent<RectTransform>();
-        panelRt.anchorMin = new Vector2(1, 0);
-        panelRt.anchorMax = new Vector2(1, 0);
-        panelRt.pivot = new Vector2(1, 0);
-        panelRt.anchoredPosition = new Vector2(-margin, margin + 80); // Silah UI'ın üstünde
+
+        if (_isMobile)
+        {
+            // Mobilde ust ortaya
+            panelRt.anchorMin = new Vector2(0.5f, 1);
+            panelRt.anchorMax = new Vector2(0.5f, 1);
+            panelRt.pivot = new Vector2(0.5f, 1);
+            panelRt.anchoredPosition = new Vector2(0, -15);
+        }
+        else
+        {
+            // Masaustunde sag alta
+            panelRt.anchorMin = new Vector2(1, 0);
+            panelRt.anchorMax = new Vector2(1, 0);
+            panelRt.pivot = new Vector2(1, 0);
+            panelRt.anchoredPosition = new Vector2(-margin, margin + 80);
+        }
 
         HorizontalLayoutGroup hlg = quickSlotsPanel.AddComponent<HorizontalLayoutGroup>();
         hlg.spacing = slotSpacing;
-        hlg.childAlignment = TextAnchor.MiddleRight;
+        hlg.childAlignment = _isMobile ? TextAnchor.MiddleCenter : TextAnchor.MiddleRight;
         hlg.childForceExpandWidth = false;
         hlg.childForceExpandHeight = false;
-        hlg.reverseArrangement = true;
+        hlg.reverseArrangement = !_isMobile;
 
         ContentSizeFitter csf = quickSlotsPanel.AddComponent<ContentSizeFitter>();
         csf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
         csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // 4 slot oluştur
+        // 4 slot olustur
         int slotCount = InventoryManager.Instance != null ? InventoryManager.Instance.quickSlotCount : 4;
         for (int i = 0; i < slotCount; i++)
         {
@@ -180,13 +258,14 @@ public class InventoryUI : MonoBehaviour
         slotObj.transform.SetParent(quickSlotsPanel.transform, false);
 
         RectTransform rt = slotObj.AddComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(slotSize, slotSize);
+        float quickSlotActualSize = _isMobile ? 45f : slotSize;
+        rt.sizeDelta = new Vector2(quickSlotActualSize, quickSlotActualSize);
 
         // Arka plan (gradient efektli)
         Image bg = slotObj.AddComponent<Image>();
         bg.color = new Color(0.1f, 0.12f, 0.18f, 0.9f);
 
-        // Çerçeve
+        // Cerceve
         GameObject borderObj = new GameObject("Border");
         borderObj.transform.SetParent(slotObj.transform, false);
         RectTransform borderRt = borderObj.AddComponent<RectTransform>();
@@ -221,7 +300,7 @@ public class InventoryUI : MonoBehaviour
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
-        // Count (sağ alt)
+        // Count (sag alt)
         GameObject countObj = new GameObject("Count");
         countObj.transform.SetParent(slotObj.transform, false);
         RectTransform countRt = countObj.AddComponent<RectTransform>();
@@ -238,7 +317,7 @@ public class InventoryUI : MonoBehaviour
         countText.fontStyle = FontStyles.Bold;
         countText.raycastTarget = false;
 
-        // Kısayol tuşu göstergesi (sol üst)
+        // Kisayol tusu gostergesi (sol ust)
         GameObject keyObj = new GameObject("KeyHint");
         keyObj.transform.SetParent(slotObj.transform, false);
         RectTransform keyRt = keyObj.AddComponent<RectTransform>();
@@ -266,6 +345,12 @@ public class InventoryUI : MonoBehaviour
         keyText.alignment = TextAlignmentOptions.Center;
         keyText.color = new Color(0.7f, 0.75f, 0.85f);
         keyText.raycastTarget = false;
+
+        // Mobilde kisa yol tusunu gizle
+        if (_isMobile)
+        {
+            keyObj.SetActive(false);
+        }
 
         // Cooldown overlay
         GameObject cooldownObj = new GameObject("Cooldown");
@@ -307,7 +392,7 @@ public class InventoryUI : MonoBehaviour
         quickSlots.Add(slotUI);
     }
 
-    // === TAM ENVANTER PANELİ ===
+    // === TAM ENVANTER PANELI ===
 
     void CreateFullInventoryPanel()
     {
@@ -318,13 +403,26 @@ public class InventoryUI : MonoBehaviour
         panelRt.anchorMin = new Vector2(0.5f, 0.5f);
         panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.pivot = new Vector2(0.5f, 0.5f);
-        panelRt.sizeDelta = new Vector2(450, 400);
+
+        // Mobilde neredeyse fullscreen, masaustunde sabit boyut
+        float panelW, panelH;
+        if (_isMobile)
+        {
+            panelW = Screen.width * 0.95f;
+            panelH = Screen.height * 0.9f;
+        }
+        else
+        {
+            panelW = 450f;
+            panelH = 400f;
+        }
+        panelRt.sizeDelta = new Vector2(panelW, panelH);
 
         // Arka plan
         Image bg = fullInventoryPanel.AddComponent<Image>();
         bg.color = new Color(0.08f, 0.1f, 0.15f, 0.95f);
 
-        // Başlık
+        // Baslik
         GameObject titleObj = new GameObject("Title");
         titleObj.transform.SetParent(fullInventoryPanel.transform, false);
         RectTransform titleRt = titleObj.AddComponent<RectTransform>();
@@ -352,47 +450,505 @@ public class InventoryUI : MonoBehaviour
         titleText.color = Color.white;
         titleText.fontStyle = FontStyles.Bold;
 
-        // Kapatma tuşu bilgisi
-        GameObject closeHintObj = new GameObject("CloseHint");
-        closeHintObj.transform.SetParent(titleObj.transform, false);
-        RectTransform closeHintRt = closeHintObj.AddComponent<RectTransform>();
-        closeHintRt.anchorMin = new Vector2(1, 0);
-        closeHintRt.anchorMax = new Vector2(1, 1);
-        closeHintRt.pivot = new Vector2(1, 0.5f);
-        closeHintRt.anchoredPosition = new Vector2(-15, 0);
-        closeHintRt.sizeDelta = new Vector2(100, 0);
+        // Kapatma tusu bilgisi (masaustunde) veya X butonu (mobilde)
+        if (_isMobile)
+        {
+            CreateCloseButton(titleObj.transform);
+        }
+        else
+        {
+            GameObject closeHintObj = new GameObject("CloseHint");
+            closeHintObj.transform.SetParent(titleObj.transform, false);
+            RectTransform closeHintRt = closeHintObj.AddComponent<RectTransform>();
+            closeHintRt.anchorMin = new Vector2(1, 0);
+            closeHintRt.anchorMax = new Vector2(1, 1);
+            closeHintRt.pivot = new Vector2(1, 0.5f);
+            closeHintRt.anchoredPosition = new Vector2(-15, 0);
+            closeHintRt.sizeDelta = new Vector2(100, 0);
 
-        TextMeshProUGUI closeHint = closeHintObj.AddComponent<TextMeshProUGUI>();
-        closeHint.text = "[TAB/ESC]";
-        closeHint.fontSize = 14;
-        closeHint.alignment = TextAlignmentOptions.MidlineRight;
-        closeHint.color = new Color(0.6f, 0.65f, 0.75f);
+            TextMeshProUGUI closeHint = closeHintObj.AddComponent<TextMeshProUGUI>();
+            closeHint.text = "[TAB/ESC]";
+            closeHint.fontSize = 14;
+            closeHint.alignment = TextAlignmentOptions.MidlineRight;
+            closeHint.color = new Color(0.6f, 0.65f, 0.75f);
+        }
 
-        // Eşya grid container
-        GameObject gridObj = new GameObject("ItemGrid");
-        gridObj.transform.SetParent(fullInventoryPanel.transform, false);
-        RectTransform gridRt = gridObj.AddComponent<RectTransform>();
-        gridRt.anchorMin = new Vector2(0, 0);
-        gridRt.anchorMax = new Vector2(1, 1);
-        gridRt.offsetMin = new Vector2(20, 20);
-        gridRt.offsetMax = new Vector2(-20, -60);
+        // ScrollRect sarmalayici - content panelden buyukse kaydirilabilir
+        GameObject scrollViewObj = new GameObject("ScrollView");
+        scrollViewObj.transform.SetParent(fullInventoryPanel.transform, false);
+        RectTransform scrollViewRt = scrollViewObj.AddComponent<RectTransform>();
+        scrollViewRt.anchorMin = new Vector2(0, 0);
+        scrollViewRt.anchorMax = new Vector2(1, 1);
+        // Mobilde altta detay paneli icin 130px yer birak
+        float bottomOffset = _isMobile ? 130f : 15f;
+        scrollViewRt.offsetMin = new Vector2(10, bottomOffset);
+        scrollViewRt.offsetMax = new Vector2(-10, -55);
 
-        GridLayoutGroup grid = gridObj.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(80, 95);
-        grid.spacing = new Vector2(10, 10);
-        grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
-        grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-        grid.childAlignment = TextAnchor.UpperLeft;
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 4;
+        Image scrollViewBg = scrollViewObj.AddComponent<Image>();
+        scrollViewBg.color = new Color(0, 0, 0, 0.01f); // Neredeyse seffaf - raycast icin
+        scrollViewObj.AddComponent<Mask>().showMaskGraphic = false;
 
-        // Her eşya tipi için slot oluştur
+        _inventoryScrollRect = scrollViewObj.AddComponent<ScrollRect>();
+        _inventoryScrollRect.horizontal = false;
+        _inventoryScrollRect.vertical = true;
+        _inventoryScrollRect.movementType = ScrollRect.MovementType.Elastic;
+        _inventoryScrollRect.elasticity = 0.1f;
+        _inventoryScrollRect.scrollSensitivity = 20f;
+
+        // Content objesi - GridLayout buraya ekleniyor
+        GameObject contentObj = new GameObject("Content");
+        contentObj.transform.SetParent(scrollViewObj.transform, false);
+        RectTransform contentRt = contentObj.AddComponent<RectTransform>();
+        contentRt.anchorMin = new Vector2(0, 1);
+        contentRt.anchorMax = new Vector2(1, 1);
+        contentRt.pivot = new Vector2(0.5f, 1);
+        contentRt.anchoredPosition = Vector2.zero;
+        // sizeDelta.x = 0 (stretch), sizeDelta.y ContentSizeFitter ayarlayacak
+        contentRt.sizeDelta = new Vector2(0, 0);
+
+        ContentSizeFitter contentCsf = contentObj.AddComponent<ContentSizeFitter>();
+        contentCsf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        contentCsf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        _inventoryScrollRect.content = contentRt;
+
+        // Grid layout
+        _itemGrid = contentObj.AddComponent<GridLayoutGroup>();
+        if (_isMobile)
+        {
+            _itemGrid.cellSize = new Vector2(75, 75);
+        }
+        else
+        {
+            _itemGrid.cellSize = new Vector2(80, 95);
+        }
+        _itemGrid.spacing = new Vector2(10, 10);
+        _itemGrid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+        _itemGrid.startAxis = GridLayoutGroup.Axis.Horizontal;
+        _itemGrid.childAlignment = TextAnchor.UpperLeft;
+        _itemGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        _itemGrid.constraintCount = 4;
+        _itemGrid.padding = new RectOffset(5, 5, 5, 5);
+
+        // Scrollbar (opsiyonel, ince)
+        GameObject scrollbarObj = new GameObject("Scrollbar");
+        scrollbarObj.transform.SetParent(scrollViewObj.transform, false);
+        RectTransform scrollbarRt = scrollbarObj.AddComponent<RectTransform>();
+        scrollbarRt.anchorMin = new Vector2(1, 0);
+        scrollbarRt.anchorMax = new Vector2(1, 1);
+        scrollbarRt.pivot = new Vector2(1, 0.5f);
+        scrollbarRt.anchoredPosition = Vector2.zero;
+        scrollbarRt.sizeDelta = new Vector2(6, 0);
+
+        Image scrollbarBg = scrollbarObj.AddComponent<Image>();
+        scrollbarBg.color = new Color(0.15f, 0.18f, 0.25f, 0.5f);
+
+        Scrollbar scrollbar = scrollbarObj.AddComponent<Scrollbar>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+
+        GameObject handleObj = new GameObject("Handle");
+        handleObj.transform.SetParent(scrollbarObj.transform, false);
+        RectTransform handleRt = handleObj.AddComponent<RectTransform>();
+        handleRt.anchorMin = Vector2.zero;
+        handleRt.anchorMax = Vector2.one;
+        handleRt.offsetMin = Vector2.zero;
+        handleRt.offsetMax = Vector2.zero;
+        Image handleImg = handleObj.AddComponent<Image>();
+        handleImg.color = new Color(0.4f, 0.45f, 0.55f, 0.7f);
+
+        scrollbar.handleRect = handleRt;
+        scrollbar.targetGraphic = handleImg;
+        _inventoryScrollRect.verticalScrollbar = scrollbar;
+        _inventoryScrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+        _inventoryScrollRect.verticalScrollbarSpacing = 2f;
+
+        // Her esya tipi icin slot olustur
         foreach (ItemType type in System.Enum.GetValues(typeof(ItemType)))
         {
-            CreateInventorySlot(gridObj.transform, type);
+            CreateInventorySlot(contentObj.transform, type);
+        }
+
+        // Mobilde alt detay paneli olustur
+        if (_isMobile)
+        {
+            CreateMobileDetailPanel(fullInventoryPanel.transform);
         }
 
         fullInventoryPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Mobilde envanter panelinin altinda secili item detay alani olusturur
+    /// </summary>
+    void CreateMobileDetailPanel(Transform parent)
+    {
+        _mobileDetailPanel = new GameObject("MobileDetailPanel");
+        _mobileDetailPanel.transform.SetParent(parent, false);
+
+        RectTransform rt = _mobileDetailPanel.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0, 0);
+        rt.anchorMax = new Vector2(1, 0);
+        rt.pivot = new Vector2(0.5f, 0);
+        rt.anchoredPosition = new Vector2(0, 5);
+        rt.sizeDelta = new Vector2(-10, 120);
+
+        Image bg = _mobileDetailPanel.AddComponent<Image>();
+        bg.color = new Color(0.1f, 0.13f, 0.2f, 0.95f);
+
+        // Sol taraf: Icon (50x50)
+        GameObject iconObj = new GameObject("DetailIcon");
+        iconObj.transform.SetParent(_mobileDetailPanel.transform, false);
+        RectTransform iconRt = iconObj.AddComponent<RectTransform>();
+        iconRt.anchorMin = new Vector2(0, 0.5f);
+        iconRt.anchorMax = new Vector2(0, 0.5f);
+        iconRt.pivot = new Vector2(0, 0.5f);
+        iconRt.anchoredPosition = new Vector2(8, 10);
+        iconRt.sizeDelta = new Vector2(50, 50);
+        _mobileDetailIcon = iconObj.AddComponent<Image>();
+        _mobileDetailIcon.preserveAspect = true;
+        _mobileDetailIcon.raycastTarget = false;
+
+        // Item adi (bold)
+        GameObject nameObj = new GameObject("DetailName");
+        nameObj.transform.SetParent(_mobileDetailPanel.transform, false);
+        RectTransform nameRt = nameObj.AddComponent<RectTransform>();
+        nameRt.anchorMin = new Vector2(0, 1);
+        nameRt.anchorMax = new Vector2(1, 1);
+        nameRt.pivot = new Vector2(0, 1);
+        nameRt.anchoredPosition = new Vector2(65, -5);
+        nameRt.sizeDelta = new Vector2(-75, 24);
+        _mobileDetailName = nameObj.AddComponent<TextMeshProUGUI>();
+        _mobileDetailName.fontSize = 16;
+        _mobileDetailName.fontStyle = FontStyles.Bold;
+        _mobileDetailName.color = Color.white;
+        _mobileDetailName.alignment = TextAlignmentOptions.MidlineLeft;
+        _mobileDetailName.raycastTarget = false;
+
+        // Item aciklamasi
+        GameObject descObj = new GameObject("DetailDesc");
+        descObj.transform.SetParent(_mobileDetailPanel.transform, false);
+        RectTransform descRt = descObj.AddComponent<RectTransform>();
+        descRt.anchorMin = new Vector2(0, 1);
+        descRt.anchorMax = new Vector2(1, 1);
+        descRt.pivot = new Vector2(0, 1);
+        descRt.anchoredPosition = new Vector2(65, -28);
+        descRt.sizeDelta = new Vector2(-75, 30);
+        _mobileDetailDesc = descObj.AddComponent<TextMeshProUGUI>();
+        _mobileDetailDesc.fontSize = 11;
+        _mobileDetailDesc.color = new Color(0.7f, 0.75f, 0.85f);
+        _mobileDetailDesc.alignment = TextAlignmentOptions.TopLeft;
+        _mobileDetailDesc.enableWordWrapping = true;
+        _mobileDetailDesc.overflowMode = TextOverflowModes.Ellipsis;
+        _mobileDetailDesc.raycastTarget = false;
+
+        // Alt kisim: Butonlar (yan yana)
+        GameObject buttonsRow = new GameObject("ButtonsRow");
+        buttonsRow.transform.SetParent(_mobileDetailPanel.transform, false);
+        RectTransform buttonsRt = buttonsRow.AddComponent<RectTransform>();
+        buttonsRt.anchorMin = new Vector2(0, 0);
+        buttonsRt.anchorMax = new Vector2(1, 0);
+        buttonsRt.pivot = new Vector2(0.5f, 0);
+        buttonsRt.anchoredPosition = new Vector2(0, 5);
+        buttonsRt.sizeDelta = new Vector2(-16, 40);
+
+        HorizontalLayoutGroup hlg = buttonsRow.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = 8;
+        hlg.childAlignment = TextAnchor.MiddleCenter;
+        hlg.childForceExpandWidth = true;
+        hlg.childForceExpandHeight = true;
+        hlg.padding = new RectOffset(0, 0, 0, 0);
+
+        // KULLAN butonu (yesil, genis)
+        _mobileDetailUseBtn = CreateDetailButton(buttonsRow.transform, "KULLAN",
+            new Color(0.15f, 0.6f, 0.15f), new Color(0.2f, 0.7f, 0.2f));
+        LayoutElement useLayout = _mobileDetailUseBtn.gameObject.AddComponent<LayoutElement>();
+        useLayout.flexibleWidth = 2f;
+        _mobileDetailUseBtn.onClick.AddListener(OnMobileDetailUse);
+
+        // KUSAN butonu (mavi)
+        _mobileDetailEquipBtn = CreateDetailButton(buttonsRow.transform, "KUSAN",
+            new Color(0.15f, 0.3f, 0.7f), new Color(0.2f, 0.4f, 0.8f));
+        LayoutElement equipLayout = _mobileDetailEquipBtn.gameObject.AddComponent<LayoutElement>();
+        equipLayout.flexibleWidth = 1.5f;
+        _mobileDetailEquipBtn.onClick.AddListener(OnMobileDetailEquip);
+
+        // AT butonu (kirmizi, kucuk)
+        _mobileDetailDropBtn = CreateDetailButton(buttonsRow.transform, "AT",
+            new Color(0.6f, 0.15f, 0.15f), new Color(0.7f, 0.2f, 0.2f));
+        LayoutElement dropLayout = _mobileDetailDropBtn.gameObject.AddComponent<LayoutElement>();
+        dropLayout.flexibleWidth = 1f;
+        _mobileDetailDropBtn.onClick.AddListener(OnMobileDetailDrop);
+
+        _mobileDetailPanel.SetActive(false);
+    }
+
+    Button CreateDetailButton(Transform parent, string text, Color normalColor, Color pressedColor)
+    {
+        GameObject btnObj = new GameObject("Btn_" + text);
+        btnObj.transform.SetParent(parent, false);
+
+        Image btnBg = btnObj.AddComponent<Image>();
+        btnBg.color = normalColor;
+
+        Button btn = btnObj.AddComponent<Button>();
+        ColorBlock colors = btn.colors;
+        colors.normalColor = normalColor;
+        colors.highlightedColor = Color.Lerp(normalColor, Color.white, 0.2f);
+        colors.pressedColor = pressedColor;
+        btn.colors = colors;
+
+        GameObject txtObj = new GameObject("Text");
+        txtObj.transform.SetParent(btnObj.transform, false);
+        RectTransform txtRt = txtObj.AddComponent<RectTransform>();
+        txtRt.anchorMin = Vector2.zero;
+        txtRt.anchorMax = Vector2.one;
+        txtRt.offsetMin = Vector2.zero;
+        txtRt.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI btnText = txtObj.AddComponent<TextMeshProUGUI>();
+        btnText.text = text;
+        btnText.fontSize = 14;
+        btnText.alignment = TextAlignmentOptions.Center;
+        btnText.color = Color.white;
+        btnText.fontStyle = FontStyles.Bold;
+        btnText.raycastTarget = false;
+
+        return btn;
+    }
+
+    /// <summary>
+    /// Mobil detay panelini secili item ile guncelle
+    /// </summary>
+    void ShowMobileDetailForItem(ItemType type, InventorySlotSimpleUI slot)
+    {
+        // Onceki secili slotu temizle
+        if (_selectedSlot != null)
+        {
+            ClearSlotHighlight(_selectedSlot);
+        }
+
+        _selectedItemType = type;
+        _selectedSlot = slot;
+
+        // Slotu highlight yap
+        if (slot != null)
+        {
+            HighlightSlot(slot);
+        }
+
+        InventoryItem item = InventoryItem.Create(type);
+        int count = InventoryManager.Instance != null ? InventoryManager.Instance.GetItemCount(type) : 0;
+
+        _mobileDetailIcon.sprite = InventorySprites.CreateItemSprite(type);
+        _mobileDetailName.text = item.name;
+        _mobileDetailDesc.text = item.description + " (Adet: " + count + ")";
+
+        _mobileDetailPanel.SetActive(true);
+    }
+
+    void HighlightSlot(InventorySlotSimpleUI slot)
+    {
+        if (slot != null && slot.background != null)
+        {
+            slot.background.color = new Color(0.3f, 0.35f, 0.5f, 0.95f);
+        }
+    }
+
+    void ClearSlotHighlight(InventorySlotSimpleUI slot)
+    {
+        if (slot != null)
+        {
+            slot.Refresh(); // Orijinal rengi geri yukle
+        }
+    }
+
+    void OnMobileDetailUse()
+    {
+        if (InventoryManager.Instance != null)
+        {
+            bool used = InventoryManager.Instance.UseItem(_selectedItemType);
+            if (used)
+            {
+                ShowNotification(_selectedItemType, -1);
+                // Detay panelini guncelle
+                int newCount = InventoryManager.Instance.GetItemCount(_selectedItemType);
+                if (newCount <= 0)
+                {
+                    _mobileDetailPanel.SetActive(false);
+                }
+                else
+                {
+                    ShowMobileDetailForItem(_selectedItemType, _selectedSlot);
+                }
+            }
+        }
+    }
+
+    void OnMobileDetailEquip()
+    {
+        if (InventoryManager.Instance == null) return;
+
+        // InventoryItemInstance uzerinden equip denemesi
+        var items = InventoryManager.Instance.GetAllItemInstances();
+        InventoryItemInstance targetItem = null;
+        foreach (var item in items)
+        {
+            if (item.itemType == _selectedItemType)
+            {
+                targetItem = item;
+                break;
+            }
+        }
+
+        if (targetItem != null && EquipmentManager.Instance != null)
+        {
+            if (targetItem.isEquipped)
+            {
+                EquipmentManager.Instance.Unequip(targetItem.equippedSlot);
+            }
+            else
+            {
+                EquipmentManager.Instance.TryEquip(targetItem);
+            }
+        }
+    }
+
+    void OnMobileDetailDrop()
+    {
+        if (InventoryManager.Instance == null) return;
+
+        var items = InventoryManager.Instance.GetAllItemInstances();
+        InventoryItemInstance targetItem = null;
+        foreach (var item in items)
+        {
+            if (item.itemType == _selectedItemType)
+            {
+                targetItem = item;
+                break;
+            }
+        }
+
+        if (targetItem != null)
+        {
+            InventoryManager.Instance.DropItem(targetItem);
+            _mobileDetailPanel.SetActive(false);
+            if (_selectedSlot != null) ClearSlotHighlight(_selectedSlot);
+            _selectedSlot = null;
+            RefreshInventorySlots();
+        }
+    }
+
+    /// <summary>
+    /// Mobilde panel sag ust kosesine X kapatma butonu ekler
+    /// </summary>
+    void CreateCloseButton(Transform titleParent)
+    {
+        _closeButton = new GameObject("CloseButton");
+        _closeButton.transform.SetParent(titleParent, false);
+
+        RectTransform rt = _closeButton.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1, 0.5f);
+        rt.anchorMax = new Vector2(1, 0.5f);
+        rt.pivot = new Vector2(1, 0.5f);
+        rt.anchoredPosition = new Vector2(-8, 0);
+        rt.sizeDelta = new Vector2(50, 50);
+
+        Image bg = _closeButton.AddComponent<Image>();
+        bg.color = new Color(0.8f, 0.2f, 0.2f, 0.9f);
+
+        Button btn = _closeButton.AddComponent<Button>();
+        btn.onClick.AddListener(CloseFullInventory);
+
+        ColorBlock colors = btn.colors;
+        colors.normalColor = new Color(0.8f, 0.2f, 0.2f);
+        colors.highlightedColor = new Color(0.9f, 0.3f, 0.3f);
+        colors.pressedColor = new Color(0.6f, 0.15f, 0.15f);
+        btn.colors = colors;
+
+        // X yazisi
+        GameObject xTextObj = new GameObject("XText");
+        xTextObj.transform.SetParent(_closeButton.transform, false);
+        RectTransform xRt = xTextObj.AddComponent<RectTransform>();
+        xRt.anchorMin = Vector2.zero;
+        xRt.anchorMax = Vector2.one;
+        xRt.offsetMin = Vector2.zero;
+        xRt.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI xText = xTextObj.AddComponent<TextMeshProUGUI>();
+        xText.text = "X";
+        xText.fontSize = 20;
+        xText.alignment = TextAlignmentOptions.Center;
+        xText.color = Color.white;
+        xText.fontStyle = FontStyles.Bold;
+        xText.raycastTarget = false;
+    }
+
+    // === MOBIL ENVANTER BUTONU ===
+
+    /// <summary>
+    /// Sol ust koseye kucuk canta/envanter butonu olusturur (sadece mobilde)
+    /// </summary>
+    void CreateMobileInventoryButton()
+    {
+        _mobileInventoryButton = new GameObject("MobileInventoryButton");
+        _mobileInventoryButton.transform.SetParent(mainCanvas.transform, false);
+
+        RectTransform rt = _mobileInventoryButton.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0, 1);
+        rt.anchorMax = new Vector2(0, 1);
+        rt.pivot = new Vector2(0, 1);
+        rt.anchoredPosition = new Vector2(15, -60);
+        rt.sizeDelta = new Vector2(55, 55);
+
+        Image bg = _mobileInventoryButton.AddComponent<Image>();
+        bg.color = new Color(0.15f, 0.18f, 0.25f, 0.85f);
+
+        Button btn = _mobileInventoryButton.AddComponent<Button>();
+        btn.onClick.AddListener(ToggleFullInventory);
+
+        ColorBlock colors = btn.colors;
+        colors.normalColor = new Color(0.15f, 0.18f, 0.25f);
+        colors.highlightedColor = new Color(0.22f, 0.26f, 0.35f);
+        colors.pressedColor = new Color(0.3f, 0.35f, 0.45f);
+        btn.colors = colors;
+
+        // 4 kare grid ikonu (procedural canta ikonu)
+        CreateGridIcon(_mobileInventoryButton.transform);
+    }
+
+    /// <summary>
+    /// 2x2 grid seklinde basit canta/envanter ikonu olusturur
+    /// </summary>
+    void CreateGridIcon(Transform parent)
+    {
+        float iconPadding = 10f;
+        float squareSize = 9f;
+        float gap = 3f;
+
+        // Her kare icin pozisyonlar (2x2 grid, merkezde)
+        Vector2[] positions = new Vector2[]
+        {
+            new Vector2(-squareSize / 2f - gap / 2f, squareSize / 2f + gap / 2f),   // sol ust
+            new Vector2(squareSize / 2f + gap / 2f, squareSize / 2f + gap / 2f),     // sag ust
+            new Vector2(-squareSize / 2f - gap / 2f, -squareSize / 2f - gap / 2f),   // sol alt
+            new Vector2(squareSize / 2f + gap / 2f, -squareSize / 2f - gap / 2f),    // sag alt
+        };
+
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject sq = new GameObject("GridSquare_" + i);
+            sq.transform.SetParent(parent, false);
+            RectTransform sqRt = sq.AddComponent<RectTransform>();
+            sqRt.anchorMin = new Vector2(0.5f, 0.5f);
+            sqRt.anchorMax = new Vector2(0.5f, 0.5f);
+            sqRt.pivot = new Vector2(0.5f, 0.5f);
+            sqRt.anchoredPosition = positions[i];
+            sqRt.sizeDelta = new Vector2(squareSize, squareSize);
+
+            Image sqImg = sq.AddComponent<Image>();
+            sqImg.color = new Color(0.65f, 0.7f, 0.8f, 0.9f);
+            sqImg.raycastTarget = false;
+        }
     }
 
     void CreateInventorySlot(Transform parent, ItemType itemType)
@@ -418,7 +974,7 @@ public class InventoryUI : MonoBehaviour
         icon.sprite = InventorySprites.CreateItemSprite(itemType);
         icon.preserveAspect = true;
 
-        // İsim
+        // Isim
         GameObject nameObj = new GameObject("Name");
         nameObj.transform.SetParent(slotObj.transform, false);
         RectTransform nameRt = nameObj.AddComponent<RectTransform>();
@@ -429,7 +985,7 @@ public class InventoryUI : MonoBehaviour
 
         TextMeshProUGUI nameText = nameObj.AddComponent<TextMeshProUGUI>();
         nameText.text = itemInfo.name;
-        nameText.fontSize = 11;
+        nameText.fontSize = _isMobile ? 10 : 11;
         nameText.alignment = TextAlignmentOptions.Center;
         nameText.color = new Color(0.8f, 0.85f, 0.95f);
         nameText.enableWordWrapping = false;
@@ -457,7 +1013,7 @@ public class InventoryUI : MonoBehaviour
 
         TextMeshProUGUI countText = countTextObj.AddComponent<TextMeshProUGUI>();
         countText.text = "0";
-        countText.fontSize = 14;
+        countText.fontSize = _isMobile ? 12 : 14;
         countText.alignment = TextAlignmentOptions.Center;
         countText.color = Color.white;
         countText.fontStyle = FontStyles.Bold;
@@ -467,11 +1023,11 @@ public class InventoryUI : MonoBehaviour
         ItemType capturedType = itemType;
         btn.onClick.AddListener(() => OnInventorySlotClicked(capturedType));
 
-        ColorBlock colors = btn.colors;
-        colors.normalColor = new Color(0.12f, 0.15f, 0.22f);
-        colors.highlightedColor = new Color(0.2f, 0.25f, 0.35f);
-        colors.pressedColor = new Color(0.25f, 0.3f, 0.4f);
-        btn.colors = colors;
+        ColorBlock slotColors = btn.colors;
+        slotColors.normalColor = new Color(0.12f, 0.15f, 0.22f);
+        slotColors.highlightedColor = new Color(0.2f, 0.25f, 0.35f);
+        slotColors.pressedColor = new Color(0.25f, 0.3f, 0.4f);
+        btn.colors = slotColors;
 
         // Slot UI component
         InventorySlotSimpleUI slotUI = slotObj.AddComponent<InventorySlotSimpleUI>();
@@ -480,30 +1036,43 @@ public class InventoryUI : MonoBehaviour
         slotUI.countText = countText;
         slotUI.background = bg;
 
-        // Hover tooltip
-        EventTrigger trigger = slotObj.AddComponent<EventTrigger>();
+        // Hover / tap tooltip (sadece masaustunde tooltip, mobilde detay paneli buton ile aciliyor)
+        if (!_isMobile)
+        {
+            EventTrigger trigger = slotObj.AddComponent<EventTrigger>();
 
-        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
-        enterEntry.eventID = EventTriggerType.PointerEnter;
-        enterEntry.callback.AddListener((data) => ShowTooltipForItem(itemType));
-        trigger.triggers.Add(enterEntry);
+            EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+            enterEntry.eventID = EventTriggerType.PointerEnter;
+            enterEntry.callback.AddListener((data) => ShowTooltipForItem(capturedType));
+            trigger.triggers.Add(enterEntry);
 
-        EventTrigger.Entry exitEntry = new EventTrigger.Entry();
-        exitEntry.eventID = EventTriggerType.PointerExit;
-        exitEntry.callback.AddListener((data) => HideTooltip());
-        trigger.triggers.Add(exitEntry);
+            EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+            exitEntry.eventID = EventTriggerType.PointerExit;
+            exitEntry.callback.AddListener((data) => HideTooltip());
+            trigger.triggers.Add(exitEntry);
+        }
 
         inventorySlots.Add(slotUI);
     }
 
     void OnInventorySlotClicked(ItemType type)
     {
-        if (InventoryManager.Instance != null)
+        if (_isMobile)
         {
-            bool used = InventoryManager.Instance.UseItem(type);
-            if (used)
+            // Mobilde: tiklaninca detay paneline bilgi yansit
+            InventorySlotSimpleUI clickedSlot = inventorySlots.Find(s => s.itemType == type);
+            ShowMobileDetailForItem(type, clickedSlot);
+        }
+        else
+        {
+            // Masaustunde: dogrudan kullan
+            if (InventoryManager.Instance != null)
             {
-                ShowNotification(type, -1); // -1 = kullanıldı
+                bool used = InventoryManager.Instance.UseItem(type);
+                if (used)
+                {
+                    ShowNotification(type, -1); // -1 = kullanildi
+                }
             }
         }
     }
@@ -523,7 +1092,7 @@ public class InventoryUI : MonoBehaviour
         bg.color = new Color(0.05f, 0.08f, 0.12f, 0.95f);
         bg.raycastTarget = false;
 
-        // Çerçeve
+        // Cerceve
         Outline outline = tooltipPanel.AddComponent<Outline>();
         outline.effectColor = new Color(0.3f, 0.35f, 0.45f);
         outline.effectDistance = new Vector2(2, 2);
@@ -540,7 +1109,7 @@ public class InventoryUI : MonoBehaviour
         tooltipIcon = iconObj.AddComponent<Image>();
         tooltipIcon.preserveAspect = true;
 
-        // Başlık
+        // Baslik
         GameObject titleObj = new GameObject("Title");
         titleObj.transform.SetParent(tooltipPanel.transform, false);
         RectTransform titleRt = titleObj.AddComponent<RectTransform>();
@@ -553,7 +1122,7 @@ public class InventoryUI : MonoBehaviour
         tooltipTitle.fontStyle = FontStyles.Bold;
         tooltipTitle.color = Color.white;
 
-        // Açıklama
+        // Aciklama
         GameObject descObj = new GameObject("Description");
         descObj.transform.SetParent(tooltipPanel.transform, false);
         RectTransform descRt = descObj.AddComponent<RectTransform>();
@@ -577,6 +1146,10 @@ public class InventoryUI : MonoBehaviour
 
     void ShowTooltipForItem(ItemType type)
     {
+        // Mobilde tooltip kullanma, detay paneli var
+        if (_isMobile) return;
+        if (tooltipPanel == null) return;
+
         InventoryItem item = InventoryItem.Create(type);
         int count = InventoryManager.Instance != null ? InventoryManager.Instance.GetItemCount(type) : 0;
 
@@ -587,8 +1160,48 @@ public class InventoryUI : MonoBehaviour
         tooltipPanel.SetActive(true);
         isTooltipVisible = true;
 
-        // Mouse pozisyonuna taşı
+        // Masaustunde: mouse pozisyonuna takip
         StartCoroutine(UpdateTooltipPosition());
+    }
+
+    /// <summary>
+    /// Mobilde tooltip'i son dokunulan slot'un ustune konumlar
+    /// </summary>
+    void PositionTooltipAboveSlot()
+    {
+        if (_lastTappedSlotRt == null) return;
+
+        RectTransform tooltipRt = tooltipPanel.GetComponent<RectTransform>();
+
+        // Slot'un dunya pozisyonunu al, tooltip'i ustune koy
+        Vector3 slotWorldPos = _lastTappedSlotRt.position;
+        float slotHeight = _lastTappedSlotRt.rect.height * _lastTappedSlotRt.lossyScale.y;
+        tooltipRt.position = new Vector3(slotWorldPos.x, slotWorldPos.y + slotHeight / 2f + 5f, 0);
+
+        // Ekran disina tasmamasi icin clamp
+        Vector3[] corners = new Vector3[4];
+        tooltipRt.GetWorldCorners(corners);
+        float screenW = Screen.width;
+        float screenH = Screen.height;
+
+        // Sag tarafa tasiyor mu?
+        if (corners[2].x > screenW)
+        {
+            float overflow = corners[2].x - screenW;
+            tooltipRt.position -= new Vector3(overflow + 10f, 0, 0);
+        }
+        // Sol tarafa tasiyor mu?
+        if (corners[0].x < 0)
+        {
+            float overflow = -corners[0].x;
+            tooltipRt.position += new Vector3(overflow + 10f, 0, 0);
+        }
+        // Ust tarafa tasiyor mu? Altta goster
+        if (corners[1].y > screenH)
+        {
+            tooltipRt.position = new Vector3(tooltipRt.position.x,
+                slotWorldPos.y - slotHeight / 2f - tooltipRt.rect.height * tooltipRt.lossyScale.y - 5f, 0);
+        }
     }
 
     System.Collections.IEnumerator UpdateTooltipPosition()
@@ -605,10 +1218,12 @@ public class InventoryUI : MonoBehaviour
     void HideTooltip()
     {
         isTooltipVisible = false;
-        tooltipPanel.SetActive(false);
+        _lastTappedSlotRt = null;
+        if (tooltipPanel != null)
+            tooltipPanel.SetActive(false);
     }
 
-    // === AKTİF EFEKTLER ===
+    // === AKTIF EFEKTLER ===
 
     void CreateActiveEffectsPanel()
     {
@@ -619,7 +1234,9 @@ public class InventoryUI : MonoBehaviour
         rt.anchorMin = new Vector2(0, 1);
         rt.anchorMax = new Vector2(0, 1);
         rt.pivot = new Vector2(0, 1);
-        rt.anchoredPosition = new Vector2(margin, -margin - 50);
+        // Mobilde envanter butonunun altinda yer birak
+        float yOffset = _isMobile ? -120f : -margin - 50f;
+        rt.anchoredPosition = new Vector2(margin, yOffset);
 
         VerticalLayoutGroup vlg = activeEffectsPanel.AddComponent<VerticalLayoutGroup>();
         vlg.spacing = 5;
@@ -636,16 +1253,16 @@ public class InventoryUI : MonoBehaviour
     {
         if (PowerUpManager.Instance == null) return;
 
-        // Aktif power-up'ları kontrol et
+        // Aktif power-up'lari kontrol et
         ItemType[] timedItems = { ItemType.Shield, ItemType.SpeedBoost, ItemType.DoubleDamage, ItemType.Magnet };
         PowerUpType[] powerUpTypes = { PowerUpType.Shield, PowerUpType.SpeedBoost, PowerUpType.SpeedBoost, PowerUpType.Magnet };
 
         for (int i = 0; i < timedItems.Length; i++)
         {
-            // PowerUpManager'dan kalan süreyi al
+            // PowerUpManager'dan kalan sureyi al
             float remaining = 0f;
 
-            // Shield için özel kontrol
+            // Shield icin ozel kontrol
             if (timedItems[i] == ItemType.Shield)
             {
                 remaining = PowerUpManager.Instance.GetRemainingTime(PowerUpType.Shield);
@@ -672,7 +1289,7 @@ public class InventoryUI : MonoBehaviour
 
     void UpdateOrCreateActiveEffect(ItemType type, float remaining)
     {
-        // Mevcut efekt var mı?
+        // Mevcut efekt var mi?
         ActiveEffectUI existing = activeEffects.Find(e => e.itemType == type);
         if (existing != null)
         {
@@ -680,7 +1297,7 @@ public class InventoryUI : MonoBehaviour
         }
         else
         {
-            // Yeni efekt oluştur
+            // Yeni efekt olustur
             CreateActiveEffectUI(type, remaining);
         }
     }
@@ -768,7 +1385,7 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
-    // === BİLDİRİMLER ===
+    // === BILDIRIMLER ===
 
     void CreateNotificationPanel()
     {
@@ -880,7 +1497,7 @@ public class InventoryUI : MonoBehaviour
         isShowingNotification = false;
     }
 
-    // === ENVANTER AÇ/KAPA ===
+    // === ENVANTER AC/KAPA ===
 
     public void ToggleFullInventory()
     {
@@ -895,7 +1512,14 @@ public class InventoryUI : MonoBehaviour
         isInventoryOpen = true;
         fullInventoryPanel.SetActive(true);
         RefreshInventorySlots();
-        Time.timeScale = 0.1f; // Oyunu yavaşlat
+
+        // Scroll'u en basa al
+        if (_inventoryScrollRect != null)
+        {
+            _inventoryScrollRect.verticalNormalizedPosition = 1f;
+        }
+
+        Time.timeScale = 0f; // Oyunu tamamen durdur
     }
 
     public void CloseFullInventory()
@@ -903,6 +1527,15 @@ public class InventoryUI : MonoBehaviour
         isInventoryOpen = false;
         fullInventoryPanel.SetActive(false);
         HideTooltip();
+
+        // Mobil detay panelini de kapat
+        if (_isMobile && _mobileDetailPanel != null)
+        {
+            _mobileDetailPanel.SetActive(false);
+            if (_selectedSlot != null) ClearSlotHighlight(_selectedSlot);
+            _selectedSlot = null;
+        }
+
         Time.timeScale = 1f;
     }
 
@@ -913,7 +1546,7 @@ public class InventoryUI : MonoBehaviour
         RefreshSlotForItem(type);
         RefreshInventorySlots();
 
-        // Bildirim göster (toplama)
+        // Bildirim goster (toplama)
         if (newCount > 0)
         {
             // ShowNotification(type, 1); // Her eklemede bildirim - opsiyonel
@@ -995,7 +1628,7 @@ public class QuickSlotUI : MonoBehaviour
         // Miktar
         countText.text = count.ToString();
 
-        // Eşya yoksa soluk göster
+        // Esya yoksa soluk goster
         float alpha = count > 0 ? 1f : 0.3f;
         icon.color = new Color(1, 1, 1, alpha);
         countText.color = count > 0 ? Color.white : new Color(0.4f, 0.4f, 0.4f);
