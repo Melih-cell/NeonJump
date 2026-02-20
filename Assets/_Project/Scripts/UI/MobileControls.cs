@@ -6,7 +6,7 @@ using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 using System.Collections.Generic;
 
 /// <summary>
-/// Profesyonel mobil kontroller - Floating joystick, neon butonlar, cooldown overlay.
+/// Mobil kontroller - Floating joystick, doga temasi butonlar, cooldown overlay.
 /// Prosedural gorsellerle programatik olarak olusturulur.
 /// Haptic feedback, auto-fire, swipe gesture destegi icerir.
 /// </summary>
@@ -15,16 +15,16 @@ public class MobileControls : MonoBehaviour
     public static MobileControls Instance { get; private set; }
 
     // === JOYSTICK STATE ===
-    private RectTransform joystickArea; // Sol yarim ekran - dokunma alani
-    private RectTransform joystickContainer; // Background + handle parent
+    private RectTransform joystickArea;
+    private RectTransform joystickContainer;
     private RectTransform joystickBackground;
     private RectTransform joystickHandle;
     private Image joystickGlowImage;
     private Vector2 joystickInput;
-    private Vector2 smoothedJoystickInput; // Smoothed joystick input
+    private Vector2 smoothedJoystickInput;
     private bool isJoystickActive;
     private int joystickTouchId = -1;
-    private Vector2 joystickOrigin; // Floating: dokunulan nokta
+    private Vector2 joystickOrigin;
 
     // === BUTTON REFS ===
     private RectTransform jumpButton;
@@ -38,7 +38,7 @@ public class MobileControls : MonoBehaviour
     private Image dashGlow;
     private Image rollGlow;
 
-    // Button icon images (for tinting)
+    // Button icon images
     private Image jumpIcon;
     private Image fireIcon;
     private Image dashIcon;
@@ -78,34 +78,34 @@ public class MobileControls : MonoBehaviour
 
     // === ANIMATION ===
     private float joystickGlowAlpha = 0f;
-    private float handleReturnSpeed = 12f; // Smooth return hizi
+    private float handleReturnSpeed = 12f;
     private bool isHandleReturning = false;
     private Dictionary<RectTransform, float> buttonScaleTimers = new Dictionary<RectTransform, float>();
 
     // === JOYSTICK SETTINGS ===
     private float joystickRadius = 100f;
     private float deadZone = 0.15f;
-    private int joystickBgSize = 250; // Pixel (base, ekrana gore olceklenir)
-    private int joystickHandleSize = 100; // Pixel (base, ekrana gore olceklenir)
-    private float joystickInputSmoothSpeed = 15f; // Joystick input lerp hizi
+    private int joystickBgSize = 250;
+    private int joystickHandleSize = 100;
+    private float joystickInputSmoothSpeed = 15f;
 
     // === BUTTON SIZES (base, before scale) ===
-    private float jumpButtonSize = 110f;
-    private float fireButtonSize = 100f;
-    private float actionButtonSize = 80f;
-    private float smallButtonSize = 65f;
-    private const float MIN_BUTTON_SIZE = 55f; // Minimum buton boyutu (px)
-    private const float MIN_BUTTON_SPACING = 15f; // Butonlar arasi minimum bosluk (px)
+    private float jumpButtonSize = 130f;
+    private float fireButtonSize = 105f;
+    private float dashButtonSize = 88f;
+    private float rollButtonSize = 88f;
+    private const float MIN_BUTTON_SIZE = 65f;
+    private const float MIN_BUTTON_SPACING = 12f;
 
     // === AUTO-FIRE ===
-    private float autoFireRate = 0.15f; // Otomatik ates arasi bekleme
+    private float autoFireRate = 0.15f;
     private float autoFireTimer = 0f;
     private bool isAutoFireActive = false;
 
     // === SWIPE GESTURE ===
     private bool swipeGesturesEnabled = true;
-    private float swipeMinDistance = 80f; // Minimum swipe mesafesi (px)
-    private float swipeMaxTime = 0.4f; // Swipe icin max sure (saniye)
+    private float swipeMinDistance = 80f;
+    private float swipeMaxTime = 0.4f;
     private Dictionary<int, SwipeData> swipeTracking = new Dictionary<int, SwipeData>();
 
     private struct SwipeData
@@ -160,14 +160,12 @@ public class MobileControls : MonoBehaviour
         bool isMobile = Application.isMobilePlatform ||
                         UnityEngine.InputSystem.Touchscreen.current != null;
 
-        // Mobil platformda veya Editor'de her zaman etkinlestir
         if (isMobile)
         {
             IsEnabled = true;
         }
 
         #if UNITY_EDITOR
-        // Editor'de her zaman goster (test icin)
         IsEnabled = true;
         #endif
 
@@ -187,7 +185,6 @@ public class MobileControls : MonoBehaviour
 
     void Update()
     {
-        // Her frame basinda one-shot buton state'lerini sifirla
         isJumpPressed = false;
         isDashPressed = false;
         isRollPressed = false;
@@ -201,10 +198,6 @@ public class MobileControls : MonoBehaviour
 
     // === EKRAN OLCEKLEME ===
 
-    /// <summary>
-    /// Joystick boyutunu ekran boyutuna gore olcekler.
-    /// Referans: 1080p ekran. Kucuk ekranlarda kuculur, buyuk ekranlarda buyur.
-    /// </summary>
     void ScaleJoystickToScreen()
     {
         float referenceHeight = 1080f;
@@ -228,7 +221,6 @@ public class MobileControls : MonoBehaviour
 
     void CreateCanvas()
     {
-        // Ozel canvas olustur - diger UI'larin ustunde
         GameObject canvasObj = new GameObject("MobileControlsCanvas");
         canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -237,18 +229,16 @@ public class MobileControls : MonoBehaviour
         CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
-        // Mobilde yukseklik oncelikli (landscape modda daha tutarli)
         scaler.matchWidthOrHeight = Application.isMobilePlatform ? 0.6f : 0.5f;
 
         canvasObj.AddComponent<GraphicRaycaster>();
 
         mainCanvasGroup = canvasObj.AddComponent<CanvasGroup>();
-        mainCanvasGroup.interactable = false; // Touch'lar manuel handle ediliyor
+        mainCanvasGroup.interactable = false;
         mainCanvasGroup.blocksRaycasts = false;
 
         transform.SetParent(canvasObj.transform, false);
 
-        // Sahne degisikliklerinde yok edilmesini engelle
         DontDestroyOnLoad(canvasObj);
     }
 
@@ -270,7 +260,7 @@ public class MobileControls : MonoBehaviour
 
     void CreateJoystick()
     {
-        // Floating joystick alani - sol yarim ekranin alt kismi
+        // Joystick alani - sol yarim ekranin alt kismi (touch detection icin)
         GameObject areaObj = new GameObject("JoystickArea");
         areaObj.transform.SetParent(safeAreaPanel, false);
 
@@ -280,15 +270,15 @@ public class MobileControls : MonoBehaviour
         joystickArea.offsetMin = Vector2.zero;
         joystickArea.offsetMax = Vector2.zero;
 
-        // Joystick container (baslangicta gizli, dokunulunca belirir)
+        // Joystick container - sabit pozisyon, sol alt kose
         GameObject containerObj = new GameObject("JoystickContainer");
         containerObj.transform.SetParent(safeAreaPanel, false);
 
         joystickContainer = containerObj.AddComponent<RectTransform>();
-        joystickContainer.anchorMin = joystickContainer.anchorMax = new Vector2(0.5f, 0.5f);
+        joystickContainer.anchorMin = joystickContainer.anchorMax = new Vector2(0f, 0f);
         joystickContainer.pivot = new Vector2(0.5f, 0.5f);
         joystickContainer.sizeDelta = new Vector2(joystickBgSize, joystickBgSize);
-        joystickContainer.anchoredPosition = Vector2.zero;
+        joystickContainer.anchoredPosition = new Vector2(joystickBgSize * 0.75f, joystickBgSize * 0.75f);
 
         // Background
         GameObject bgObj = new GameObject("JoystickBg");
@@ -313,13 +303,13 @@ public class MobileControls : MonoBehaviour
         glowRt.anchorMin = glowRt.anchorMax = new Vector2(0.5f, 0.5f);
         glowRt.pivot = new Vector2(0.5f, 0.5f);
         glowRt.anchoredPosition = Vector2.zero;
-        glowRt.sizeDelta = new Vector2(joystickBgSize + 10, joystickBgSize + 10);
+        glowRt.sizeDelta = new Vector2(joystickBgSize + 8, joystickBgSize + 8);
 
         joystickGlowImage = glowObj.AddComponent<Image>();
         joystickGlowImage.sprite = MobileControlsVisualFactory.CreateJoystickGlowRing(256);
         joystickGlowImage.type = Image.Type.Simple;
         joystickGlowImage.preserveAspect = true;
-        joystickGlowImage.color = new Color(1f, 1f, 1f, 0f); // Baslangicta gorulmez
+        joystickGlowImage.color = new Color(1f, 1f, 1f, 0f);
 
         // Handle
         GameObject handleObj = new GameObject("JoystickHandle");
@@ -336,65 +326,65 @@ public class MobileControls : MonoBehaviour
         handleImage.type = Image.Type.Simple;
         handleImage.preserveAspect = true;
 
-        // Floating: baslangicta joystick gizli
-        SetJoystickVisible(false);
+        // Sabit joystick: her zaman gorunur
+        SetJoystickVisible(true);
     }
 
     // === BUTON OLUSTURMA ===
 
     void CreateActionButtons()
     {
-        // Sadece 4 buton: Jump, Fire, Dash, Roll
-        // Tum butonlar sag alt koseye (1,0) sabitlenir, offset ile konumlandirilir.
         Vector2 rightBottom = new Vector2(1f, 0f);
 
-        // Buton boyutlarini minimum ile sinirla
         float effJumpSize = Mathf.Max(jumpButtonSize, MIN_BUTTON_SIZE);
         float effFireSize = Mathf.Max(fireButtonSize, MIN_BUTTON_SIZE);
-        float effActionSize = Mathf.Max(actionButtonSize, MIN_BUTTON_SIZE);
-        float effSmallSize = Mathf.Max(smallButtonSize, MIN_BUTTON_SIZE);
+        float effDashSize = Mathf.Max(dashButtonSize, MIN_BUTTON_SIZE);
+        float effRollSize = Mathf.Max(rollButtonSize, MIN_BUTTON_SIZE);
 
-        // Jump - sag alt, en buyuk (birincil aksiyon, basparmaga en yakin)
+        // Layout:
+        //                           [Roll]
+        //                           [Dash]
+        //                    [Fire]  [Jump]
+
+        // Jump - sag alt, en buyuk (birincil aksiyon)
         jumpButton = CreateActionButton("JumpButton", "ZIPLA",
             MobileControlsVisualFactory.CreateArrowUpIcon(128),
-            MobileControlsVisualFactory.NeonGreen,
-            rightBottom, new Vector2(-100, 95), effJumpSize,
+            MobileControlsVisualFactory.ThemeGreen,
+            rightBottom, new Vector2(-95, 95), effJumpSize,
             out jumpGlow, out jumpIcon);
 
-        // Fire - jump'in solunda (ikincil aksiyon, basparmaga yakin)
-        float fireOffsetX = -100 - effJumpSize * 0.5f - MIN_BUTTON_SPACING - effFireSize * 0.5f;
+        // Fire - jump'in solunda
+        float fireOffsetX = -95 - effJumpSize * 0.5f - MIN_BUTTON_SPACING - effFireSize * 0.5f;
         fireButton = CreateActionButton("FireButton", "ATES",
             MobileControlsVisualFactory.CreateCrosshairIcon(128),
-            MobileControlsVisualFactory.NeonOrange,
+            MobileControlsVisualFactory.ThemeAmber,
             rightBottom, new Vector2(fireOffsetX, 80), effFireSize,
             out fireGlow, out fireIcon);
 
-        // Dash - jump ile fire arasinda, ustlerinde
+        // Dash - jump'in ustunde
         dashButton = CreateActionButton("DashButton", "DASH",
             MobileControlsVisualFactory.CreateLightningIcon(128),
-            MobileControlsVisualFactory.NeonCyan,
-            rightBottom, new Vector2(-180, 245), effActionSize,
+            MobileControlsVisualFactory.ThemeSky,
+            rightBottom, new Vector2(-95, 95 + effJumpSize * 0.5f + MIN_BUTTON_SPACING + effDashSize * 0.5f), effDashSize,
             out dashGlow, out dashIcon);
 
-        // Dash cooldown overlay
         CreateCooldownOverlay(dashButton, out dashCooldownFill);
 
-        // Roll/Takla - dash'in saginda, ustunde
+        // Roll - dash'in ustunde
         rollButton = CreateActionButton("RollButton", "TAKLA",
-            MobileControlsVisualFactory.CreateLightningIcon(128),
-            new Color(1f, 0.4f, 1f), // Mor/pembe
-            rightBottom, new Vector2(-80, 340), effSmallSize,
+            MobileControlsVisualFactory.CreateRollIcon(128),
+            MobileControlsVisualFactory.ThemeRose,
+            rightBottom, new Vector2(-95, 95 + effJumpSize * 0.5f + MIN_BUTTON_SPACING + effDashSize + MIN_BUTTON_SPACING + effRollSize * 0.5f), effRollSize,
             out rollGlow, out rollIcon);
 
         CreateCooldownOverlay(rollButton, out rollCooldownFill);
     }
 
-    RectTransform CreateActionButton(string name, string label, Sprite iconSprite, Color neonColor,
+    RectTransform CreateActionButton(string name, string label, Sprite iconSprite, Color themeColor,
         Vector2 anchor, Vector2 offset, float size, out Image glowImage, out Image iconImage)
     {
         float scaledSize = Mathf.Max(size * ButtonSizeScale, MIN_BUTTON_SIZE);
 
-        // Ana buton objesi
         GameObject btnObj = new GameObject(name);
         btnObj.transform.SetParent(safeAreaPanel, false);
 
@@ -404,29 +394,29 @@ public class MobileControls : MonoBehaviour
         rt.anchoredPosition = offset;
         rt.sizeDelta = new Vector2(scaledSize, scaledSize);
 
-        // Arka plan daire
+        // Renkli arka plan daire
         Image bgImg = btnObj.AddComponent<Image>();
-        bgImg.sprite = MobileControlsVisualFactory.CreateButtonCircle(256, neonColor);
+        bgImg.sprite = MobileControlsVisualFactory.CreateButtonCircle(256, themeColor);
         bgImg.type = Image.Type.Simple;
         bgImg.preserveAspect = true;
 
-        // Glow overlay (basili durumda gorulur)
+        // Glow overlay (basili durumda hafif parlama)
         GameObject glowObj = new GameObject("Glow");
         glowObj.transform.SetParent(btnObj.transform, false);
 
         RectTransform glowRt = glowObj.AddComponent<RectTransform>();
         glowRt.anchorMin = Vector2.zero;
         glowRt.anchorMax = Vector2.one;
-        glowRt.offsetMin = new Vector2(-4, -4);
-        glowRt.offsetMax = new Vector2(4, 4);
+        glowRt.offsetMin = new Vector2(-3, -3);
+        glowRt.offsetMax = new Vector2(3, 3);
 
         glowImage = glowObj.AddComponent<Image>();
-        glowImage.sprite = MobileControlsVisualFactory.CreateButtonGlowCircle(256, neonColor);
+        glowImage.sprite = MobileControlsVisualFactory.CreateButtonGlowCircle(256, themeColor);
         glowImage.type = Image.Type.Simple;
         glowImage.preserveAspect = true;
-        glowImage.color = new Color(1f, 1f, 1f, 0f); // Gizli
+        glowImage.color = new Color(1f, 1f, 1f, 0f);
 
-        // Ikon
+        // Beyaz ikon (renkli arka plan uzerinde beyaz)
         GameObject iconObj = new GameObject("Icon");
         iconObj.transform.SetParent(btnObj.transform, false);
 
@@ -440,7 +430,7 @@ public class MobileControls : MonoBehaviour
         iconImage.sprite = iconSprite;
         iconImage.type = Image.Type.Simple;
         iconImage.preserveAspect = true;
-        iconImage.color = neonColor;
+        iconImage.color = Color.white;
 
         // Label (kucuk yazi altta)
         if (!string.IsNullOrEmpty(label))
@@ -450,20 +440,19 @@ public class MobileControls : MonoBehaviour
 
             RectTransform labelRt = labelObj.AddComponent<RectTransform>();
             labelRt.anchorMin = new Vector2(0f, -0.05f);
-            labelRt.anchorMax = new Vector2(1f, 0.2f);
+            labelRt.anchorMax = new Vector2(1f, 0.18f);
             labelRt.offsetMin = Vector2.zero;
             labelRt.offsetMax = Vector2.zero;
 
             Text labelText = labelObj.AddComponent<Text>();
             labelText.text = label;
             labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            labelText.fontSize = scaledSize > 100 ? 14 : 11;
+            labelText.fontSize = scaledSize > 100 ? 13 : 11;
             labelText.fontStyle = FontStyle.Bold;
-            labelText.color = new Color(neonColor.r, neonColor.g, neonColor.b, 0.7f);
+            labelText.color = new Color(1f, 1f, 1f, 0.6f);
             labelText.alignment = TextAnchor.MiddleCenter;
         }
 
-        // Scale animasyon takibi icin
         buttonScaleTimers[rt] = 0f;
 
         return rt;
@@ -490,22 +479,18 @@ public class MobileControls : MonoBehaviour
         cooldownFill.fillOrigin = (int)Image.Origin360.Top;
         cooldownFill.fillClockwise = false;
         cooldownFill.fillAmount = 0f;
-        cooldownFill.color = new Color(0f, 0f, 0f, 0.6f);
+        cooldownFill.color = new Color(0f, 0f, 0f, 0.55f);
         cooldownFill.raycastTarget = false;
     }
 
     // === HAPTIC FEEDBACK ===
 
-    /// <summary>
-    /// Aksiyon turune gore haptic feedback tetikler.
-    /// Android'de daha ince kontrol, diger platformlarda Handheld.Vibrate().
-    /// </summary>
     void TriggerHapticFeedback(string action)
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
         try
         {
-            long milliseconds = 20; // Varsayilan kisa titresim
+            long milliseconds = 20;
             switch (action)
             {
                 case "Jump": milliseconds = 15; break;
@@ -538,7 +523,6 @@ public class MobileControls : MonoBehaviour
     {
         var touches = Touch.activeTouches;
 
-        // Kalkan dokunuslari temizle (pre-allocated list - no GC)
         touchRemoveList.Clear();
         foreach (var kvp in activeTouches)
         {
@@ -558,7 +542,6 @@ public class MobileControls : MonoBehaviour
             activeTouches.Remove(id);
         }
 
-        // Dokunuslari isle
         foreach (var touch in touches)
         {
             Vector2 screenPos = touch.screenPosition;
@@ -572,7 +555,6 @@ public class MobileControls : MonoBehaviour
                     OnTouchBegan(element, screenPos, touch.touchId);
                 }
 
-                // Swipe tracking baslat (joystick alani disinda, sag tarafta)
                 if (swipeGesturesEnabled && screenPos.x > Screen.width * 0.5f)
                 {
                     swipeTracking[touch.touchId] = new SwipeData
@@ -599,7 +581,6 @@ public class MobileControls : MonoBehaviour
                     activeTouches.Remove(touch.touchId);
                 }
 
-                // Swipe detection
                 if (swipeGesturesEnabled && swipeTracking.TryGetValue(touch.touchId, out SwipeData swipeData))
                 {
                     DetectSwipe(swipeData, screenPos);
@@ -611,13 +592,11 @@ public class MobileControls : MonoBehaviour
 
     string GetTouchedElement(Vector2 screenPos)
     {
-        // Butonlari once kontrol et (oncelik)
         if (IsPointInButton(screenPos, jumpButton)) return "Jump";
         if (IsPointInButton(screenPos, fireButton)) return "Fire";
         if (IsPointInButton(screenPos, dashButton)) return "Dash";
         if (IsPointInButton(screenPos, rollButton)) return "Roll";
 
-        // Sol yarim ekran = joystick alani
         if (screenPos.x < Screen.width * 0.5f && screenPos.y < Screen.height * 0.6f)
         {
             return "Joystick";
@@ -629,7 +608,6 @@ public class MobileControls : MonoBehaviour
     bool IsPointInButton(Vector2 screenPos, RectTransform button)
     {
         if (button == null) return false;
-        // Hit area'yi biraz buyut (parmak dostu)
         return RectTransformUtility.RectangleContainsScreenPoint(button, screenPos, null);
     }
 
@@ -642,9 +620,7 @@ public class MobileControls : MonoBehaviour
                 joystickTouchId = touchId;
                 isHandleReturning = false;
 
-                // Floating: joystick dokunulan noktada belirir
-                MoveJoystickTo(screenPos);
-                SetJoystickVisible(true);
+                // Sabit joystick: pozisyon degismiyor, sadece input guncelleniyor
                 UpdateJoystick(screenPos);
                 break;
 
@@ -698,7 +674,8 @@ public class MobileControls : MonoBehaviour
                 isJoystickActive = false;
                 joystickTouchId = -1;
                 joystickInput = Vector2.zero;
-                isHandleReturning = true; // Smooth return baslat
+                isHandleReturning = true;
+                // Joystick her zaman gorunur kalir, gizleme yok
                 break;
 
             case "Jump":
@@ -732,21 +709,16 @@ public class MobileControls : MonoBehaviour
         float distance = delta.magnitude;
         if (distance < swipeMinDistance) return;
 
-        // Dikey swipe kontrolu (yatay hareketten buyuk olmali)
         if (Mathf.Abs(delta.y) > Mathf.Abs(delta.x))
         {
             if (delta.y > 0)
             {
-                // Yukari swipe = ziplama
                 isJumpPressed = true;
                 TriggerHapticFeedback("Jump");
             }
         }
     }
 
-    /// <summary>
-    /// Swipe gesture destegini ac/kapat (ayarlardan)
-    /// </summary>
     public void SetSwipeGesturesEnabled(bool enabled)
     {
         swipeGesturesEnabled = enabled;
@@ -777,7 +749,6 @@ public class MobileControls : MonoBehaviour
     {
         if (joystickContainer == null || safeAreaPanel == null) return;
 
-        // Screen pozisyonunu safe area lokal pozisyonuna cevir
         Vector2 localPoint;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             safeAreaPanel, screenPos, null, out localPoint);
@@ -789,11 +760,9 @@ public class MobileControls : MonoBehaviour
     {
         if (joystickContainer == null) return;
 
-        // Screen pozisyonunu joystick merkezine gore hesapla
         Vector2 joystickCenter = RectTransformUtility.WorldToScreenPoint(null, joystickContainer.position);
         Vector2 direction = screenPos - joystickCenter;
 
-        // Radius siniri
         float scaledRadius = joystickRadius * ButtonSizeScale;
         float magnitude = direction.magnitude;
         if (magnitude > scaledRadius)
@@ -801,28 +770,21 @@ public class MobileControls : MonoBehaviour
             direction = direction.normalized * scaledRadius;
         }
 
-        // Handle pozisyonunu guncelle
         joystickHandle.anchoredPosition = direction;
 
-        // Input degeri (-1, 1)
         joystickInput = direction / scaledRadius;
 
-        // Dead zone
         if (joystickInput.magnitude < deadZone)
         {
             joystickInput = Vector2.zero;
         }
         else
         {
-            // Dead zone sonrasi remap
             float mag = joystickInput.magnitude;
             joystickInput = joystickInput.normalized * ((mag - deadZone) / (1f - deadZone));
         }
     }
 
-    /// <summary>
-    /// Joystick inputunu smooth lerp ile yumusatir (ani hareketleri onler)
-    /// </summary>
     void UpdateJoystickSmoothing()
     {
         smoothedJoystickInput = Vector2.Lerp(
@@ -831,7 +793,6 @@ public class MobileControls : MonoBehaviour
             Time.deltaTime * joystickInputSmoothSpeed
         );
 
-        // Cok kucuk degerler icin sifirla (floating point birikimi onleme)
         if (smoothedJoystickInput.sqrMagnitude < 0.001f)
         {
             smoothedJoystickInput = Vector2.zero;
@@ -842,19 +803,20 @@ public class MobileControls : MonoBehaviour
     {
         if (joystickContainer == null) return;
 
-        // Cache joystick images (avoid GetComponentsInChildren every frame)
         if (cachedJoystickImages == null)
             cachedJoystickImages = joystickContainer.GetComponentsInChildren<Image>(true);
 
+        // Joystick her zaman tam gorunur - minimum alpha idle durumda bile 1.0
+        float targetAlpha = visible ? 1f : 1f;
         foreach (Image img in cachedJoystickImages)
         {
-            if (img == joystickGlowImage) continue; // Glow ayri kontrol
+            if (img == joystickGlowImage) continue;
             Color c = img.color;
-            c.a = visible ? Opacity : 0f;
+            c.a = targetAlpha;
             img.color = c;
         }
 
-        joystickContainer.gameObject.SetActive(true); // Her zaman aktif, alpha ile goster/gizle
+        joystickContainer.gameObject.SetActive(true);
     }
 
     // === ANIMASYONLAR ===
@@ -862,14 +824,14 @@ public class MobileControls : MonoBehaviour
     void UpdateAnimations()
     {
         // Joystick glow animasyonu
-        float targetGlowAlpha = isJoystickActive ? 0.8f : 0f;
+        float targetGlowAlpha = isJoystickActive ? 0.6f : 0f;
         joystickGlowAlpha = Mathf.MoveTowards(joystickGlowAlpha, targetGlowAlpha, Time.deltaTime * 8f);
         if (joystickGlowImage != null)
         {
             joystickGlowImage.color = new Color(1f, 1f, 1f, joystickGlowAlpha);
         }
 
-        // Handle smooth return
+        // Handle smooth return (joystick gorunur kalir, sadece handle merkeze doner)
         if (isHandleReturning && joystickHandle != null)
         {
             joystickHandle.anchoredPosition = Vector2.Lerp(
@@ -882,13 +844,9 @@ public class MobileControls : MonoBehaviour
             {
                 joystickHandle.anchoredPosition = Vector2.zero;
                 isHandleReturning = false;
-
-                // Joystick'i gizle (floating mode)
-                SetJoystickVisible(false);
             }
         }
 
-        // Buton scale punch animasyonlari
         UpdateButtonScales();
     }
 
@@ -898,17 +856,14 @@ public class MobileControls : MonoBehaviour
 
         if (pressed)
         {
-            // Scale punch baslat
-            buttonScaleTimers[button] = 0.2f;
-            button.localScale = Vector3.one * 1.15f;
+            buttonScaleTimers[button] = 0.15f;
+            button.localScale = Vector3.one * 1.12f;
 
-            // Glow goster
             if (glow != null)
-                glow.color = new Color(1f, 1f, 1f, 0.9f);
+                glow.color = new Color(1f, 1f, 1f, 0.7f);
         }
         else
         {
-            // Glow gizle
             if (glow != null)
                 glow.color = new Color(1f, 1f, 1f, 0f);
         }
@@ -929,19 +884,15 @@ public class MobileControls : MonoBehaviour
                 timer -= Time.deltaTime;
                 buttonScaleTimers[btn] = timer;
 
-                // Smoothstep scale punch (1.15 -> 1.0)
-                float t = 1f - Mathf.Clamp01(timer / 0.2f);
-                float scale = Mathf.Lerp(1.15f, 1f, t * t * (3f - 2f * t));
+                float t = 1f - Mathf.Clamp01(timer / 0.15f);
+                float scale = Mathf.Lerp(1.12f, 1f, t * t * (3f - 2f * t));
                 btn.localScale = Vector3.one * scale;
             }
         }
     }
 
-    // === DASH COOLDOWN ===
+    // === COOLDOWN ===
 
-    /// <summary>
-    /// Dash cooldown'u baslat (PlayerController'dan cagirilir)
-    /// </summary>
     public void StartDashCooldown(float duration)
     {
         dashCooldownDuration = duration;
@@ -1014,7 +965,7 @@ public class MobileControls : MonoBehaviour
 
     public void SetOpacity(float alpha)
     {
-        Opacity = Mathf.Clamp(alpha, 0.3f, 1.0f);
+        Opacity = Mathf.Clamp(alpha, 0.6f, 1.0f);
         PlayerPrefs.SetFloat(PREF_OPACITY, Opacity);
         PlayerPrefs.Save();
 
@@ -1023,13 +974,11 @@ public class MobileControls : MonoBehaviour
 
     void ApplyButtonSize()
     {
-        // Buton boyutlarini guncelle
         if (jumpButton != null) jumpButton.sizeDelta = Vector2.one * Mathf.Max(jumpButtonSize * ButtonSizeScale, MIN_BUTTON_SIZE);
         if (fireButton != null) fireButton.sizeDelta = Vector2.one * Mathf.Max(fireButtonSize * ButtonSizeScale, MIN_BUTTON_SIZE);
-        if (dashButton != null) dashButton.sizeDelta = Vector2.one * Mathf.Max(actionButtonSize * ButtonSizeScale, MIN_BUTTON_SIZE);
-        if (rollButton != null) rollButton.sizeDelta = Vector2.one * Mathf.Max(smallButtonSize * ButtonSizeScale, MIN_BUTTON_SIZE);
+        if (dashButton != null) dashButton.sizeDelta = Vector2.one * Mathf.Max(dashButtonSize * ButtonSizeScale, MIN_BUTTON_SIZE);
+        if (rollButton != null) rollButton.sizeDelta = Vector2.one * Mathf.Max(rollButtonSize * ButtonSizeScale, MIN_BUTTON_SIZE);
 
-        // Joystick boyutu
         float jScale = joystickBgSize * ButtonSizeScale;
         if (joystickBackground != null)
             joystickBackground.sizeDelta = new Vector2(jScale, jScale);

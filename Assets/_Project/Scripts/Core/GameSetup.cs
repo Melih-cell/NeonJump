@@ -91,14 +91,7 @@ public class GameSetup : MonoBehaviour
             nm.AddComponent<NotificationManager>();
         }
 
-        // 14. AdvancedHUD
-        if (FindObjectOfType<AdvancedHUD>() == null)
-        {
-            GameObject hud = new GameObject("AdvancedHUD");
-            hud.AddComponent<AdvancedHUD>();
-        }
-
-        // 15. BossHealthBar
+        // 14. BossHealthBar
         if (FindObjectOfType<BossHealthBar>() == null)
         {
             GameObject bhb = new GameObject("BossHealthBar");
@@ -346,57 +339,7 @@ public class GameSetup : MonoBehaviour
         GameObject uiManagerObj = new GameObject("UIManager");
         UIManager uiManager = uiManagerObj.AddComponent<UIManager>();
 
-        // === HUD Panel (Sol Ust) ===
-        GameObject hudPanel = CreateUIPanel(canvasObj.transform, "HUDPanel",
-            new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
-            new Vector2(20, -20), new Vector2(300, 150), new Color(0, 0, 0, 0.7f));
-
-        // Score Label
-        CreateUIText(hudPanel.transform, "ScoreLabel", "SKOR", 24,
-            new Vector2(0, 1), new Vector2(15, -10), new Vector2(150, 30),
-            TextAlignmentOptions.Left, new Color(0.7f, 0.7f, 0.7f));
-
-        // Score Text
-        TextMeshProUGUI scoreText = CreateUIText(hudPanel.transform, "ScoreText", "0", 48,
-            new Vector2(0, 1), new Vector2(15, -40), new Vector2(250, 55),
-            TextAlignmentOptions.Left, Color.white);
-        uiManager.scoreText = scoreText;
-
-        // Coin Icon
-        GameObject coinIcon = new GameObject("CoinIcon");
-        coinIcon.transform.SetParent(hudPanel.transform, false);
-        RectTransform coinIconRT = coinIcon.AddComponent<RectTransform>();
-        coinIconRT.anchorMin = coinIconRT.anchorMax = coinIconRT.pivot = new Vector2(0, 1);
-        coinIconRT.anchoredPosition = new Vector2(15, -105);
-        coinIconRT.sizeDelta = new Vector2(30, 30);
-        Image coinIconImg = coinIcon.AddComponent<Image>();
-        coinIconImg.color = new Color(1f, 0.84f, 0f);
-
-        // Coin Text
-        TextMeshProUGUI coinText = CreateUIText(hudPanel.transform, "CoinText", "x 0", 32,
-            new Vector2(0, 1), new Vector2(55, -105), new Vector2(150, 35),
-            TextAlignmentOptions.Left, new Color(1f, 0.84f, 0f));
-        uiManager.coinText = coinText;
-
-        // === Hearts Panel (Sag Ust) ===
-        GameObject heartsPanel = CreateUIPanel(canvasObj.transform, "HeartsPanel",
-            new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1),
-            new Vector2(-20, -20), new Vector2(200, 70), new Color(0, 0, 0, 0.7f));
-
-        // Hearts Container
-        GameObject heartsContainer = new GameObject("HeartsContainer");
-        heartsContainer.transform.SetParent(heartsPanel.transform, false);
-        RectTransform heartsRT = heartsContainer.AddComponent<RectTransform>();
-        heartsRT.anchorMin = heartsRT.anchorMax = new Vector2(0.5f, 0.5f);
-        heartsRT.pivot = new Vector2(0.5f, 0.5f);
-        heartsRT.anchoredPosition = Vector2.zero;
-        heartsRT.sizeDelta = new Vector2(180, 50);
-        HorizontalLayoutGroup hlg = heartsContainer.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 15;
-        hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.childForceExpandWidth = false;
-        hlg.childForceExpandHeight = false;
-        uiManager.heartsContainer = heartsRT;
+        // HUD artik NeonHUD tarafindan yonetiliyor
 
         // === Game Over Panel ===
         GameObject gameOverPanel = CreateUIPanel(canvasObj.transform, "GameOverPanel",

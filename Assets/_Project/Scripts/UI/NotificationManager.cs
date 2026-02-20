@@ -247,10 +247,10 @@ public class NotificationManager : MonoBehaviour
         CreateMessage(notifObj.transform, data, textOffsetX);
 
         // Progress bar (duration gostergesi)
-        CreateProgressBar(notifObj.transform, data);
+        Image progressBar = CreateProgressBar(notifObj.transform, data);
 
         // Animasyon baslat
-        StartCoroutine(AnimateNotification(notifObj, data, cg));
+        StartCoroutine(AnimateNotification(notifObj, data, cg, progressBar));
     }
 
     void CreateIcon(Transform parent, UINotificationData data)
@@ -315,7 +315,7 @@ public class NotificationManager : MonoBehaviour
         tmp.alignment = TextAlignmentOptions.Left;
     }
 
-    void CreateProgressBar(Transform parent, UINotificationData data)
+    Image CreateProgressBar(Transform parent, UINotificationData data)
     {
         GameObject barObj = new GameObject("ProgressBar");
         barObj.transform.SetParent(parent, false);
@@ -329,12 +329,12 @@ public class NotificationManager : MonoBehaviour
 
         Image img = barObj.AddComponent<Image>();
         img.color = GetBorderColor(data.type);
+        return img;
     }
 
-    IEnumerator AnimateNotification(GameObject notifObj, UINotificationData data, CanvasGroup cg)
+    IEnumerator AnimateNotification(GameObject notifObj, UINotificationData data, CanvasGroup cg, Image progressBar)
     {
         RectTransform rt = notifObj.GetComponent<RectTransform>();
-        Image progressBar = notifObj.transform.Find("ProgressBar")?.GetComponent<Image>();
 
         // Baslangic pozisyonu (sag disarida)
         Vector2 originalPos = rt.anchoredPosition;

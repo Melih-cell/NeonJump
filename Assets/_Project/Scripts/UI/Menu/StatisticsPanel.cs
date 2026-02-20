@@ -40,10 +40,10 @@ public class StatisticsPanel : MonoBehaviour
     public Button confirmYesButton;
     public Button confirmNoButton;
 
-    [Header("Neon Stili")]
+    [Header("Doga Temasi Stili")]
     public Color statLabelColor = new Color(0.7f, 0.7f, 0.7f);
-    public Color statValueColor = new Color(0f, 1f, 1f);
-    public Color upgradeMaxColor = new Color(1f, 0.84f, 0f);
+    public Color statValueColor = new Color(0.9f, 0.8f, 0.55f);
+    public Color upgradeMaxColor = new Color(0.35f, 0.75f, 0.45f);
 
     void Start()
     {
@@ -260,12 +260,12 @@ public class StatisticsPanel : MonoBehaviour
         contentRect.offsetMax = Vector2.zero;
 
         var contentBg = content.AddComponent<Image>();
-        contentBg.color = new Color(0.1f, 0.1f, 0.15f);
+        contentBg.color = new Color(0.12f, 0.14f, 0.10f);
 
         // Border
         var outline = content.AddComponent<Outline>();
-        outline.effectColor = new Color(0f, 1f, 1f);
-        outline.effectDistance = new Vector2(2, 2);
+        outline.effectColor = new Color(0.9f, 0.8f, 0.55f, 0.5f);
+        outline.effectDistance = new Vector2(1, 1);
 
         // Baslik
         GameObject titleObj = CreateText(content.transform, "ISTATISTIKLER", 36, TextAlignmentOptions.Center);
@@ -339,7 +339,7 @@ public class StatisticsPanel : MonoBehaviour
         rect.offsetMax = Vector2.zero;
 
         var image = btnObj.AddComponent<Image>();
-        image.color = new Color(0f, 0.8f, 0.8f);
+        image.color = new Color(0.35f, 0.55f, 0.35f);
 
         var button = btnObj.AddComponent<Button>();
         button.targetGraphic = image;

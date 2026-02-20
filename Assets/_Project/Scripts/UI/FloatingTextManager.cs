@@ -19,7 +19,7 @@ public class FloatingTextManager : MonoBehaviour
 
     private Canvas canvas;
     private Queue<GameObject> textPool = new Queue<GameObject>();
-    private List<GameObject> activeTexts = new List<GameObject>();
+    private HashSet<GameObject> activeTexts = new HashSet<GameObject>();
     private bool isMobile;
     private float mobileFontScale = 1f;
 
@@ -323,9 +323,13 @@ public class FloatingTextManager : MonoBehaviour
         switch (style)
         {
             case FloatingTextStyle.Combo:
-                // Pulse efekti
-                float pulse = 1f + Mathf.Sin(t * Mathf.PI * 6f) * 0.1f;
-                rt.localScale = rt.localScale * pulse / (1f + Mathf.Sin((t - Time.deltaTime) * Mathf.PI * 6f) * 0.1f);
+                // Pulse efekti - onceki frame degerini guvenlice hesapla
+                float prevSin = 1f + Mathf.Sin((t - Time.deltaTime) * Mathf.PI * 6f) * 0.1f;
+                if (prevSin > 0.01f)
+                {
+                    float pulse = 1f + Mathf.Sin(t * Mathf.PI * 6f) * 0.1f;
+                    rt.localScale = rt.localScale * (pulse / prevSin);
+                }
                 break;
 
             case FloatingTextStyle.Achievement:

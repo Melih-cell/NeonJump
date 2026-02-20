@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Combo sistemi - AdvancedHUD ile entegrasyon icin
+/// Combo sistemi - NeonHUD ile entegrasyon icin
 /// </summary>
 public class ComboManager : MonoBehaviour
 {

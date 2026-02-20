@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Jump - Game Art Assets</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #111;
+  color: #eee;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  padding: 30px;
+}
+h1 {
+  text-align: center;
+  font-size: 2.5em;
+  color: #00ffff;
+  text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+  margin-bottom: 10px;
+}
+h1 span { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff; }
+.subtitle {
+  text-align: center;
+  color: #888;
+  margin-bottom: 40px;
+  font-size: 1.1em;
+}
+.section {
+  margin-bottom: 50px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 25px;
+}
+.section h2 {
+  color: #00ffff;
+  font-size: 1.4em;
+  margin-bottom: 5px;
+  text-shadow: 0 0 10px #00ffff;
+}
+.section .desc {
+  color: #888;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+}
+.canvas-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-start;
+  justify-content: center;
+}
+.canvas-wrap canvas {
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+.download-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #00ffff22, #ff00ff22);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s;
+}
+.download-btn:hover {
+  background: linear-gradient(135deg, #00ffff44, #ff00ff44);
+  box-shadow: 0 0 15px #00ffff66;
+}
+.btn-row {
+  text-align: center;
+  margin-top: 10px;
+}
+.grid-label {
+  color: #aaa;
+  font-size: 0.8em;
+  text-align: center;
+  margin-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<h1>NEON <span>JUMP</span></h1>
+<p class="subtitle">Game Art Assets - Cyberpunk 2D Action Platformer</p>
+
+<!-- 1. Logo -->
+<div class="section">
+  <h2>1. Logo Design</h2>
+  <p class="desc">800x300 - Main game logo with neon glow effects</p>
+  <div class="canvas-wrap"><canvas id="logo" width="800" height="300"></canvas></div>
+  <div class="btn-row"><button class="download-btn" onclick="dl('logo','NeonJump_Logo.png')">Download PNG</button></div>
+</div>
+
+<!-- 2. Splash Screen -->
+<div class="section">
+  <h2>2. Splash Screen</h2>
+  <p class="desc">390x844 - Mobile splash / title screen</p>
+  <div class="canvas-wrap"><canvas id="splash" width="390" height="844"></canvas></div>
+  <div class="btn-row"><button class="download-btn" onclick="dl('splash','NeonJump_Splash.png')">Download PNG</button></div>
+</div>
+
+<!-- 3. Loading Screen -->
+<div class="section">
+  <h2>3. Loading Screen</h2>
+  <p class="desc">390x844 - In-game loading screen with progress bar</p>
+  <div class="canvas-wrap"><canvas id="loading" width="390" height="844"></canvas></div>
+  <div class="btn-row"><button class="download-btn" onclick="dl('loading','NeonJump_Loading.png')">Download PNG</button></div>
+</div>
+
+<!-- 4. Weapon Icons -->
+<div class="section">
+  <h2>4. Weapon Icons</h2>
+  <p class="desc">128x128 each - 8 neon weapon silhouettes</p>
+  <div class="canvas-wrap" id="weaponWrap"></div>
+  <div class="btn-row"><button class="download-btn" onclick="dlAll('weapon','WeaponIcon')">Download All PNGs</button></div>
+</div>
+
+<!-- 5. Rarity Frames -->
+<div class="section">
+  <h2>5. Rarity Frames</h2>
+  <p class="desc">100x100 each - Item slot borders for 5 rarity levels</p>
+  <div class="canvas-wrap" id="rarityWrap"></div>
+  <div class="btn-row"><button class="download-btn" onclick="dlAll('rarity','RarityFrame')">Download All PNGs</button></div>
+</div>
+
+<!-- 6. Power-Up Icons -->
+<div class="section">
+  <h2>6. Power-Up Icons</h2>
+  <p class="desc">80x80 each - 6 neon power-up icons</p>
+  <div class="canvas-wrap" id="powerupWrap"></div>
+  <div class="btn-row"><button class="download-btn" onclick="dlAll('powerup','PowerUp')">Download All PNGs</button></div>
+</div>
+
+<!-- 7. Achievement Badges -->
+<div class="section">
+  <h2>7. Achievement Badges</h2>
+  <p class="desc">100x100 each - 8 circular achievement badges</p>
+  <div class="canvas-wrap" id="achieveWrap"></div>
+  <div class="btn-row"><button class="download-btn" onclick="dlAll('achieve','Achievement')">Download All PNGs</button></div>
+</div>
+
+<!-- 8. Upgrade Stat Icons -->
+<div class="section">
+  <h2>8. Upgrade Stat Icons</h2>
+  <p class="desc">80x80 each - 5 stat upgrade icons</p>
+  <div class="canvas-wrap" id="upgradeWrap"></div>
+  <div class="btn-row"><button class="download-btn" onclick="dlAll('upgrade','UpgradeIcon')">Download All PNGs</button></div>
+</div>
+
+<script>
+// ========== UTILITIES ==========
+function dl(id, name) {
+  const c = document.getElementById(id);
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+function dlAll(prefix, namePrefix) {
+  document.querySelectorAll('canvas[id^="'+prefix+'_"]').forEach((c,i) => {
+    const a = document.createElement('a');
+    a.download = namePrefix + '_' + c.dataset.label.replace(/\s+/g,'_') + '.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+  });
+}
+
+function neonText(ctx, text, x, y, color, font, blur) {
+  ctx.save();
+  ctx.font = font;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur || 30;
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+  ctx.shadowBlur = (blur || 30) * 0.5;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawNeonLine(ctx, x1, y1, x2, y2, color, width, blur) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width || 2;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur || 15;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawNeonCircle(ctx, x, y, r, color, width, blur) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width || 2;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur || 15;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawNeonRect(ctx, x, y, w, h, color, lineW, blur) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineW || 2;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur || 15;
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+}
+
+function sparkle(ctx, x, y, size, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = 1.5;
+  // cross
+  ctx.beginPath();
+  ctx.moveTo(x - size, y); ctx.lineTo(x + size, y);
+  ctx.moveTo(x, y - size); ctx.lineTo(x, y + size);
+  ctx.stroke();
+  // diag
+  var s2 = size * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(x - s2, y - s2); ctx.lineTo(x + s2, y + s2);
+  ctx.moveTo(x + s2, y - s2); ctx.lineTo(x - s2, y + s2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function createCanvasInWrap(wrapId, id, w, h, label) {
+  var wrap = document.getElementById(wrapId);
+  var div = document.createElement('div');
+  div.style.textAlign = 'center';
+  var c = document.createElement('canvas');
+  c.id = id;
+  c.width = w;
+  c.height = h;
+  c.dataset.label = label;
+  c.style.border = '1px solid #333';
+  c.style.borderRadius = '4px';
+  div.appendChild(c);
+  var lbl = document.createElement('div');
+  lbl.className = 'grid-label';
+  lbl.textContent = label;
+  div.appendChild(lbl);
+  wrap.appendChild(div);
+  return c;
+}
+
+// ========== 1. LOGO ==========
+(function() {
+  var c = document.getElementById('logo');
+  var ctx = c.getContext('2d');
+  // background
+  ctx.fillStyle = '#0a0a2e';
+  ctx.fillRect(0, 0, 800, 300);
+
+  // grid lines
+  ctx.save();
+  ctx.strokeStyle = '#1a1a4e';
+  ctx.lineWidth = 1;
+  for (var i = 0; i < 800; i += 40) {
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 300); ctx.stroke();
+  }
+  for (var j = 0; j < 300; j += 40) {
+    ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(800, j); ctx.stroke();
+  }
+  ctx.restore();
+
+  // neon grid glow
+  ctx.save();
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 0.5;
+  ctx.globalAlpha = 0.08;
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 5;
+  for (var i = 0; i < 800; i += 40) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 300); ctx.stroke();
+  }
+  for (var j = 0; j < 300; j += 40) {
+    ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(800, j); ctx.stroke();
+  }
+  ctx.restore();
+
+  // NEON text
+  neonText(ctx, 'NEON', 300, 130, '#00ffff', 'bold 120px Arial', 40);
+  // extra glow pass
+  ctx.save();
+  ctx.font = 'bold 120px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 80;
+  ctx.fillStyle = '#00ffff33';
+  ctx.fillText('NEON', 300, 130);
+  ctx.restore();
+
+  // JUMP text
+  neonText(ctx, 'JUMP', 540, 200, '#ff00ff', 'bold 100px Arial', 40);
+  ctx.save();
+  ctx.font = 'bold 100px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 80;
+  ctx.fillStyle = '#ff00ff33';
+  ctx.fillText('JUMP', 540, 200);
+  ctx.restore();
+
+  // Electric sparks between letters
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 20;
+  // spark 1
+  ctx.beginPath();
+  ctx.moveTo(370, 100);
+  ctx.lineTo(385, 85); ctx.lineTo(395, 105); ctx.lineTo(410, 80);
+  ctx.lineTo(425, 110); ctx.lineTo(440, 90);
+  ctx.stroke();
+  // spark 2
+  ctx.shadowColor = '#ff00ff';
+  ctx.beginPath();
+  ctx.moveTo(410, 155);
+  ctx.lineTo(430, 140); ctx.lineTo(445, 165); ctx.lineTo(460, 145);
+  ctx.lineTo(470, 170);
+  ctx.stroke();
+  // spark 3
+  ctx.shadowColor = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(350, 170);
+  ctx.lineTo(365, 155); ctx.lineTo(375, 175); ctx.lineTo(395, 160);
+  ctx.stroke();
+  // small spark dots
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#ffffff';
+  [
+    [380, 88], [420, 95], [450, 148], [365, 162], [430, 85], [460, 155]
+  ].forEach(function(p) {
+    ctx.beginPath(); ctx.arc(p[0], p[1], 2, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+})();
+
+// ========== 2. SPLASH SCREEN ==========
+(function() {
+  var c = document.getElementById('splash');
+  var ctx = c.getContext('2d');
+  var W = 390, H = 844;
+
+  // gradient background
+  var grd = ctx.createRadialGradient(W/2, H*0.4, 50, W/2, H*0.4, H*0.6);
+  grd.addColorStop(0, '#1a0a3e');
+  grd.addColorStop(0.5, '#0a0a2e');
+  grd.addColorStop(1, '#050510');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // neon rings pulsing outward
+  var ringColors = ['#00ffff', '#ff00ff', '#00ffff', '#ff00ff', '#00ffff'];
+  var ringRadii = [60, 120, 180, 250, 330];
+  ringRadii.forEach(function(r, i) {
+    ctx.save();
+    ctx.strokeStyle = ringColors[i];
+    ctx.lineWidth = 2 - i * 0.2;
+    ctx.shadowColor = ringColors[i];
+    ctx.shadowBlur = 25 - i * 3;
+    ctx.globalAlpha = 0.6 - i * 0.1;
+    ctx.beginPath();
+    ctx.arc(W/2, H*0.4, r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // particles scattered
+  ctx.save();
+  var particles = [];
+  for (var i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 2 + 0.5,
+      color: ['#00ffff', '#ff00ff', '#ffff00', '#ffffff'][Math.floor(Math.random()*4)]
+    });
+  }
+  particles.forEach(function(p) {
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 10;
+    ctx.globalAlpha = 0.4 + Math.random() * 0.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  // NEON JUMP logo with extreme glow
+  ctx.save();
+  ctx.font = 'bold 72px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // extreme glow layers
+  for (var g = 0; g < 3; g++) {
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 60 + g * 20;
+    ctx.fillStyle = g === 2 ? '#00ffff' : '#00ffff22';
+    ctx.fillText('NEON', W/2, H*0.35);
+  }
+  for (var g = 0; g < 3; g++) {
+    ctx.shadowColor = '#ff00ff';
+    ctx.shadowBlur = 60 + g * 20;
+    ctx.fillStyle = g === 2 ? '#ff00ff' : '#ff00ff22';
+    ctx.fillText('JUMP', W/2, H*0.43);
+  }
+  ctx.restore();
+
+  // "NEON STUDIOS" small text
+  neonText(ctx, 'NEON STUDIOS', W/2, H*0.55, '#666688', '14px Arial', 5);
+
+  // "Yukleniyor..." at bottom
+  ctx.save();
+  ctx.font = '18px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#00ffff';
+  ctx.globalAlpha = 0.8;
+  ctx.fillText('Yukleniyor...', W/2, H*0.88);
+  ctx.restore();
+
+  // loading dots
+  for (var d = 0; d < 3; d++) {
+    ctx.save();
+    ctx.fillStyle = '#00ffff';
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 10;
+    ctx.globalAlpha = 0.4 + d * 0.2;
+    ctx.beginPath();
+    ctx.arc(W/2 - 15 + d * 15, H*0.91, 3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+})();
+
+// ========== 3. LOADING SCREEN ==========
+(function() {
+  var c = document.getElementById('loading');
+  var ctx = c.getContext('2d');
+  var W = 390, H = 844;
+
+  // dark background
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, W, H);
+
+  // subtle grid
+  ctx.save();
+  ctx.strokeStyle = '#1a1a3e';
+  ctx.lineWidth = 0.5;
+  ctx.globalAlpha = 0.5;
+  for (var i = 0; i < W; i += 30) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
+  }
+  for (var j = 0; j < H; j += 30) {
+    ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Floating neon geometric shapes
+  // triangle
+  ctx.save();
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 20;
+  ctx.globalAlpha = 0.4;
+  ctx.beginPath();
+  ctx.moveTo(60, 250); ctx.lineTo(100, 180); ctx.lineTo(140, 250);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+
+  // diamond
+  ctx.save();
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 20;
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  ctx.moveTo(310, 300); ctx.lineTo(340, 260); ctx.lineTo(370, 300); ctx.lineTo(340, 340);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+
+  // hexagon
+  ctx.save();
+  ctx.strokeStyle = '#ffff00';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 15;
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  for (var i = 0; i < 6; i++) {
+    var angle = Math.PI / 3 * i - Math.PI / 6;
+    var hx = 80 + Math.cos(angle) * 30;
+    var hy = 500 + Math.sin(angle) * 30;
+    if (i === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+  }
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+
+  // circle
+  ctx.save();
+  ctx.strokeStyle = '#ff8800';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#ff8800';
+  ctx.shadowBlur = 15;
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  ctx.arc(330, 550, 25, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // small square
+  ctx.save();
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur = 15;
+  ctx.globalAlpha = 0.3;
+  ctx.translate(200, 650);
+  ctx.rotate(Math.PI / 6);
+  ctx.strokeRect(-15, -15, 30, 30);
+  ctx.restore();
+
+  // NEON JUMP text at center-top
+  neonText(ctx, 'NEON JUMP', W/2, 120, '#00ffff', 'bold 42px Arial', 30);
+
+  // "Seviye Yukleniyor..." text
+  neonText(ctx, 'Seviye Yukleniyor...', W/2, H - 130, '#aaaacc', '16px Arial', 8);
+
+  // Loading progress bar (70% filled)
+  var barW = 300, barH = 16;
+  var barX = (W - barW) / 2, barY = H - 100;
+  // bar background
+  ctx.save();
+  ctx.fillStyle = '#1a1a3e';
+  ctx.strokeStyle = '#333366';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, barH, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  // bar fill 70%
+  ctx.save();
+  var fillW = barW * 0.7;
+  var barGrd = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+  barGrd.addColorStop(0, '#00aaff');
+  barGrd.addColorStop(1, '#00ffff');
+  ctx.fillStyle = barGrd;
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, fillW, barH, 8);
+  ctx.fill();
+  ctx.restore();
+  // percentage
+  neonText(ctx, '70%', W/2, barY + barH + 20, '#00ffff', '14px Arial', 8);
+
+  // Tip text
+  ctx.save();
+  ctx.font = '13px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#888899';
+  ctx.shadowColor = '#888899';
+  ctx.shadowBlur = 5;
+  ctx.fillText('IPUCU: Duvarlara tutunarak kayabilirsin!', W/2, H - 40);
+  ctx.restore();
+})();
+
+// ========== 4. WEAPON ICONS ==========
+(function() {
+  var weapons = [
+    { name: 'Pistol', color: '#00ffff', draw: function(ctx) {
+      ctx.beginPath();
+      // barrel
+      ctx.moveTo(40, 50); ctx.lineTo(95, 50); ctx.lineTo(95, 60); ctx.lineTo(75, 60);
+      // grip
+      ctx.lineTo(75, 62); ctx.lineTo(68, 95); ctx.lineTo(52, 95); ctx.lineTo(52, 62);
+      ctx.lineTo(40, 62); ctx.closePath();
+      ctx.stroke();
+      // trigger guard
+      ctx.beginPath();
+      ctx.moveTo(58, 70); ctx.quadraticCurveTo(55, 82, 65, 82); ctx.lineTo(68, 70);
+      ctx.stroke();
+      // sight
+      ctx.beginPath(); ctx.moveTo(85, 45); ctx.lineTo(85, 50); ctx.stroke();
+    }},
+    { name: 'Rifle', color: '#00ff88', draw: function(ctx) {
+      ctx.beginPath();
+      // body
+      ctx.moveTo(15, 55); ctx.lineTo(110, 55); ctx.lineTo(110, 65); ctx.lineTo(80, 65);
+      // grip
+      ctx.lineTo(75, 65); ctx.lineTo(70, 92); ctx.lineTo(58, 92); ctx.lineTo(58, 65);
+      // stock
+      ctx.lineTo(15, 65); ctx.closePath(); ctx.stroke();
+      // magazine
+      ctx.beginPath(); ctx.moveTo(50, 65); ctx.lineTo(48, 85); ctx.lineTo(42, 85); ctx.lineTo(44, 65); ctx.stroke();
+      // scope
+      ctx.beginPath(); ctx.moveTo(70, 48); ctx.lineTo(95, 48); ctx.lineTo(95, 55); ctx.lineTo(70, 55); ctx.stroke();
+      ctx.beginPath(); ctx.arc(82, 51.5, 5, 0, Math.PI*2); ctx.stroke();
+    }},
+    { name: 'Shotgun', color: '#ff8800', draw: function(ctx) {
+      ctx.beginPath();
+      // wide barrel
+      ctx.moveTo(20, 50); ctx.lineTo(105, 46); ctx.lineTo(108, 56);
+      ctx.lineTo(108, 64); ctx.lineTo(105, 68); ctx.lineTo(80, 65);
+      // grip
+      ctx.lineTo(72, 65); ctx.lineTo(66, 92); ctx.lineTo(54, 92); ctx.lineTo(54, 65);
+      // stock
+      ctx.lineTo(20, 68); ctx.closePath(); ctx.stroke();
+      // pump
+      ctx.beginPath();
+      ctx.strokeRect(85, 48, 18, 18);
+    }},
+    { name: 'SMG', color: '#ffff00', draw: function(ctx) {
+      ctx.beginPath();
+      // compact body
+      ctx.moveTo(30, 48); ctx.lineTo(100, 48); ctx.lineTo(100, 58);
+      ctx.lineTo(85, 58);
+      // grip
+      ctx.lineTo(78, 58); ctx.lineTo(74, 85); ctx.lineTo(60, 85); ctx.lineTo(60, 58);
+      ctx.lineTo(30, 58); ctx.closePath(); ctx.stroke();
+      // magazine
+      ctx.beginPath(); ctx.moveTo(55, 58); ctx.lineTo(52, 90); ctx.lineTo(46, 90); ctx.lineTo(49, 58); ctx.stroke();
+      // top rail
+      ctx.beginPath(); ctx.moveTo(45, 44); ctx.lineTo(80, 44); ctx.lineTo(80, 48); ctx.stroke();
+      // front grip
+      ctx.beginPath(); ctx.moveTo(88, 58); ctx.lineTo(90, 72); ctx.lineTo(84, 72); ctx.lineTo(82, 58); ctx.stroke();
+    }},
+    { name: 'Sniper', color: '#4488ff', draw: function(ctx) {
+      ctx.beginPath();
+      // long barrel
+      ctx.moveTo(8, 58); ctx.lineTo(120, 58); ctx.lineTo(120, 64); ctx.lineTo(85, 64);
+      // grip
+      ctx.lineTo(78, 64); ctx.lineTo(72, 95); ctx.lineTo(60, 95); ctx.lineTo(60, 64);
+      // stock
+      ctx.lineTo(8, 68); ctx.closePath(); ctx.stroke();
+      // scope (larger)
+      ctx.beginPath(); ctx.moveTo(65, 48); ctx.lineTo(105, 48); ctx.lineTo(105, 58); ctx.lineTo(65, 58); ctx.stroke();
+      ctx.beginPath(); ctx.arc(75, 53, 7, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(97, 53, 5, 0, Math.PI*2); ctx.stroke();
+      // bipod
+      ctx.beginPath(); ctx.moveTo(95, 64); ctx.lineTo(100, 80); ctx.moveTo(95, 64); ctx.lineTo(90, 80); ctx.stroke();
+    }},
+    { name: 'Rocket Launcher', color: '#ff00ff', draw: function(ctx) {
+      ctx.beginPath();
+      // tube
+      ctx.moveTo(15, 50); ctx.lineTo(95, 50); ctx.lineTo(95, 70); ctx.lineTo(15, 70); ctx.closePath(); ctx.stroke();
+      // warhead
+      ctx.beginPath();
+      ctx.moveTo(95, 48); ctx.lineTo(115, 53); ctx.lineTo(115, 67); ctx.lineTo(95, 72); ctx.stroke();
+      // tip
+      ctx.beginPath(); ctx.moveTo(115, 53); ctx.lineTo(120, 57); ctx.lineTo(120, 63); ctx.lineTo(115, 67); ctx.stroke();
+      // grip
+      ctx.beginPath(); ctx.moveTo(50, 70); ctx.lineTo(48, 90); ctx.lineTo(60, 90); ctx.lineTo(62, 70); ctx.stroke();
+      // sight
+      ctx.beginPath(); ctx.moveTo(70, 45); ctx.lineTo(70, 50); ctx.lineTo(75, 50); ctx.lineTo(75, 45); ctx.stroke();
+      // exhaust lines
+      ctx.beginPath(); ctx.moveTo(15, 55); ctx.lineTo(5, 52); ctx.moveTo(15, 60); ctx.lineTo(5, 60); ctx.moveTo(15, 65); ctx.lineTo(5, 68); ctx.stroke();
+    }},
+    { name: 'Flamethrower', color: '#ff4444', draw: function(ctx) {
+      ctx.beginPath();
+      // body/tank
+      ctx.moveTo(20, 50); ctx.lineTo(80, 50); ctx.lineTo(80, 70); ctx.lineTo(20, 70); ctx.closePath(); ctx.stroke();
+      // wide nozzle
+      ctx.beginPath();
+      ctx.moveTo(80, 48); ctx.lineTo(95, 42); ctx.lineTo(110, 35);
+      ctx.lineTo(115, 42); ctx.lineTo(115, 75); ctx.lineTo(110, 82);
+      ctx.lineTo(95, 75); ctx.lineTo(80, 72);
+      ctx.stroke();
+      // grip
+      ctx.beginPath(); ctx.moveTo(45, 70); ctx.lineTo(42, 90); ctx.lineTo(55, 90); ctx.lineTo(55, 70); ctx.stroke();
+      // flame wisps
+      ctx.beginPath();
+      ctx.moveTo(115, 45); ctx.quadraticCurveTo(122, 40, 118, 35);
+      ctx.moveTo(115, 55); ctx.quadraticCurveTo(125, 52, 120, 45);
+      ctx.moveTo(115, 65); ctx.quadraticCurveTo(125, 68, 120, 75);
+      ctx.stroke();
+    }},
+    { name: 'Grenade Launcher', color: '#aa44ff', draw: function(ctx) {
+      ctx.beginPath();
+      // tube
+      ctx.moveTo(25, 48); ctx.lineTo(100, 48); ctx.lineTo(100, 68); ctx.lineTo(25, 68); ctx.closePath(); ctx.stroke();
+      // barrel opening
+      ctx.beginPath(); ctx.arc(100, 58, 10, -Math.PI/2, Math.PI/2); ctx.stroke();
+      // revolving chamber
+      ctx.beginPath(); ctx.arc(65, 58, 15, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(65, 58, 8, 0, Math.PI*2); ctx.stroke();
+      // grip
+      ctx.beginPath(); ctx.moveTo(42, 68); ctx.lineTo(38, 92); ctx.lineTo(52, 92); ctx.lineTo(52, 68); ctx.stroke();
+      // stock
+      ctx.beginPath(); ctx.moveTo(25, 48); ctx.lineTo(15, 52); ctx.lineTo(10, 60); ctx.lineTo(15, 68); ctx.lineTo(25, 68); ctx.stroke();
+    }}
+  ];
+
+  weapons.forEach(function(w, i) {
+    var canvas = createCanvasInWrap('weaponWrap', 'weapon_' + i, 128, 128, w.name);
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.strokeStyle = w.color;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = w.color;
+    ctx.shadowBlur = 15;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    w.draw(ctx);
+    // second glow pass
+    ctx.shadowBlur = 30;
+    ctx.globalAlpha = 0.3;
+    w.draw(ctx);
+  });
+})();
+
+// ========== 5. RARITY FRAMES ==========
+(function() {
+  var rarities = [
+    { name: 'Common', color: '#888888', blur: 8, width: 2 },
+    { name: 'Uncommon', color: '#00ff88', blur: 15, width: 2.5 },
+    { name: 'Rare', color: '#4488ff', blur: 15, width: 2.5 },
+    { name: 'Epic', color: '#aa44ff', blur: 25, width: 3 },
+    { name: 'Legendary', color: '#ffaa00', blur: 35, width: 3.5 }
+  ];
+
+  rarities.forEach(function(r, i) {
+    var canvas = createCanvasInWrap('rarityWrap', 'rarity_' + i, 100, 100, r.name);
+    var ctx = canvas.getContext('2d');
+    // dark interior
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 100, 100);
+    // inner darker area
+    ctx.fillStyle = '#0d0d20';
+    ctx.fillRect(8, 8, 84, 84);
+
+    // border
+    ctx.save();
+    ctx.strokeStyle = r.color;
+    ctx.lineWidth = r.width;
+    ctx.shadowColor = r.color;
+    ctx.shadowBlur = r.blur;
+    ctx.beginPath();
+    ctx.roundRect(6, 6, 88, 88, 6);
+    ctx.stroke();
+    // second glow pass
+    ctx.globalAlpha = 0.4;
+    ctx.shadowBlur = r.blur * 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // "?" placeholder
+    ctx.save();
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = r.color;
+    ctx.shadowColor = r.color;
+    ctx.shadowBlur = 10;
+    ctx.globalAlpha = 0.5;
+    ctx.fillText('?', 50, 50);
+    ctx.restore();
+
+    // corner sparkles for Legendary
+    if (r.name === 'Legendary') {
+      sparkle(ctx, 12, 12, 6, '#ffaa00');
+      sparkle(ctx, 88, 12, 6, '#ffaa00');
+      sparkle(ctx, 12, 88, 6, '#ffaa00');
+      sparkle(ctx, 88, 88, 6, '#ffaa00');
+      // extra mid sparkles
+      sparkle(ctx, 50, 8, 4, '#ffdd44');
+      sparkle(ctx, 50, 92, 4, '#ffdd44');
+    }
+  });
+})();
+
+// ========== 6. POWER-UP ICONS ==========
+(function() {
+  var powerups = [
+    { name: 'Speed Boost', color: '#00ff88', draw: function(ctx) {
+      // lightning bolt
+      ctx.beginPath();
+      ctx.moveTo(48, 12); ctx.lineTo(28, 42); ctx.lineTo(40, 42);
+      ctx.lineTo(32, 68); ctx.lineTo(56, 35); ctx.lineTo(44, 35);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }},
+    { name: 'Shield', color: '#00ffff', draw: function(ctx) {
+      // shield shape
+      ctx.beginPath();
+      ctx.moveTo(40, 14);
+      ctx.quadraticCurveTo(10, 18, 14, 40);
+      ctx.quadraticCurveTo(16, 60, 40, 70);
+      ctx.quadraticCurveTo(64, 60, 66, 40);
+      ctx.quadraticCurveTo(70, 18, 40, 14);
+      ctx.closePath();
+      ctx.stroke();
+      // inner line
+      ctx.beginPath();
+      ctx.moveTo(40, 22);
+      ctx.quadraticCurveTo(20, 25, 22, 40);
+      ctx.quadraticCurveTo(24, 55, 40, 62);
+      ctx.quadraticCurveTo(56, 55, 58, 40);
+      ctx.quadraticCurveTo(60, 25, 40, 22);
+      ctx.stroke();
+    }},
+    { name: 'Double Damage', color: '#ff4444', draw: function(ctx) {
+      // crossed swords
+      // sword 1
+      ctx.beginPath();
+      ctx.moveTo(15, 65); ctx.lineTo(60, 15);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(54, 22); ctx.lineTo(65, 18); ctx.lineTo(62, 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(27, 48); ctx.lineTo(20, 52); ctx.lineTo(24, 56); ctx.stroke();
+      // sword 2
+      ctx.beginPath();
+      ctx.moveTo(65, 65); ctx.lineTo(20, 15);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(26, 22); ctx.lineTo(15, 18); ctx.lineTo(18, 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(53, 48); ctx.lineTo(60, 52); ctx.lineTo(56, 56); ctx.stroke();
+    }},
+    { name: 'Magnet', color: '#ff00ff', draw: function(ctx) {
+      // magnet U shape
+      ctx.beginPath();
+      ctx.moveTo(18, 20); ctx.lineTo(18, 48);
+      ctx.quadraticCurveTo(18, 68, 40, 68);
+      ctx.quadraticCurveTo(62, 68, 62, 48);
+      ctx.lineTo(62, 20);
+      ctx.stroke();
+      // caps
+      ctx.beginPath(); ctx.moveTo(12, 20); ctx.lineTo(24, 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(56, 20); ctx.lineTo(68, 20); ctx.stroke();
+      // field lines
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(15, 14); ctx.quadraticCurveTo(40, 5, 65, 14);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(12, 10); ctx.quadraticCurveTo(40, -2, 68, 10);
+      ctx.stroke();
+      ctx.restore();
+    }},
+    { name: 'Health Pack', color: '#ff4444', draw: function(ctx) {
+      // cross/plus shape
+      ctx.save();
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#ff4444';
+      ctx.beginPath();
+      ctx.moveTo(30, 18); ctx.lineTo(50, 18); ctx.lineTo(50, 30);
+      ctx.lineTo(62, 30); ctx.lineTo(62, 50); ctx.lineTo(50, 50);
+      ctx.lineTo(50, 62); ctx.lineTo(30, 62); ctx.lineTo(30, 50);
+      ctx.lineTo(18, 50); ctx.lineTo(18, 30); ctx.lineTo(30, 30);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 15;
+      ctx.stroke();
+      ctx.restore();
+    }},
+    { name: 'Coin Multiplier', color: '#ffaa00', draw: function(ctx) {
+      // "x2" text
+      ctx.save();
+      ctx.font = 'bold 38px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffaa00';
+      ctx.shadowColor = '#ffaa00';
+      ctx.shadowBlur = 20;
+      ctx.fillText('x2', 40, 42);
+      ctx.restore();
+    }}
+  ];
+
+  powerups.forEach(function(p, i) {
+    var canvas = createCanvasInWrap('powerupWrap', 'powerup_' + i, 80, 80, p.name);
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 80, 80);
+    ctx.strokeStyle = p.color;
+    ctx.fillStyle = p.color + '33';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 15;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    p.draw(ctx);
+  });
+})();
+
+// ========== 7. ACHIEVEMENT BADGES ==========
+(function() {
+  var achievements = [
+    { name: 'Ilk Adim', color: '#00ffff', draw: function(ctx, cx, cy) {
+      // footprint icon
+      ctx.beginPath();
+      // foot sole
+      ctx.ellipse(cx - 2, cy + 5, 10, 14, -0.15, 0, Math.PI * 2);
+      ctx.stroke();
+      // toes
+      ctx.beginPath(); ctx.arc(cx - 10, cy - 12, 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx - 3, cy - 16, 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + 5, cy - 14, 3.5, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + 11, cy - 10, 3, 0, Math.PI*2); ctx.stroke();
+    }},
+    { name: 'Dusman Avcisi', color: '#ff4444', draw: function(ctx, cx, cy) {
+      // skull
+      ctx.beginPath();
+      ctx.arc(cx, cy - 4, 16, Math.PI, 0);
+      ctx.lineTo(cx + 16, cy + 8);
+      ctx.quadraticCurveTo(cx + 14, cy + 16, cx + 8, cy + 16);
+      ctx.lineTo(cx + 4, cy + 12); ctx.lineTo(cx, cy + 16);
+      ctx.lineTo(cx - 4, cy + 12); ctx.lineTo(cx - 8, cy + 16);
+      ctx.quadraticCurveTo(cx - 14, cy + 16, cx - 16, cy + 8);
+      ctx.closePath(); ctx.stroke();
+      // eyes
+      ctx.beginPath(); ctx.arc(cx - 7, cy - 2, 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + 7, cy - 2, 4, 0, Math.PI*2); ctx.stroke();
+      // nose
+      ctx.beginPath(); ctx.moveTo(cx - 2, cy + 5); ctx.lineTo(cx, cy + 3); ctx.lineTo(cx + 2, cy + 5); ctx.stroke();
+    }},
+    { name: 'Boss Katili', color: '#ff00ff', draw: function(ctx, cx, cy) {
+      // crown
+      ctx.beginPath();
+      ctx.moveTo(cx - 18, cy + 10);
+      ctx.lineTo(cx - 18, cy - 5);
+      ctx.lineTo(cx - 10, cy + 2);
+      ctx.lineTo(cx, cy - 15);
+      ctx.lineTo(cx + 10, cy + 2);
+      ctx.lineTo(cx + 18, cy - 5);
+      ctx.lineTo(cx + 18, cy + 10);
+      ctx.closePath(); ctx.stroke();
+      // jewels
+      ctx.beginPath(); ctx.arc(cx, cy - 8, 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 14, cy, 2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 14, cy, 2, 0, Math.PI*2); ctx.fill();
+    }},
+    { name: 'Zengin', color: '#ffaa00', draw: function(ctx, cx, cy) {
+      // coin stack
+      for (var s = 0; s < 4; s++) {
+        var sy = cy + 12 - s * 8;
+        ctx.beginPath();
+        ctx.ellipse(cx, sy, 14, 6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // $ sign on top coin
+      ctx.save();
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$', cx, cy - 12);
+      ctx.restore();
+    }},
+    { name: 'Combo Ustasi', color: '#ff8800', draw: function(ctx, cx, cy) {
+      // "C" with flames
+      ctx.save();
+      ctx.font = 'bold 32px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('C', cx, cy + 2);
+      ctx.restore();
+      // flames
+      ctx.beginPath();
+      ctx.moveTo(cx - 8, cy - 16);
+      ctx.quadraticCurveTo(cx - 12, cy - 28, cx - 4, cy - 30);
+      ctx.quadraticCurveTo(cx - 6, cy - 22, cx, cy - 18);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 4, cy - 18);
+      ctx.quadraticCurveTo(cx + 2, cy - 30, cx + 10, cy - 32);
+      ctx.quadraticCurveTo(cx + 8, cy - 24, cx + 12, cy - 18);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 10, cy - 14);
+      ctx.quadraticCurveTo(cx + 14, cy - 24, cx + 18, cy - 22);
+      ctx.quadraticCurveTo(cx + 16, cy - 16, cx + 16, cy - 12);
+      ctx.stroke();
+    }},
+    { name: 'Koleksiyoncu', color: '#aa44ff', draw: function(ctx, cx, cy) {
+      // chest icon
+      // body
+      ctx.beginPath();
+      ctx.moveTo(cx - 18, cy - 4);
+      ctx.lineTo(cx - 18, cy + 14);
+      ctx.lineTo(cx + 18, cy + 14);
+      ctx.lineTo(cx + 18, cy - 4);
+      ctx.closePath(); ctx.stroke();
+      // lid
+      ctx.beginPath();
+      ctx.moveTo(cx - 20, cy - 4);
+      ctx.quadraticCurveTo(cx, cy - 18, cx + 20, cy - 4);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - 20, cy - 4); ctx.lineTo(cx + 20, cy - 4); ctx.stroke();
+      // lock
+      ctx.beginPath(); ctx.arc(cx, cy + 2, 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.lineTo(cx, cy + 10); ctx.stroke();
+    }},
+    { name: 'Hayatta Kalan', color: '#00ff88', draw: function(ctx, cx, cy) {
+      // heart icon
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + 16);
+      ctx.bezierCurveTo(cx - 28, cy - 2, cx - 16, cy - 22, cx, cy - 10);
+      ctx.bezierCurveTo(cx + 16, cy - 22, cx + 28, cy - 2, cx, cy + 16);
+      ctx.closePath();
+      ctx.stroke();
+      // pulse line
+      ctx.beginPath();
+      ctx.moveTo(cx - 14, cy); ctx.lineTo(cx - 6, cy);
+      ctx.lineTo(cx - 3, cy - 6); ctx.lineTo(cx + 2, cy + 6);
+      ctx.lineTo(cx + 5, cy); ctx.lineTo(cx + 14, cy);
+      ctx.stroke();
+    }},
+    { name: 'Efsane', color: '#ffaa00', draw: function(ctx, cx, cy) {
+      // star icon with multi-color glow
+      var spikes = 5, outerR = 20, innerR = 9;
+      ctx.beginPath();
+      for (var s = 0; s < spikes * 2; s++) {
+        var r = s % 2 === 0 ? outerR : innerR;
+        var angle = (Math.PI * s / spikes) - Math.PI / 2;
+        var sx = cx + Math.cos(angle) * r;
+        var sy = cy + Math.sin(angle) * r;
+        if (s === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+      }
+      ctx.closePath(); ctx.stroke(); ctx.fill();
+      // multi-color outer glow
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ['#ff00ff', '#00ffff', '#ffff00'].forEach(function(col, gi) {
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 25 + gi * 8;
+        ctx.stroke();
+      });
+      ctx.restore();
+    }}
+  ];
+
+  achievements.forEach(function(a, i) {
+    var canvas = createCanvasInWrap('achieveWrap', 'achieve_' + i, 100, 100, a.name);
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 100, 100);
+
+    // circular badge border
+    ctx.save();
+    ctx.strokeStyle = a.color;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = a.color;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(50, 50, 42, 0, Math.PI * 2);
+    ctx.stroke();
+    // inner ring
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(50, 50, 36, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // draw icon
+    ctx.save();
+    ctx.strokeStyle = a.color;
+    ctx.fillStyle = a.color;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = a.color;
+    ctx.shadowBlur = 12;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    a.draw(ctx, 50, 50);
+    ctx.restore();
+  });
+})();
+
+// ========== 8. UPGRADE STAT ICONS ==========
+(function() {
+  var upgrades = [
+    { name: 'Health', color: '#ff4444', draw: function(ctx) {
+      // heart shape
+      ctx.beginPath();
+      ctx.moveTo(40, 60);
+      ctx.bezierCurveTo(12, 38, 16, 14, 40, 26);
+      ctx.bezierCurveTo(64, 14, 68, 38, 40, 60);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }},
+    { name: 'Speed', color: '#00ff88', draw: function(ctx) {
+      // arrow/wind lines
+      // main arrow
+      ctx.beginPath();
+      ctx.moveTo(15, 40); ctx.lineTo(55, 40);
+      ctx.lineTo(50, 30); ctx.lineTo(68, 40);
+      ctx.lineTo(50, 50); ctx.lineTo(55, 40);
+      ctx.stroke();
+      // wind lines
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(10, 28); ctx.lineTo(40, 28); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(12, 52); ctx.lineTo(42, 52); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(18, 62); ctx.lineTo(36, 62); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(20, 18); ctx.lineTo(34, 18); ctx.stroke();
+      ctx.restore();
+    }},
+    { name: 'Dash', color: '#4488ff', draw: function(ctx) {
+      // horizontal lightning
+      ctx.beginPath();
+      ctx.moveTo(10, 40);
+      ctx.lineTo(25, 30); ctx.lineTo(30, 40);
+      ctx.lineTo(45, 28); ctx.lineTo(48, 40);
+      ctx.lineTo(58, 25); ctx.lineTo(62, 40);
+      ctx.lineTo(70, 34);
+      ctx.stroke();
+      // motion lines
+      ctx.save(); ctx.globalAlpha = 0.4;
+      ctx.beginPath(); ctx.moveTo(8, 50); ctx.lineTo(30, 50); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(12, 56); ctx.lineTo(26, 56); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(5, 44); ctx.lineTo(18, 44); ctx.stroke();
+      ctx.restore();
+    }},
+    { name: 'Jump', color: '#ffff00', draw: function(ctx) {
+      // up arrow with motion lines
+      ctx.beginPath();
+      ctx.moveTo(40, 12);
+      ctx.lineTo(55, 32); ctx.lineTo(48, 32);
+      ctx.lineTo(48, 58); ctx.lineTo(32, 58);
+      ctx.lineTo(32, 32); ctx.lineTo(25, 32);
+      ctx.closePath();
+      ctx.stroke();
+      // motion lines below
+      ctx.save(); ctx.globalAlpha = 0.4;
+      ctx.beginPath(); ctx.moveTo(26, 64); ctx.lineTo(54, 64); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(30, 70); ctx.lineTo(50, 70); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(34, 76); ctx.lineTo(46, 76); ctx.stroke();
+      ctx.restore();
+    }},
+    { name: 'Damage', color: '#ff8800', draw: function(ctx) {
+      // explosion/impact
+      var cx = 40, cy = 40;
+      var spikes = 10;
+      ctx.beginPath();
+      for (var i = 0; i < spikes * 2; i++) {
+        var r = i % 2 === 0 ? 26 : 14;
+        var angle = (Math.PI * i / spikes) - Math.PI / 2;
+        var sx = cx + Math.cos(angle) * r;
+        var sy = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      // inner circle
+      ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI*2); ctx.fill();
+      // impact lines
+      ctx.save(); ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+      for (var l = 0; l < 8; l++) {
+        var a = Math.PI * 2 * l / 8;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 28, cy + Math.sin(a) * 28);
+        ctx.lineTo(cx + Math.cos(a) * 34, cy + Math.sin(a) * 34);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }}
+  ];
+
+  upgrades.forEach(function(u, i) {
+    var canvas = createCanvasInWrap('upgradeWrap', 'upgrade_' + i, 80, 80, u.name);
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 80, 80);
+    ctx.strokeStyle = u.color;
+    ctx.fillStyle = u.color + '44';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = u.color;
+    ctx.shadowBlur = 15;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    u.draw(ctx);
+  });
+})();
+
+</script>
+</body>
+</html>

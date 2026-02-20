@@ -14,7 +14,7 @@ public class SceneSetup : MonoBehaviour
     [Header("Lighting")]
     public bool setupLighting = true;
     public float ambientIntensity = 1.2f;
-    public Color ambientColor = new Color(0.35f, 0.35f, 0.5f);
+    public Color ambientColor = new Color(0.85f, 0.90f, 0.80f);
 
     void Start()
     {

@@ -2,26 +2,26 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Prosedural sprite fabrikasi - mobil kontroller icin gorsel ogeleri runtime'da uretir.
+/// Prosedural sprite fabrikasi - mobil kontroller icin doga temasina uygun gorsel ogeler.
 /// Tum sprite'lar dictionary cache'de saklanir.
+/// Yumusak renkler, soft gradient, buzlu cam efekti.
 /// </summary>
 public static class MobileControlsVisualFactory
 {
     private static readonly Dictionary<string, Sprite> _cache = new Dictionary<string, Sprite>();
 
-    // Neon renk paleti
-    public static readonly Color NeonCyan = new Color(0f, 0.85f, 1f, 0.9f);
-    public static readonly Color NeonGreen = new Color(0f, 1f, 0.5f, 0.9f);
-    public static readonly Color NeonOrange = new Color(1f, 0.5f, 0f, 0.9f);
-    public static readonly Color NeonYellow = new Color(1f, 1f, 0f, 0.9f);
-    public static readonly Color NeonPink = new Color(1f, 0f, 0.6f, 0.9f);
-    public static readonly Color DarkBg = new Color(0.05f, 0.05f, 0.12f, 0.55f);
-    public static readonly Color DarkBgSolid = new Color(0.05f, 0.05f, 0.12f, 0.7f);
+    // Doga renk paleti
+    public static readonly Color ThemeGreen = new Color(0.35f, 0.75f, 0.45f, 0.85f);   // Yesil (Jump)
+    public static readonly Color ThemeAmber = new Color(0.92f, 0.68f, 0.21f, 0.85f);   // Amber (Fire)
+    public static readonly Color ThemeSky = new Color(0.45f, 0.72f, 0.88f, 0.85f);     // Gok mavisi (Dash)
+    public static readonly Color ThemeRose = new Color(0.85f, 0.42f, 0.52f, 0.85f);    // Gul (Roll)
+    public static readonly Color DarkBg = new Color(0.12f, 0.12f, 0.12f, 0.45f);       // Seffaf koyu
+    public static readonly Color LightBg = new Color(0.95f, 0.95f, 0.95f, 0.15f);      // Buzlu cam
 
     // === JOYSTICK ===
 
     /// <summary>
-    /// Koyu daire + neon kenar - joystick arka plani
+    /// Yumusak koyu daire + ince beyaz kenarlik - joystick arka plani
     /// </summary>
     public static Sprite CreateJoystickBackground(int size = 256)
     {
@@ -32,8 +32,9 @@ public static class MobileControlsVisualFactory
         Color[] pixels = new Color[size * size];
 
         float center = size * 0.5f;
-        float outerR = center - 1f;
-        float innerR = outerR - 3f;
+        float outerR = center - 2f;
+        float borderWidth = 2f;
+        float innerR = outerR - borderWidth;
 
         for (int y = 0; y < size; y++)
         {
@@ -43,27 +44,26 @@ public static class MobileControlsVisualFactory
                 float dy = y - center + 0.5f;
                 float dist = Mathf.Sqrt(dx * dx + dy * dy);
 
-                // Anti-aliased edge
-                float edgeAA = Mathf.Clamp01(1f - Mathf.Abs(dist - outerR));
-
                 if (dist <= innerR)
                 {
-                    // Ic dolgu - koyu arka plan, merkeze dogru hafif gradient
+                    // Ic dolgu - yumusak koyu, merkeze dogru hafif acilma
                     float t = dist / innerR;
-                    float alpha = Mathf.Lerp(0.5f, 0.6f, t);
-                    pixels[y * size + x] = new Color(0.05f, 0.05f, 0.12f, alpha);
+                    float alpha = Mathf.Lerp(0.38f, 0.48f, t);
+                    pixels[y * size + x] = new Color(0.12f, 0.12f, 0.12f, alpha);
                 }
                 else if (dist <= outerR)
                 {
-                    // Neon kenar - parlak cyan
-                    float edgeFade = 1f - (dist - innerR) / (outerR - innerR);
-                    pixels[y * size + x] = new Color(NeonCyan.r, NeonCyan.g, NeonCyan.b, 0.7f * edgeFade * edgeAA);
+                    // Ince beyaz kenarlik
+                    float edgeT = (dist - innerR) / borderWidth;
+                    float aa = Mathf.Clamp01(outerR - dist);
+                    float alpha = 0.35f * (1f - edgeT * 0.5f) * Mathf.Clamp01(aa + 0.5f);
+                    pixels[y * size + x] = new Color(0.95f, 0.95f, 0.95f, alpha);
                 }
-                else if (dist <= outerR + 1f)
+                else if (dist <= outerR + 1.5f)
                 {
                     // AA fringe
-                    float aa = Mathf.Clamp01(outerR + 1f - dist);
-                    pixels[y * size + x] = new Color(NeonCyan.r, NeonCyan.g, NeonCyan.b, 0.2f * aa);
+                    float aa = Mathf.Clamp01(outerR + 1.5f - dist);
+                    pixels[y * size + x] = new Color(0.95f, 0.95f, 0.95f, 0.08f * aa);
                 }
                 else
                 {
@@ -72,19 +72,20 @@ public static class MobileControlsVisualFactory
             }
         }
 
-        // 4 yon noktasi (kucuk parlak noktalar)
-        int dotOffset = Mathf.RoundToInt(innerR - size * 0.06f);
-        int dotRadius = Mathf.Max(2, size / 64);
-        DrawDot(pixels, size, (int)center, (int)(center + dotOffset), NeonCyan * 0.5f, dotRadius);
-        DrawDot(pixels, size, (int)center, (int)(center - dotOffset), NeonCyan * 0.5f, dotRadius);
-        DrawDot(pixels, size, (int)(center + dotOffset), (int)center, NeonCyan * 0.5f, dotRadius);
-        DrawDot(pixels, size, (int)(center - dotOffset), (int)center, NeonCyan * 0.5f, dotRadius);
+        // 4 yon noktasi (kucuk soluk beyaz noktalar)
+        int dotOffset = Mathf.RoundToInt(innerR - size * 0.08f);
+        int dotRadius = Mathf.Max(2, size / 80);
+        Color dotColor = new Color(0.9f, 0.9f, 0.9f, 0.25f);
+        DrawDot(pixels, size, (int)center, (int)(center + dotOffset), dotColor, dotRadius);
+        DrawDot(pixels, size, (int)center, (int)(center - dotOffset), dotColor, dotRadius);
+        DrawDot(pixels, size, (int)(center + dotOffset), (int)center, dotColor, dotRadius);
+        DrawDot(pixels, size, (int)(center - dotOffset), (int)center, dotColor, dotRadius);
 
         return CacheSprite(key, tex, pixels, size);
     }
 
     /// <summary>
-    /// Kucuk parlak daire - joystick handle
+    /// Parlak handle noktasi - joystick handle
     /// </summary>
     public static Sprite CreateJoystickHandle(int size = 256)
     {
@@ -95,8 +96,8 @@ public static class MobileControlsVisualFactory
         Color[] pixels = new Color[size * size];
 
         float center = size * 0.5f;
-        float outerR = center - 1f;
-        float innerR = outerR - 2f;
+        float outerR = center - 2f;
+        float innerR = outerR * 0.75f;
 
         for (int y = 0; y < size; y++)
         {
@@ -106,30 +107,23 @@ public static class MobileControlsVisualFactory
                 float dy = y - center + 0.5f;
                 float dist = Mathf.Sqrt(dx * dx + dy * dy);
 
-                // Anti-aliased edge
-                float handleAA = Mathf.Clamp01(1f - Mathf.Abs(dist - outerR));
-
                 if (dist <= innerR)
                 {
-                    // Parlak ic kisim - hafif gradient
+                    // Parlak ic kisim - beyaz/acik gri gradient
                     float t = dist / innerR;
                     Color c = Color.Lerp(
-                        new Color(0.6f, 0.95f, 1f, 0.95f),
-                        new Color(0.1f, 0.7f, 0.85f, 0.85f),
-                        t
+                        new Color(0.98f, 0.98f, 1f, 0.92f),
+                        new Color(0.75f, 0.78f, 0.82f, 0.78f),
+                        t * t
                     );
                     pixels[y * size + x] = c;
                 }
                 else if (dist <= outerR)
                 {
-                    // Dis kenar glow
-                    float edgeFade = 1f - (dist - innerR) / (outerR - innerR);
-                    pixels[y * size + x] = new Color(NeonCyan.r, NeonCyan.g, NeonCyan.b, 0.6f * edgeFade * handleAA);
-                }
-                else if (dist <= outerR + 1f)
-                {
-                    float aa = Mathf.Clamp01(outerR + 1f - dist);
-                    pixels[y * size + x] = new Color(NeonCyan.r, NeonCyan.g, NeonCyan.b, 0.15f * aa);
+                    // Yumusak dis kenar
+                    float edgeT = (dist - innerR) / (outerR - innerR);
+                    float alpha = Mathf.Lerp(0.78f, 0f, edgeT * edgeT);
+                    pixels[y * size + x] = new Color(0.8f, 0.82f, 0.85f, alpha);
                 }
                 else
                 {
@@ -138,16 +132,17 @@ public static class MobileControlsVisualFactory
             }
         }
 
-        // Merkez highlight
-        int hlRadius = Mathf.Max(3, size / 16);
-        int hlOffset = Mathf.Max(2, size / 24);
-        DrawDot(pixels, size, (int)(center - hlOffset), (int)(center + hlOffset), new Color(1f, 1f, 1f, 0.6f), hlRadius);
+        // Merkez parlak highlight noktasi
+        int hlRadius = Mathf.Max(3, size / 12);
+        int hlOffset = Mathf.Max(2, size / 20);
+        DrawSoftDot(pixels, size, (int)(center - hlOffset), (int)(center + hlOffset),
+            new Color(1f, 1f, 1f, 0.5f), hlRadius);
 
         return CacheSprite(key, tex, pixels, size);
     }
 
     /// <summary>
-    /// Neon halka - aktif durum glow efekti
+    /// Ince beyaz halka - aktif durum glow efekti (neon yerine yumusak beyaz)
     /// </summary>
     public static Sprite CreateJoystickGlowRing(int size = 256)
     {
@@ -159,7 +154,7 @@ public static class MobileControlsVisualFactory
 
         float center = size * 0.5f;
         float outerR = center - 1f;
-        float innerR = outerR - 6f;
+        float innerR = outerR - 4f;
 
         for (int y = 0; y < size; y++)
         {
@@ -173,7 +168,7 @@ public static class MobileControlsVisualFactory
                 {
                     float mid = (innerR + outerR) * 0.5f;
                     float t = 1f - Mathf.Abs(dist - mid) / ((outerR - innerR) * 0.5f);
-                    pixels[y * size + x] = new Color(NeonCyan.r, NeonCyan.g, NeonCyan.b, 0.8f * t * t);
+                    pixels[y * size + x] = new Color(0.95f, 0.95f, 0.95f, 0.55f * t * t);
                 }
                 else
                 {
@@ -188,21 +183,30 @@ public static class MobileControlsVisualFactory
     // === BUTONLAR ===
 
     /// <summary>
-    /// Buton arka plan dairesi - koyu + neon kenar
+    /// Yuvarlak buton - renkli arka plan, soft gradient, ince beyaz kenarlik
     /// </summary>
-    public static Sprite CreateButtonCircle(int size = 256, Color borderColor = default)
+    public static Sprite CreateButtonCircle(int size = 256, Color themeColor = default)
     {
-        if (borderColor == default) borderColor = NeonCyan;
+        if (themeColor == default) themeColor = ThemeGreen;
 
-        string key = $"btn_circle_{size}_{ColorKey(borderColor)}";
+        string key = $"btn_circle_{size}_{ColorKey(themeColor)}";
         if (_cache.TryGetValue(key, out Sprite cached)) return cached;
 
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         Color[] pixels = new Color[size * size];
 
         float center = size * 0.5f;
-        float outerR = center - 1f;
-        float borderR = outerR - Mathf.Max(2f, size * 0.02f);
+        float outerR = center - 2f;
+        float borderWidth = 2f;
+        float innerR = outerR - borderWidth;
+
+        // Koyu versiyon (gradient icin)
+        Color darkVariant = new Color(
+            themeColor.r * 0.5f,
+            themeColor.g * 0.5f,
+            themeColor.b * 0.5f,
+            themeColor.a
+        );
 
         for (int y = 0; y < size; y++)
         {
@@ -212,22 +216,28 @@ public static class MobileControlsVisualFactory
                 float dy = y - center + 0.5f;
                 float dist = Mathf.Sqrt(dx * dx + dy * dy);
 
-                // Anti-aliased edge
-                float btnAA = Mathf.Clamp01(1f - Mathf.Abs(dist - outerR));
-
-                if (dist <= borderR)
+                if (dist <= innerR)
                 {
-                    pixels[y * size + x] = DarkBgSolid;
+                    // Soft gradient dolgu - merkezden kenara koyulasan
+                    float t = dist / innerR;
+                    // Ust kisim daha acik (isik efekti)
+                    float lightBias = Mathf.Clamp01(0.5f + (dy / innerR) * 0.3f);
+                    Color baseColor = Color.Lerp(themeColor, darkVariant, t * 0.4f + lightBias * 0.2f);
+                    baseColor.a = themeColor.a * 0.85f;
+                    pixels[y * size + x] = baseColor;
                 }
                 else if (dist <= outerR)
                 {
-                    float edgeFade = 1f - (dist - borderR) / (outerR - borderR);
-                    pixels[y * size + x] = new Color(borderColor.r, borderColor.g, borderColor.b, 0.8f * edgeFade * btnAA);
+                    // Ince beyaz kenarlik
+                    float edgeT = (dist - innerR) / borderWidth;
+                    float aa = Mathf.Clamp01(outerR - dist);
+                    float alpha = 0.4f * (1f - edgeT * 0.3f) * Mathf.Clamp01(aa + 0.5f);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
                 }
-                else if (dist <= outerR + 1f)
+                else if (dist <= outerR + 1.5f)
                 {
-                    float aa = Mathf.Clamp01(outerR + 1f - dist);
-                    pixels[y * size + x] = new Color(borderColor.r, borderColor.g, borderColor.b, 0.2f * aa);
+                    float aa = Mathf.Clamp01(outerR + 1.5f - dist);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, 0.06f * aa);
                 }
                 else
                 {
@@ -240,11 +250,11 @@ public static class MobileControlsVisualFactory
     }
 
     /// <summary>
-    /// Basili durum parlak kenar dairesi
+    /// Basili durum hafif parlama dairesi (neon glow yerine yumusak beyaz)
     /// </summary>
     public static Sprite CreateButtonGlowCircle(int size = 256, Color glowColor = default)
     {
-        if (glowColor == default) glowColor = NeonCyan;
+        if (glowColor == default) glowColor = ThemeGreen;
 
         string key = $"btn_glow_{size}_{ColorKey(glowColor)}";
         if (_cache.TryGetValue(key, out Sprite cached)) return cached;
@@ -254,7 +264,15 @@ public static class MobileControlsVisualFactory
 
         float center = size * 0.5f;
         float outerR = center;
-        float innerR = outerR - 5f;
+        float innerR = outerR - 4f;
+
+        // Acik versiyon
+        Color lightColor = new Color(
+            Mathf.Lerp(glowColor.r, 1f, 0.5f),
+            Mathf.Lerp(glowColor.g, 1f, 0.5f),
+            Mathf.Lerp(glowColor.b, 1f, 0.5f),
+            1f
+        );
 
         for (int y = 0; y < size; y++)
         {
@@ -268,13 +286,13 @@ public static class MobileControlsVisualFactory
                 {
                     float mid = (innerR + outerR) * 0.5f;
                     float t = 1f - Mathf.Abs(dist - mid) / ((outerR - innerR) * 0.5f);
-                    pixels[y * size + x] = new Color(glowColor.r, glowColor.g, glowColor.b, 0.9f * t);
+                    pixels[y * size + x] = new Color(lightColor.r, lightColor.g, lightColor.b, 0.6f * t);
                 }
                 else if (dist < innerR)
                 {
-                    // Hafif ic dolgu
+                    // Hafif ic parlama
                     float t = dist / innerR;
-                    pixels[y * size + x] = new Color(glowColor.r, glowColor.g, glowColor.b, 0.15f * (1f - t));
+                    pixels[y * size + x] = new Color(lightColor.r, lightColor.g, lightColor.b, 0.1f * (1f - t));
                 }
                 else
                 {
@@ -289,7 +307,7 @@ public static class MobileControlsVisualFactory
     // === IKONLAR ===
 
     /// <summary>
-    /// Yukari ok ikonu - Ziplama
+    /// Yukari ok ikonu - Ziplama (beyaz, temiz flat design)
     /// </summary>
     public static Sprite CreateArrowUpIcon(int size = 128)
     {
@@ -302,9 +320,9 @@ public static class MobileControlsVisualFactory
 
         int cx = size / 2;
         int margin = size / 6;
-        int thickness = Mathf.Max(2, size / 16); // 2x kalin cizgiler
+        int thickness = Mathf.Max(2, size / 16);
 
-        // Ok ucu (ucgen) - daha kalin
+        // Ok ucu (ucgen)
         int tipY = size - margin - 1;
         int baseY = size / 2;
         for (int y = baseY; y <= tipY; y++)
@@ -318,7 +336,7 @@ public static class MobileControlsVisualFactory
             }
         }
 
-        // Ok govdesi (dikdortgen) - daha kalin
+        // Ok govdesi (dikdortgen)
         int bodyWidth = size / 5;
         for (int y = margin; y < baseY; y++)
         {
@@ -333,7 +351,7 @@ public static class MobileControlsVisualFactory
     }
 
     /// <summary>
-    /// Yildirim ikonu - Dash
+    /// Yildirim ikonu - Dash (beyaz, temiz flat design)
     /// </summary>
     public static Sprite CreateLightningIcon(int size = 128)
     {
@@ -344,9 +362,8 @@ public static class MobileControlsVisualFactory
         Color[] pixels = new Color[size * size];
         Color white = Color.white;
 
-        // Yildirim zigzag cizimi - daha kalin
         int margin = size / 6;
-        int w = size / 3; // Daha genis yildirim
+        int w = size / 3;
 
         // Ust kisim - genis ucgen asagi
         int topY = size - margin;
@@ -381,7 +398,7 @@ public static class MobileControlsVisualFactory
     }
 
     /// <summary>
-    /// Nisangah ikonu - Ates
+    /// Nisangah ikonu - Ates (beyaz, temiz flat design)
     /// </summary>
     public static Sprite CreateCrosshairIcon(int size = 128)
     {
@@ -395,9 +412,9 @@ public static class MobileControlsVisualFactory
         int cx = size / 2;
         int cy = size / 2;
         int r = size / 3;
-        int lineW = Mathf.Max(2, size / 8); // 2x kalin cizgiler
+        int lineW = Mathf.Max(2, size / 8);
 
-        // Dis daire - daha kalin
+        // Dis daire
         float ringThickness = Mathf.Max(2f, size / 16f);
         for (int y = 0; y < size; y++)
         {
@@ -414,11 +431,10 @@ public static class MobileControlsVisualFactory
             }
         }
 
-        // Artı cizgileri (merkezde bosluk) - daha kalin
+        // Arti cizgileri (merkezde bosluk)
         int gap = size / 8;
         int lineLen = size / 4;
 
-        // Yatay cizgiler
         for (int lw = -lineW / 2; lw <= lineW / 2; lw++)
         {
             for (int x = cx - r - lineLen / 2; x < cx - gap; x++)
@@ -430,7 +446,6 @@ public static class MobileControlsVisualFactory
                     pixels[(cy + lw) * size + x] = white;
         }
 
-        // Dikey cizgiler
         for (int lw = -lineW / 2; lw <= lineW / 2; lw++)
         {
             for (int y = cy - r - lineLen / 2; y < cy - gap; y++)
@@ -442,7 +457,7 @@ public static class MobileControlsVisualFactory
                     pixels[y * size + (cx + lw)] = white;
         }
 
-        // Merkez nokta - daha buyuk
+        // Merkez nokta
         int dotR = Mathf.Max(2, size / 24);
         DrawDot(pixels, size, cx, cy, white, dotR);
 
@@ -450,11 +465,11 @@ public static class MobileControlsVisualFactory
     }
 
     /// <summary>
-    /// Daire ok (reload) ikonu
+    /// Takla/Roll ikonu - yuvarlanma hareket cizgileri (beyaz, flat design)
     /// </summary>
-    public static Sprite CreateReloadIcon(int size = 128)
+    public static Sprite CreateRollIcon(int size = 128)
     {
-        string key = $"icon_reload_{size}";
+        string key = $"icon_roll_{size}";
         if (_cache.TryGetValue(key, out Sprite cached)) return cached;
 
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -465,7 +480,7 @@ public static class MobileControlsVisualFactory
         int cy = size / 2;
         int r = size / 3;
 
-        // 270 derece arc (saat yonunde, sag usttte bosluk)
+        // 270 derece arc (dairesel ok)
         for (int y = 0; y < size; y++)
         {
             for (int x = 0; x < size; x++)
@@ -476,86 +491,22 @@ public static class MobileControlsVisualFactory
                 float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
                 if (angle < 0) angle += 360f;
 
-                // 45-360 arasi ciz (sag ustte bosluk birak)
-                if (Mathf.Abs(dist - r) < 1.5f && (angle > 50f || angle < 5f))
+                if (Mathf.Abs(dist - r) < 1.8f && (angle > 50f || angle < 5f))
                 {
                     pixels[y * size + x] = white;
                 }
             }
         }
 
-        // Ok ucu (sag ustte)
+        // Ok ucu
         int arrowX = cx + (int)(r * Mathf.Cos(50f * Mathf.Deg2Rad));
         int arrowY = cy + (int)(r * Mathf.Sin(50f * Mathf.Deg2Rad));
-        // Kucuk ok ucgen
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 5; i++)
         {
             for (int j = -i; j <= i; j++)
             {
                 int px = arrowX + j;
                 int py = arrowY + i;
-                if (px >= 0 && px < size && py >= 0 && py < size)
-                    pixels[py * size + px] = white;
-            }
-        }
-
-        return CacheSprite(key, tex, pixels, size);
-    }
-
-    /// <summary>
-    /// Cift ok ikonu - Silah degistir
-    /// </summary>
-    public static Sprite CreateSwitchIcon(int size = 128)
-    {
-        string key = $"icon_switch_{size}";
-        if (_cache.TryGetValue(key, out Sprite cached)) return cached;
-
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        Color[] pixels = new Color[size * size];
-        Color white = Color.white;
-
-        int margin = size / 5;
-        int lineH = Mathf.Max(2, size / 10);
-
-        // Ust yatay cizgi (saga ok)
-        int topY = size * 2 / 3;
-        for (int y = topY - lineH / 2; y <= topY + lineH / 2; y++)
-        {
-            for (int x = margin; x < size - margin; x++)
-            {
-                if (x >= 0 && x < size && y >= 0 && y < size)
-                    pixels[y * size + x] = white;
-            }
-        }
-        // Sag ok ucu
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = -i; j <= i; j++)
-            {
-                int px = size - margin - i;
-                int py = topY + j;
-                if (px >= 0 && px < size && py >= 0 && py < size)
-                    pixels[py * size + px] = white;
-            }
-        }
-
-        // Alt yatay cizgi (sola ok)
-        int botY = size / 3;
-        for (int y = botY - lineH / 2; y <= botY + lineH / 2; y++)
-        {
-            for (int x = margin; x < size - margin; x++)
-            {
-                if (x >= 0 && x < size && y >= 0 && y < size)
-                    pixels[y * size + x] = white;
-            }
-        }
-        // Sol ok ucu
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = -i; j <= i; j++)
-            {
-                int px = margin + i;
-                int py = botY + j;
                 if (px >= 0 && px < size && py >= 0 && py < size)
                     pixels[py * size + px] = white;
             }
@@ -617,6 +568,40 @@ public static class MobileControlsVisualFactory
                     if (px >= 0 && px < texSize && py >= 0 && py < texSize)
                     {
                         pixels[py * texSize + px] = color;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void DrawSoftDot(Color[] pixels, int texSize, int cx, int cy, Color color, int radius)
+    {
+        for (int dy = -radius; dy <= radius; dy++)
+        {
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                if (dist <= radius)
+                {
+                    int px = cx + dx;
+                    int py = cy + dy;
+                    if (px >= 0 && px < texSize && py >= 0 && py < texSize)
+                    {
+                        float falloff = 1f - (dist / radius);
+                        Color c = color;
+                        c.a *= falloff * falloff;
+                        // Alpha blending
+                        Color existing = pixels[py * texSize + px];
+                        float outA = c.a + existing.a * (1f - c.a);
+                        if (outA > 0f)
+                        {
+                            pixels[py * texSize + px] = new Color(
+                                (c.r * c.a + existing.r * existing.a * (1f - c.a)) / outA,
+                                (c.g * c.a + existing.g * existing.a * (1f - c.a)) / outA,
+                                (c.b * c.a + existing.b * existing.a * (1f - c.a)) / outA,
+                                outA
+                            );
+                        }
                     }
                 }
             }

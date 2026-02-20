@@ -318,12 +318,6 @@ public class GameManager : MonoBehaviour
             FloatingTextManager.Instance.ShowCoinPickup(player.position + Vector3.up * 0.3f, amount);
         }
 
-        // AdvancedHUD coin display
-        if (AdvancedHUD.Instance != null)
-        {
-            AdvancedHUD.Instance.UpdateCoinDisplay(coins);
-        }
-
         // 100 coin = 1 can
         if (coins >= 100)
         {
@@ -614,7 +608,7 @@ public class GameManager : MonoBehaviour
     public int GetCombo() { return currentCombo; }
     public int GetComboMultiplier() { return comboMultiplier; }
 
-    // AdvancedHUD icin property'ler
+    // HUD icin property'ler
     public float currentHealth => health;
     public int MaxHealth => maxHealth;
 

@@ -3,20 +3,23 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 /// <summary>
-/// Gelismis Neon HUD - Mobil uyumlu, tek sistem
-/// Tum HUD elementlerini birlestirir
+/// NeonJump HUD - Mobil uyumlu, temiz ve performansli
+/// Elemanlar: Health, Score/Combo, Coin, Weapon, PowerUp, Boss Health
 /// </summary>
 public class NeonHUD : MonoBehaviour
 {
     public static NeonHUD Instance { get; private set; }
 
-    [Header("Main Canvas")]
+    // Canvas
     private Canvas mainCanvas;
     private CanvasScaler canvasScaler;
+    private RectTransform safeAreaRoot;
+    private bool isMobile;
 
-    [Header("Top Left - Health & Status")]
+    // Health (Sol ust)
     private RectTransform healthPanel;
     private Image healthBarFill;
     private Image healthBarGlow;
@@ -24,7 +27,7 @@ public class NeonHUD : MonoBehaviour
     private Image[] heartIcons;
     private float displayedHealth;
 
-    [Header("Top Center - Score & Combo")]
+    // Score & Combo (Ust orta)
     private RectTransform scorePanel;
     private TextMeshProUGUI scoreText;
     private TextMeshProUGUI comboText;
@@ -32,12 +35,11 @@ public class NeonHUD : MonoBehaviour
     private CanvasGroup comboGroup;
     private int displayedScore;
 
-    [Header("Top Right - Coins & Currency")]
+    // Coin (Sag ust)
     private RectTransform coinPanel;
     private TextMeshProUGUI coinText;
-    private Image coinIcon;
 
-    [Header("Bottom Left - Weapon Info")]
+    // Weapon (Sol alt)
     private RectTransform weaponPanel;
     private TextMeshProUGUI weaponNameText;
     private TextMeshProUGUI ammoText;
@@ -45,54 +47,46 @@ public class NeonHUD : MonoBehaviour
     private Image[] weaponSlots;
     private Image[] slotRarityBorders;
 
-    [Header("Bottom Right - Skills")]
-    private RectTransform skillPanel;
-    private SkillIconUI[] skillIcons;
-
-    [Header("Center - Crosshair & Hit Markers")]
-    private RectTransform crosshairPanel;
-    private Image crosshairImage;
-    private Image hitMarker;
-    private Image critMarker;
-
-    [Header("Left Edge - Power-Up Indicators")]
+    // Power-Up (Sol kenar)
     private RectTransform powerUpPanel;
     private Dictionary<PowerUpType, PowerUpIndicatorUI> powerUpIndicators = new Dictionary<PowerUpType, PowerUpIndicatorUI>();
 
-    [Header("Right Edge - Kill Feed")]
-    private RectTransform killFeedPanel;
-    private List<KillFeedEntry> killFeedEntries = new List<KillFeedEntry>();
-
-    [Header("Screen Edges - Damage Direction")]
-    private Image[] damageDirectionIndicators;
-
-    [Header("Mini Map")]
-    private RectTransform miniMapPanel;
-    private RawImage miniMapImage;
-    private Image playerBlip;
-    private List<Image> enemyBlips = new List<Image>();
-
-    [Header("Boss Health Bar")]
+    // Boss Health
     private RectTransform bossHealthPanel;
     private TextMeshProUGUI bossNameText;
     private Image bossHealthFill;
     private int bossMaxHealth;
 
-    [Header("Mobile Controls")]
-    private bool isMobile;
-    private RectTransform mobileControlsPanel;
-
-    [Header("Animation Settings")]
+    // Neon efekt
     private float pulseSpeed = 3f;
     private float glowIntensity = 0.5f;
 
-    // Neon Colors
-    private Color neonCyan = new Color(0f, 1f, 1f);
-    private Color neonPink = new Color(1f, 0f, 0.6f);
-    private Color neonYellow = new Color(1f, 1f, 0f);
-    private Color neonOrange = new Color(1f, 0.5f, 0f);
-    private Color neonGreen = new Color(0f, 1f, 0.5f);
-    private Color neonPurple = new Color(0.7f, 0f, 1f);
+    // Doga Temasi Renkleri
+    private Color neonCyan = new Color(0.9f, 0.8f, 0.55f);
+    private Color neonPink = new Color(0.7f, 0.35f, 0.35f);
+    private Color neonYellow = new Color(0.92f, 0.78f, 0.35f);
+    private Color neonOrange = new Color(0.85f, 0.55f, 0.25f);
+    private Color neonGreen = new Color(0.35f, 0.75f, 0.45f);
+    private Color neonPurple = new Color(0.55f, 0.40f, 0.65f);
+
+    private static readonly Color panelBgColor = new Color(0.12f, 0.14f, 0.10f, 0.85f);
+
+    // Cached string builder - her frame yeni string olusturmayi onler
+    private readonly StringBuilder _sb = new StringBuilder(32);
+
+    // Onceki degerler - sadece degisince UI guncelle
+    private int _lastHealthDisplay = -1;
+    private int _lastMaxHealthDisplay = -1;
+    private int _lastScoreDisplay = -1;
+    private int _lastCombo = -1;
+    private int _lastMultiplier = -1;
+    private int _lastCoinDisplay = -1;
+    private int _lastAmmo = -1;
+    private int _lastReserve = -1;
+
+    // Neon efekt throttle
+    private float _neonUpdateInterval = 0.05f; // 20 FPS glow yeterli
+    private float _neonUpdateTimer;
 
     void Awake()
     {
@@ -109,39 +103,8 @@ public class NeonHUD : MonoBehaviour
         CreateScorePanel();
         CreateCoinPanel();
         CreateWeaponPanel();
-        CreateSkillPanel();
-        CreateCrosshair();
         CreatePowerUpPanel();
-        CreateKillFeedPanel();
-        CreateDamageIndicators();
-        CreateMiniMap();
-
         StartCoroutine(DelayedInit());
-    }
-
-    // Safe area root - tum HUD elementleri bunun icine yerlesir
-    private RectTransform safeAreaRoot;
-
-    void CreateSafeAreaRoot()
-    {
-        GameObject safeObj = new GameObject("SafeAreaRoot");
-        safeObj.transform.SetParent(transform, false);
-        safeAreaRoot = safeObj.AddComponent<RectTransform>();
-        safeAreaRoot.anchorMin = Vector2.zero;
-        safeAreaRoot.anchorMax = Vector2.one;
-        safeAreaRoot.offsetMin = Vector2.zero;
-        safeAreaRoot.offsetMax = Vector2.zero;
-        safeObj.AddComponent<SafeAreaHandler>();
-    }
-
-    /// <summary>
-    /// Screen DPI'a gore font boyutu olcekler.
-    /// </summary>
-    float GetMobileFontSize(float baseFontSize)
-    {
-        if (!isMobile) return baseFontSize;
-        float dpiScale = Mathf.Clamp(Screen.dpi / 160f, 1f, 2.5f);
-        return Mathf.Max(baseFontSize * dpiScale, 14f);
     }
 
     IEnumerator DelayedInit()
@@ -163,19 +126,26 @@ public class NeonHUD : MonoBehaviour
         UpdateHealthAnimation();
         UpdateScoreAnimation();
         UpdateComboTimer();
-        UpdateNeonEffects();
-        UpdateMiniMap();
+
+        // Neon glow efekti gorsel oncelikli degil, throttle et
+        _neonUpdateTimer += Time.deltaTime;
+        if (_neonUpdateTimer >= _neonUpdateInterval)
+        {
+            _neonUpdateTimer = 0f;
+            UpdateNeonEffects();
+        }
     }
 
-    // === CANVAS SETUP ===
+    // ============================================================
+    // CANVAS & SAFE AREA
+    // ============================================================
 
     void CreateMainCanvas()
     {
         mainCanvas = GetComponentInParent<Canvas>();
         if (mainCanvas == null)
-        {
             mainCanvas = FindFirstObjectByType<Canvas>();
-        }
+
         if (mainCanvas == null)
         {
             GameObject canvasObj = new GameObject("NeonHUDCanvas");
@@ -196,14 +166,32 @@ public class NeonHUD : MonoBehaviour
             canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
         }
 
-        // Mobilde UI scale ayarla
         if (isMobile && canvasScaler != null)
-        {
             canvasScaler.referenceResolution = new Vector2(1280, 720);
-        }
     }
 
-    // === HEALTH PANEL - Sol Ust ===
+    void CreateSafeAreaRoot()
+    {
+        GameObject safeObj = new GameObject("SafeAreaRoot");
+        safeObj.transform.SetParent(transform, false);
+        safeAreaRoot = safeObj.AddComponent<RectTransform>();
+        safeAreaRoot.anchorMin = Vector2.zero;
+        safeAreaRoot.anchorMax = Vector2.one;
+        safeAreaRoot.offsetMin = Vector2.zero;
+        safeAreaRoot.offsetMax = Vector2.zero;
+        safeObj.AddComponent<SafeAreaHandler>();
+    }
+
+    float GetMobileFontSize(float baseFontSize)
+    {
+        if (!isMobile) return baseFontSize;
+        float dpiScale = Mathf.Clamp(Screen.dpi / 160f, 1f, 2.5f);
+        return Mathf.Max(baseFontSize * dpiScale, 14f);
+    }
+
+    // ============================================================
+    // HEALTH PANEL - Sol Ust
+    // ============================================================
 
     void CreateHealthPanel()
     {
@@ -211,12 +199,11 @@ public class NeonHUD : MonoBehaviour
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1),
             new Vector2(20, -20), new Vector2(320, 70));
 
-        // Arka plan - Neon border ile
         Image panelBg = healthPanel.gameObject.AddComponent<Image>();
-        panelBg.color = new Color(0.02f, 0.02f, 0.08f, 0.85f);
-        AddNeonBorder(healthPanel.gameObject, neonCyan, 2);
+        panelBg.color = panelBgColor;
+        AddNeonBorder(healthPanel.gameObject, neonCyan);
 
-        // HP Icon - Sol taraf
+        // Kalp ikonu
         GameObject hpIconObj = CreateUIElement("HPIcon", healthPanel);
         RectTransform hpIconRt = hpIconObj.GetComponent<RectTransform>();
         hpIconRt.anchorMin = hpIconRt.anchorMax = new Vector2(0, 0.5f);
@@ -225,12 +212,11 @@ public class NeonHUD : MonoBehaviour
         hpIconRt.sizeDelta = new Vector2(50, 50);
 
         TextMeshProUGUI hpSymbol = hpIconObj.AddComponent<TextMeshProUGUI>();
-        hpSymbol.text = "<color=#FF3366>♥</color>";
+        hpSymbol.text = "<color=#FF3366>\u2665</color>";
         hpSymbol.fontSize = 36;
         hpSymbol.alignment = TextAlignmentOptions.Center;
-        hpSymbol.enableVertexGradient = true;
 
-        // Health Bar Container
+        // Health Bar arka plan
         GameObject healthBarBg = CreateUIElement("HealthBarBg", healthPanel);
         RectTransform barBgRt = healthBarBg.GetComponent<RectTransform>();
         barBgRt.anchorMin = new Vector2(0, 0.5f);
@@ -254,7 +240,7 @@ public class NeonHUD : MonoBehaviour
         healthBarFill = healthBarFillObj.AddComponent<Image>();
         healthBarFill.color = neonGreen;
 
-        // Health Bar Glow (arka plan efekti)
+        // Health Bar Glow
         GameObject glowObj = CreateUIElement("HealthGlow", healthBarFillObj.transform);
         RectTransform glowRt = glowObj.GetComponent<RectTransform>();
         glowRt.anchorMin = Vector2.zero;
@@ -265,7 +251,7 @@ public class NeonHUD : MonoBehaviour
         healthBarGlow = glowObj.AddComponent<Image>();
         healthBarGlow.color = new Color(neonGreen.r, neonGreen.g, neonGreen.b, 0.3f);
 
-        // Health Text (bar icinde)
+        // Health Text
         GameObject healthTextObj = CreateUIElement("HealthText", healthBarBg.transform);
         RectTransform textRt = healthTextObj.GetComponent<RectTransform>();
         textRt.anchorMin = Vector2.zero;
@@ -279,7 +265,6 @@ public class NeonHUD : MonoBehaviour
         healthText.alignment = TextAlignmentOptions.Center;
         healthText.color = Color.white;
 
-        // Kalp ikonlari (bar altinda)
         CreateHeartIcons();
     }
 
@@ -315,7 +300,9 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
-    // === SCORE PANEL - Ust Orta ===
+    // ============================================================
+    // SCORE PANEL - Ust Orta
+    // ============================================================
 
     void CreateScorePanel()
     {
@@ -323,10 +310,9 @@ public class NeonHUD : MonoBehaviour
             new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
             new Vector2(0, -15), new Vector2(280, 90));
 
-        // Arka plan
         Image panelBg = scorePanel.gameObject.AddComponent<Image>();
-        panelBg.color = new Color(0.02f, 0.02f, 0.08f, 0.8f);
-        AddNeonBorder(scorePanel.gameObject, neonYellow, 2);
+        panelBg.color = new Color(0.12f, 0.14f, 0.10f, 0.8f);
+        AddNeonBorder(scorePanel.gameObject, neonYellow);
 
         // Score Label
         GameObject scoreLabelObj = CreateUIElement("ScoreLabel", scorePanel);
@@ -372,7 +358,7 @@ public class NeonHUD : MonoBehaviour
         comboGroup = comboContainer.AddComponent<CanvasGroup>();
         comboGroup.alpha = 0;
 
-        // Combo Timer Bar (arka plan)
+        // Combo Timer Bar arka plan
         GameObject comboBarBg = CreateUIElement("ComboBarBg", comboContainer.transform);
         RectTransform comboBgRt = comboBarBg.GetComponent<RectTransform>();
         comboBgRt.anchorMin = new Vector2(0, 0);
@@ -412,7 +398,9 @@ public class NeonHUD : MonoBehaviour
         comboText.color = neonOrange;
     }
 
-    // === COIN PANEL - Sag Ust ===
+    // ============================================================
+    // COIN PANEL - Sag Ust
+    // ============================================================
 
     void CreateCoinPanel()
     {
@@ -420,10 +408,9 @@ public class NeonHUD : MonoBehaviour
             new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1),
             new Vector2(-20, -20), new Vector2(160, 50));
 
-        // Arka plan
         Image panelBg = coinPanel.gameObject.AddComponent<Image>();
-        panelBg.color = new Color(0.05f, 0.04f, 0.01f, 0.85f);
-        AddNeonBorder(coinPanel.gameObject, new Color(1f, 0.85f, 0f), 2);
+        panelBg.color = new Color(0.14f, 0.14f, 0.10f, 0.85f);
+        AddNeonBorder(coinPanel.gameObject, new Color(1f, 0.85f, 0f));
 
         // Coin Icon
         GameObject coinIconObj = CreateUIElement("CoinIcon", coinPanel);
@@ -433,13 +420,8 @@ public class NeonHUD : MonoBehaviour
         iconRt.anchoredPosition = new Vector2(10, 0);
         iconRt.sizeDelta = new Vector2(30, 30);
 
-        coinIcon = coinIconObj.AddComponent<Image>();
+        Image coinIcon = coinIconObj.AddComponent<Image>();
         coinIcon.color = new Color(1f, 0.85f, 0f);
-
-        // Neon glow for coin
-        Outline coinGlow = coinIconObj.AddComponent<Outline>();
-        coinGlow.effectColor = new Color(1f, 0.6f, 0f, 0.6f);
-        coinGlow.effectDistance = new Vector2(2, 2);
 
         // Coin Text
         GameObject coinTextObj = CreateUIElement("CoinText", coinPanel);
@@ -457,7 +439,9 @@ public class NeonHUD : MonoBehaviour
         coinText.color = new Color(1f, 0.9f, 0.3f);
     }
 
-    // === WEAPON PANEL - Sol Alt ===
+    // ============================================================
+    // WEAPON PANEL - Sol Alt
+    // ============================================================
 
     void CreateWeaponPanel()
     {
@@ -467,10 +451,9 @@ public class NeonHUD : MonoBehaviour
             new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0),
             new Vector2(20, yOffset), new Vector2(280, 100));
 
-        // Arka plan
         Image panelBg = weaponPanel.gameObject.AddComponent<Image>();
-        panelBg.color = new Color(0.02f, 0.02f, 0.08f, 0.85f);
-        AddNeonBorder(weaponPanel.gameObject, neonPink, 2);
+        panelBg.color = panelBgColor;
+        AddNeonBorder(weaponPanel.gameObject, neonPink);
 
         // Weapon Name
         GameObject nameObj = CreateUIElement("WeaponName", weaponPanel);
@@ -494,7 +477,7 @@ public class NeonHUD : MonoBehaviour
         ammoRt.anchorMin = new Vector2(0.5f, 0.5f);
         ammoRt.anchorMax = new Vector2(0.5f, 0.5f);
         ammoRt.pivot = new Vector2(0.5f, 0.5f);
-        ammoRt.anchoredPosition = new Vector2(0, 0);
+        ammoRt.anchoredPosition = Vector2.zero;
         ammoRt.sizeDelta = new Vector2(200, 30);
 
         ammoText = ammoObj.AddComponent<TextMeshProUGUI>();
@@ -513,21 +496,20 @@ public class NeonHUD : MonoBehaviour
         reloadRt.sizeDelta = Vector2.zero;
 
         Image reloadBg = reloadBarObj.AddComponent<Image>();
-        reloadBg.color = new Color(0.15f, 0.15f, 0.2f, 0.8f);
+        reloadBg.color = new Color(0.18f, 0.20f, 0.16f, 0.8f);
 
         GameObject reloadFillObj = CreateUIElement("ReloadFill", reloadBarObj.transform);
-        RectTransform fillRt = reloadFillObj.GetComponent<RectTransform>();
-        fillRt.anchorMin = Vector2.zero;
-        fillRt.anchorMax = new Vector2(0, 1);
-        fillRt.pivot = new Vector2(0, 0.5f);
-        fillRt.offsetMin = Vector2.zero;
-        fillRt.offsetMax = Vector2.zero;
+        RectTransform rFillRt = reloadFillObj.GetComponent<RectTransform>();
+        rFillRt.anchorMin = Vector2.zero;
+        rFillRt.anchorMax = new Vector2(0, 1);
+        rFillRt.pivot = new Vector2(0, 0.5f);
+        rFillRt.offsetMin = Vector2.zero;
+        rFillRt.offsetMax = Vector2.zero;
 
         reloadBarFill = reloadFillObj.AddComponent<Image>();
         reloadBarFill.color = neonCyan;
         reloadBarObj.SetActive(false);
 
-        // Weapon Slots (3 slot)
         CreateWeaponSlots();
     }
 
@@ -561,11 +543,9 @@ public class NeonHUD : MonoBehaviour
             le.preferredWidth = 75;
             le.preferredHeight = 28;
 
-            // Rarity border (dis cerceve)
             slotRarityBorders[i] = slotObj.AddComponent<Image>();
             slotRarityBorders[i].color = new Color(0.3f, 0.3f, 0.3f);
 
-            // Inner slot
             GameObject innerObj = CreateUIElement("Inner", slotObj.transform);
             RectTransform innerRt = innerObj.GetComponent<RectTransform>();
             innerRt.anchorMin = Vector2.zero;
@@ -574,9 +554,8 @@ public class NeonHUD : MonoBehaviour
             innerRt.offsetMax = new Vector2(-2, -2);
 
             weaponSlots[i] = innerObj.AddComponent<Image>();
-            weaponSlots[i].color = new Color(0.1f, 0.1f, 0.15f, 0.9f);
+            weaponSlots[i].color = new Color(0.16f, 0.18f, 0.14f, 0.9f);
 
-            // Slot number
             GameObject labelObj = CreateUIElement("Label", slotObj.transform);
             RectTransform labelRt = labelObj.GetComponent<RectTransform>();
             labelRt.anchorMin = Vector2.zero;
@@ -592,125 +571,9 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
-    // === SKILL PANEL - Sag Alt (Mobilde gizli - butonlarda cooldown gosteriliyor) ===
-
-    void CreateSkillPanel()
-    {
-        float yOffset = isMobile ? 250 : 20;
-
-        skillPanel = CreatePanel("SkillPanel",
-            new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0),
-            new Vector2(-20, yOffset), new Vector2(180, 60));
-
-        HorizontalLayoutGroup hlg = skillPanel.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 10;
-        hlg.childAlignment = TextAnchor.MiddleRight;
-        hlg.childForceExpandWidth = false;
-        hlg.childForceExpandHeight = false;
-        hlg.padding = new RectOffset(10, 10, 5, 5);
-
-        skillIcons = new SkillIconUI[3];
-        string[] skillNames = { "Dash", "Roll", "Jump" };
-        string[] skillKeys = { "D", "R", "J" };
-        Color[] skillColors = { neonCyan, neonOrange, neonGreen };
-
-        for (int i = 0; i < 3; i++)
-        {
-            skillIcons[i] = CreateSkillIcon(skillNames[i], skillKeys[i], skillColors[i]);
-        }
-    }
-
-    SkillIconUI CreateSkillIcon(string name, string key, Color color)
-    {
-        GameObject iconObj = CreateUIElement($"Skill_{name}", skillPanel);
-        RectTransform iconRt = iconObj.GetComponent<RectTransform>();
-        iconRt.sizeDelta = new Vector2(50, 50);
-
-        LayoutElement le = iconObj.AddComponent<LayoutElement>();
-        le.preferredWidth = 50;
-        le.preferredHeight = 50;
-
-        // Background
-        Image bg = iconObj.AddComponent<Image>();
-        bg.color = new Color(0.05f, 0.05f, 0.1f, 0.9f);
-
-        // Neon border
-        Outline outline = iconObj.AddComponent<Outline>();
-        outline.effectColor = color;
-        outline.effectDistance = new Vector2(2, 2);
-
-        // Cooldown fill (radial)
-        GameObject fillObj = CreateUIElement("CooldownFill", iconObj.transform);
-        RectTransform fillRt = fillObj.GetComponent<RectTransform>();
-        fillRt.anchorMin = Vector2.zero;
-        fillRt.anchorMax = Vector2.one;
-        fillRt.offsetMin = new Vector2(3, 3);
-        fillRt.offsetMax = new Vector2(-3, -3);
-
-        Image cooldownFill = fillObj.AddComponent<Image>();
-        cooldownFill.color = new Color(color.r, color.g, color.b, 0.4f);
-        cooldownFill.type = Image.Type.Filled;
-        cooldownFill.fillMethod = Image.FillMethod.Radial360;
-        cooldownFill.fillOrigin = (int)Image.Origin360.Top;
-        cooldownFill.fillClockwise = false;
-        cooldownFill.fillAmount = 0;
-
-        // Key label
-        GameObject labelObj = CreateUIElement("KeyLabel", iconObj.transform);
-        RectTransform labelRt = labelObj.GetComponent<RectTransform>();
-        labelRt.anchorMin = Vector2.zero;
-        labelRt.anchorMax = Vector2.one;
-        labelRt.sizeDelta = Vector2.zero;
-
-        TextMeshProUGUI label = labelObj.AddComponent<TextMeshProUGUI>();
-        label.text = key;
-        label.fontSize = 22;
-        label.fontStyle = FontStyles.Bold;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = color;
-
-        return new SkillIconUI
-        {
-            container = iconRt,
-            background = bg,
-            cooldownFill = cooldownFill,
-            keyLabel = label,
-            baseColor = color
-        };
-    }
-
-    // === CROSSHAIR ===
-
-    void CreateCrosshair()
-    {
-        crosshairPanel = CreatePanel("CrosshairPanel",
-            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            Vector2.zero, new Vector2(64, 64));
-
-        // Crosshair (basit dot)
-        crosshairImage = crosshairPanel.gameObject.AddComponent<Image>();
-        crosshairImage.color = new Color(1f, 1f, 1f, 0.7f);
-
-        // Hit marker (vurusta gosterilecek)
-        GameObject hitObj = CreateUIElement("HitMarker", crosshairPanel);
-        RectTransform hitRt = hitObj.GetComponent<RectTransform>();
-        hitRt.anchorMin = hitRt.anchorMax = hitRt.pivot = new Vector2(0.5f, 0.5f);
-        hitRt.sizeDelta = new Vector2(32, 32);
-
-        hitMarker = hitObj.AddComponent<Image>();
-        hitMarker.color = new Color(1f, 1f, 1f, 0f); // Baslangicta gorunmez
-
-        // Crit marker
-        GameObject critObj = CreateUIElement("CritMarker", crosshairPanel);
-        RectTransform critRt = critObj.GetComponent<RectTransform>();
-        critRt.anchorMin = critRt.anchorMax = critRt.pivot = new Vector2(0.5f, 0.5f);
-        critRt.sizeDelta = new Vector2(48, 48);
-
-        critMarker = critObj.AddComponent<Image>();
-        critMarker.color = new Color(1f, 0.3f, 0f, 0f);
-    }
-
-    // === POWER-UP PANEL ===
+    // ============================================================
+    // POWER-UP PANEL - Sol Kenar
+    // ============================================================
 
     void CreatePowerUpPanel()
     {
@@ -726,129 +589,67 @@ public class NeonHUD : MonoBehaviour
         vlg.padding = new RectOffset(5, 5, 5, 5);
     }
 
-    // === KILL FEED PANEL ===
+    // ============================================================
+    // BOSS HEALTH BAR
+    // ============================================================
 
-    void CreateKillFeedPanel()
+    void CreateBossHealthBar()
     {
-        killFeedPanel = CreatePanel("KillFeedPanel",
-            new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-            new Vector2(-20, 50), new Vector2(250, 200));
+        bossHealthPanel = CreatePanel("BossHealthPanel",
+            new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
+            new Vector2(0, -120), new Vector2(500, 50));
 
-        VerticalLayoutGroup vlg = killFeedPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 5;
-        vlg.childAlignment = TextAnchor.UpperRight;
-        vlg.childForceExpandWidth = true;
-        vlg.childForceExpandHeight = false;
-        vlg.padding = new RectOffset(5, 5, 5, 5);
+        Image bg = bossHealthPanel.gameObject.AddComponent<Image>();
+        bg.color = new Color(0.05f, 0.02f, 0.02f, 0.9f);
+        AddNeonBorder(bossHealthPanel.gameObject, new Color(1f, 0.2f, 0.2f));
+
+        // Boss name
+        GameObject nameObj = CreateUIElement("BossName", bossHealthPanel);
+        RectTransform nameRt = nameObj.GetComponent<RectTransform>();
+        nameRt.anchorMin = new Vector2(0.5f, 1);
+        nameRt.anchorMax = new Vector2(0.5f, 1);
+        nameRt.pivot = new Vector2(0.5f, 1);
+        nameRt.anchoredPosition = new Vector2(0, -3);
+        nameRt.sizeDelta = new Vector2(480, 20);
+
+        bossNameText = nameObj.AddComponent<TextMeshProUGUI>();
+        bossNameText.fontSize = 16;
+        bossNameText.fontStyle = FontStyles.Bold;
+        bossNameText.alignment = TextAlignmentOptions.Center;
+        bossNameText.color = new Color(1f, 0.3f, 0.3f);
+
+        // Health bar
+        GameObject barBg = CreateUIElement("HealthBarBg", bossHealthPanel);
+        RectTransform barRt = barBg.GetComponent<RectTransform>();
+        barRt.anchorMin = new Vector2(0.5f, 0);
+        barRt.anchorMax = new Vector2(0.5f, 0);
+        barRt.pivot = new Vector2(0.5f, 0);
+        barRt.anchoredPosition = new Vector2(0, 5);
+        barRt.sizeDelta = new Vector2(480, 20);
+
+        Image barBgImg = barBg.AddComponent<Image>();
+        barBgImg.color = new Color(0.2f, 0.05f, 0.05f, 0.9f);
+
+        GameObject fillObj = CreateUIElement("Fill", barBg.transform);
+        RectTransform fillRt = fillObj.GetComponent<RectTransform>();
+        fillRt.anchorMin = Vector2.zero;
+        fillRt.anchorMax = Vector2.one;
+        fillRt.offsetMin = new Vector2(2, 2);
+        fillRt.offsetMax = new Vector2(-2, -2);
+        fillRt.pivot = new Vector2(0, 0.5f);
+
+        bossHealthFill = fillObj.AddComponent<Image>();
+        bossHealthFill.color = new Color(1f, 0.2f, 0.2f);
+
+        bossHealthPanel.gameObject.SetActive(false);
     }
 
-    // === DAMAGE INDICATORS ===
-
-    void CreateDamageIndicators()
-    {
-        damageDirectionIndicators = new Image[4]; // Top, Right, Bottom, Left
-
-        Vector2[] positions = {
-            new Vector2(0.5f, 1f),   // Top
-            new Vector2(1f, 0.5f),   // Right
-            new Vector2(0.5f, 0f),   // Bottom
-            new Vector2(0f, 0.5f)    // Left
-        };
-
-        Vector2[] sizes = {
-            new Vector2(400, 50),   // Top
-            new Vector2(50, 400),   // Right
-            new Vector2(400, 50),   // Bottom
-            new Vector2(50, 400)    // Left
-        };
-
-        for (int i = 0; i < 4; i++)
-        {
-            GameObject indicator = CreateUIElement($"DamageIndicator_{i}", transform);
-            RectTransform rt = indicator.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = rt.pivot = positions[i];
-            rt.anchoredPosition = Vector2.zero;
-            rt.sizeDelta = sizes[i];
-
-            damageDirectionIndicators[i] = indicator.AddComponent<Image>();
-            damageDirectionIndicators[i].color = new Color(1f, 0f, 0f, 0f);
-
-            // Gradient texture olustur
-            Texture2D gradientTex = CreateDamageGradient(i);
-            damageDirectionIndicators[i].sprite = Sprite.Create(gradientTex,
-                new Rect(0, 0, gradientTex.width, gradientTex.height),
-                new Vector2(0.5f, 0.5f));
-        }
-    }
-
-    Texture2D CreateDamageGradient(int direction)
-    {
-        int w = direction % 2 == 0 ? 128 : 32;
-        int h = direction % 2 == 0 ? 32 : 128;
-        Texture2D tex = new Texture2D(w, h);
-        Color[] colors = new Color[w * h];
-
-        for (int y = 0; y < h; y++)
-        {
-            for (int x = 0; x < w; x++)
-            {
-                float alpha = 0;
-                switch (direction)
-                {
-                    case 0: alpha = 1f - (y / (float)h); break; // Top
-                    case 1: alpha = x / (float)w; break;        // Right
-                    case 2: alpha = y / (float)h; break;        // Bottom
-                    case 3: alpha = 1f - (x / (float)w); break; // Left
-                }
-                colors[y * w + x] = new Color(1, 0, 0, alpha * 0.6f);
-            }
-        }
-
-        tex.SetPixels(colors);
-        tex.filterMode = FilterMode.Bilinear;
-        tex.Apply();
-        return tex;
-    }
-
-    // === MINI MAP ===
-
-    void CreateMiniMap()
-    {
-        miniMapPanel = CreatePanel("MiniMapPanel",
-            new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1),
-            new Vector2(-20, -80), new Vector2(150, 150));
-
-        // Arka plan
-        Image bg = miniMapPanel.gameObject.AddComponent<Image>();
-        bg.color = new Color(0.02f, 0.02f, 0.08f, 0.8f);
-        AddNeonBorder(miniMapPanel.gameObject, neonCyan, 2);
-
-        // Mini map image (RenderTexture kullanilabilir)
-        GameObject mapObj = CreateUIElement("MapImage", miniMapPanel);
-        RectTransform mapRt = mapObj.GetComponent<RectTransform>();
-        mapRt.anchorMin = Vector2.zero;
-        mapRt.anchorMax = Vector2.one;
-        mapRt.offsetMin = new Vector2(5, 5);
-        mapRt.offsetMax = new Vector2(-5, -5);
-
-        miniMapImage = mapObj.AddComponent<RawImage>();
-        miniMapImage.color = new Color(0.1f, 0.15f, 0.2f, 0.9f);
-
-        // Player blip (ortada)
-        GameObject playerBlipObj = CreateUIElement("PlayerBlip", mapObj.transform);
-        RectTransform blipRt = playerBlipObj.GetComponent<RectTransform>();
-        blipRt.anchorMin = blipRt.anchorMax = blipRt.pivot = new Vector2(0.5f, 0.5f);
-        blipRt.sizeDelta = new Vector2(10, 10);
-
-        playerBlip = playerBlipObj.AddComponent<Image>();
-        playerBlip.color = neonCyan;
-    }
-
-    // === HELPER METHODS ===
+    // ============================================================
+    // UI HELPER METHODS
+    // ============================================================
 
     RectTransform CreatePanel(string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 position, Vector2 size)
     {
-        // Safe area varsa HUD panellerini onun altina koy
         Transform parentTransform = safeAreaRoot != null ? safeAreaRoot : transform;
 
         GameObject panelObj = new GameObject(name);
@@ -877,20 +678,17 @@ public class NeonHUD : MonoBehaviour
         return CreateUIElement(name, (Transform)parent);
     }
 
-    void AddNeonBorder(GameObject obj, Color color, float width)
+    void AddNeonBorder(GameObject obj, Color color)
     {
         Outline outline = obj.GetComponent<Outline>();
         if (outline == null) outline = obj.AddComponent<Outline>();
         outline.effectColor = color;
-        outline.effectDistance = new Vector2(width, width);
-
-        // Ekstra glow icin ikinci outline
-        Outline glow = obj.AddComponent<Outline>();
-        glow.effectColor = new Color(color.r, color.g, color.b, 0.3f);
-        glow.effectDistance = new Vector2(width + 2, width + 2);
+        outline.effectDistance = new Vector2(2, 2);
     }
 
-    // === EVENT SUBSCRIPTIONS ===
+    // ============================================================
+    // EVENT SUBSCRIPTIONS
+    // ============================================================
 
     void SubscribeToEvents()
     {
@@ -914,7 +712,9 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
-    // === UPDATE METHODS ===
+    // ============================================================
+    // UPDATE METHODS
+    // ============================================================
 
     void UpdateAllUI()
     {
@@ -922,7 +722,6 @@ public class NeonHUD : MonoBehaviour
         UpdateScoreUI();
         UpdateCoinUI();
         UpdateWeaponUI();
-        UpdateSkillUI();
     }
 
     void UpdateHealthUI()
@@ -934,24 +733,23 @@ public class NeonHUD : MonoBehaviour
 
         displayedHealth = current;
         healthBarFill.rectTransform.anchorMax = new Vector2(current / max, 1);
-        healthText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
 
-        // Can durumuna gore renk
+        int currentInt = Mathf.CeilToInt(current);
+        int maxInt = Mathf.CeilToInt(max);
+        _lastHealthDisplay = currentInt;
+        _lastMaxHealthDisplay = maxInt;
+        _sb.Clear();
+        _sb.Append(currentInt).Append(" / ").Append(maxInt);
+        healthText.SetText(_sb);
+
         float percent = current / max;
         if (percent > 0.6f)
-        {
             healthBarFill.color = neonGreen;
-        }
         else if (percent > 0.3f)
-        {
             healthBarFill.color = neonYellow;
-        }
         else
-        {
             healthBarFill.color = new Color(1f, 0.2f, 0.3f);
-        }
 
-        // Kalp ikonlarini guncelle
         int hearts = Mathf.CeilToInt(max);
         int filledHearts = Mathf.CeilToInt(current);
         for (int i = 0; i < heartIcons.Length; i++)
@@ -980,7 +778,18 @@ public class NeonHUD : MonoBehaviour
             displayedHealth = Mathf.Lerp(displayedHealth, target, Time.deltaTime * 8f);
             float max = GameManager.Instance.MaxHealth;
             healthBarFill.rectTransform.anchorMax = new Vector2(displayedHealth / max, 1);
-            healthText.text = $"{Mathf.CeilToInt(displayedHealth)} / {Mathf.CeilToInt(max)}";
+
+            // Sadece goruntulenen tam sayi degistiginde string olustur
+            int displayInt = Mathf.CeilToInt(displayedHealth);
+            int maxInt = Mathf.CeilToInt(max);
+            if (displayInt != _lastHealthDisplay || maxInt != _lastMaxHealthDisplay)
+            {
+                _lastHealthDisplay = displayInt;
+                _lastMaxHealthDisplay = maxInt;
+                _sb.Clear();
+                _sb.Append(displayInt).Append(" / ").Append(maxInt);
+                healthText.SetText(_sb);
+            }
         }
     }
 
@@ -988,7 +797,8 @@ public class NeonHUD : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
         displayedScore = GameManager.Instance.GetScore();
-        scoreText.text = displayedScore.ToString("N0");
+        _lastScoreDisplay = displayedScore;
+        SetScoreText(displayedScore);
     }
 
     void UpdateScoreAnimation()
@@ -1003,9 +813,13 @@ public class NeonHUD : MonoBehaviour
             displayedScore = diff > 0 ?
                 Mathf.Min(displayedScore + step, target) :
                 Mathf.Max(displayedScore - step, target);
-            scoreText.text = displayedScore.ToString("N0");
 
-            // Score artinca pulse
+            if (displayedScore != _lastScoreDisplay)
+            {
+                _lastScoreDisplay = displayedScore;
+                SetScoreText(displayedScore);
+            }
+
             if (diff > 0)
             {
                 float scale = 1f + Mathf.Min(diff / 500f, 0.3f);
@@ -1019,6 +833,50 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
+    void SetScoreText(int score)
+    {
+        _sb.Clear();
+        FormatNumber(_sb, score);
+        scoreText.SetText(_sb);
+    }
+
+    // GC-free sayi formatlama (N0 yerine)
+    static void FormatNumber(StringBuilder sb, int number)
+    {
+        if (number < 0)
+        {
+            sb.Append('-');
+            number = -number;
+        }
+        if (number == 0)
+        {
+            sb.Append('0');
+            return;
+        }
+
+        // Rakamlari bul
+        int digits = 0;
+        int temp = number;
+        while (temp > 0) { digits++; temp /= 10; }
+
+        int startIndex = sb.Length;
+        for (int i = 0; i < digits; i++) sb.Append('0');
+
+        int pos = startIndex + digits - 1;
+        int groupCount = 0;
+        while (number > 0)
+        {
+            if (groupCount > 0 && groupCount % 3 == 0)
+            {
+                sb.Insert(pos + 1, ',');
+            }
+            sb[pos] = (char)('0' + number % 10);
+            number /= 10;
+            pos--;
+            groupCount++;
+        }
+    }
+
     void UpdateComboTimer()
     {
         if (GameManager.Instance == null) return;
@@ -1029,15 +887,22 @@ public class NeonHUD : MonoBehaviour
         if (combo > 0)
         {
             comboGroup.alpha = 1f;
-            comboText.text = $"{combo} HIT! x{multiplier}";
 
-            // Combo rengini ayarla
-            if (combo >= 20) comboText.color = neonPurple;
-            else if (combo >= 10) comboText.color = neonPink;
-            else if (combo >= 5) comboText.color = neonOrange;
-            else comboText.color = neonYellow;
+            // Sadece combo veya multiplier degistiginde string olustur
+            if (combo != _lastCombo || multiplier != _lastMultiplier)
+            {
+                _lastCombo = combo;
+                _lastMultiplier = multiplier;
+                _sb.Clear();
+                _sb.Append(combo).Append(" HIT! x").Append(multiplier);
+                comboText.SetText(_sb);
 
-            // Timer bar icin ComboManager kullanilabilir
+                if (combo >= 20) comboText.color = neonPurple;
+                else if (combo >= 10) comboText.color = neonPink;
+                else if (combo >= 5) comboText.color = neonOrange;
+                else comboText.color = neonYellow;
+            }
+
             if (ComboManager.Instance != null)
             {
                 float timerPercent = ComboManager.Instance.comboTimer / ComboManager.Instance.comboTimeout;
@@ -1046,6 +911,11 @@ public class NeonHUD : MonoBehaviour
         }
         else
         {
+            if (_lastCombo != 0)
+            {
+                _lastCombo = 0;
+                _lastMultiplier = -1;
+            }
             comboGroup.alpha = Mathf.Lerp(comboGroup.alpha, 0f, Time.deltaTime * 3f);
         }
     }
@@ -1053,7 +923,14 @@ public class NeonHUD : MonoBehaviour
     void UpdateCoinUI()
     {
         if (GameManager.Instance == null) return;
-        coinText.text = GameManager.Instance.GetCoins().ToString("N0");
+        int coins = GameManager.Instance.GetCoins();
+        if (coins != _lastCoinDisplay)
+        {
+            _lastCoinDisplay = coins;
+            _sb.Clear();
+            FormatNumber(_sb, coins);
+            coinText.SetText(_sb);
+        }
     }
 
     void UpdateWeaponUI()
@@ -1065,9 +942,8 @@ public class NeonHUD : MonoBehaviour
         {
             weaponNameText.text = weapon.data.weaponName.ToUpper();
             weaponNameText.color = WeaponRarityHelper.GetRarityColor(weapon.rarity);
-            ammoText.text = $"{weapon.currentAmmo} / {weapon.reserveAmmo}";
+            SetAmmoText(weapon.currentAmmo, weapon.reserveAmmo);
 
-            // Dusuk mermi uyarisi
             float ammoPercent = (float)weapon.currentAmmo / weapon.GetEffectiveMaxAmmo();
             if (ammoPercent <= 0.2f)
             {
@@ -1080,8 +956,19 @@ public class NeonHUD : MonoBehaviour
             }
         }
 
-        // Slot guncelle
         UpdateWeaponSlots();
+    }
+
+    void SetAmmoText(int current, int reserve)
+    {
+        if (current != _lastAmmo || reserve != _lastReserve)
+        {
+            _lastAmmo = current;
+            _lastReserve = reserve;
+            _sb.Clear();
+            _sb.Append(current).Append(" / ").Append(reserve);
+            ammoText.SetText(_sb);
+        }
     }
 
     void UpdateWeaponSlots()
@@ -1112,68 +999,28 @@ public class NeonHUD : MonoBehaviour
                 else
                 {
                     slotRarityBorders[i].color = new Color(rarityColor.r * 0.5f, rarityColor.g * 0.5f, rarityColor.b * 0.5f);
-                    weaponSlots[i].color = new Color(0.1f, 0.1f, 0.15f, 0.7f);
+                    weaponSlots[i].color = new Color(0.16f, 0.18f, 0.14f, 0.7f);
                 }
             }
             else
             {
                 slotRarityBorders[i].color = new Color(0.2f, 0.2f, 0.2f);
-                weaponSlots[i].color = new Color(0.05f, 0.05f, 0.08f, 0.5f);
+                weaponSlots[i].color = new Color(0.12f, 0.13f, 0.10f, 0.5f);
             }
-        }
-    }
-
-    void UpdateSkillUI()
-    {
-        PlayerController player = FindFirstObjectByType<PlayerController>();
-        if (player == null) return;
-
-        // Dash
-        float dashPercent = player.DashCooldownTimer / player.DashCooldownMax;
-        UpdateSkillIcon(skillIcons[0], dashPercent, player.CanDash);
-
-        // Roll
-        float rollPercent = player.RollCooldownTimer / player.RollCooldownMax;
-        UpdateSkillIcon(skillIcons[1], rollPercent, player.CanRoll);
-
-        // Jump
-        bool canJump = player.JumpCount < player.MaxJumpCount || player.IsGrounded;
-        skillIcons[2].cooldownFill.fillAmount = canJump ? 0 : 1;
-        skillIcons[2].keyLabel.color = canJump ? skillIcons[2].baseColor : new Color(0.4f, 0.4f, 0.4f);
-    }
-
-    void UpdateSkillIcon(SkillIconUI icon, float cooldownPercent, bool isReady)
-    {
-        icon.cooldownFill.fillAmount = Mathf.Clamp01(cooldownPercent);
-        icon.keyLabel.color = isReady ? icon.baseColor : new Color(0.4f, 0.4f, 0.4f);
-
-        if (isReady)
-        {
-            float pulse = 0.8f + Mathf.Sin(Time.time * 3f) * 0.2f;
-            icon.cooldownFill.color = new Color(icon.baseColor.r, icon.baseColor.g, icon.baseColor.b, 0.1f * pulse);
         }
     }
 
     void UpdateNeonEffects()
     {
-        // Neon pulse animasyonu
+        if (healthBarGlow == null) return;
         float pulse = (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * glowIntensity;
-
-        // Health bar glow
-        if (healthBarGlow != null)
-        {
-            Color glowColor = healthBarFill.color;
-            healthBarGlow.color = new Color(glowColor.r, glowColor.g, glowColor.b, 0.2f + pulse * 0.2f);
-        }
+        Color glowColor = healthBarFill.color;
+        healthBarGlow.color = new Color(glowColor.r, glowColor.g, glowColor.b, 0.2f + pulse * 0.2f);
     }
 
-    void UpdateMiniMap()
-    {
-        // Mini map icin dusman blipleri guncellenebilir
-        // Su an basit bir gorsel
-    }
-
-    // === EVENT HANDLERS ===
+    // ============================================================
+    // EVENT HANDLERS
+    // ============================================================
 
     void OnWeaponChanged(WeaponInstance weapon)
     {
@@ -1182,7 +1029,7 @@ public class NeonHUD : MonoBehaviour
 
     void OnAmmoChanged(int current, int reserve)
     {
-        ammoText.text = $"{current} / {reserve}";
+        SetAmmoText(current, reserve);
     }
 
     void OnReloadStarted()
@@ -1214,126 +1061,23 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
-    // === PUBLIC METHODS ===
+    // ============================================================
+    // PUBLIC API - Refresh
+    // ============================================================
 
-    public void ShowHitMarker(bool isCrit = false)
+    public void RefreshCoins()
     {
-        StartCoroutine(HitMarkerAnimation(isCrit));
+        UpdateCoinUI();
     }
 
-    IEnumerator HitMarkerAnimation(bool isCrit)
-    {
-        Image marker = isCrit ? critMarker : hitMarker;
-        Color color = isCrit ? neonOrange : Color.white;
-
-        marker.color = new Color(color.r, color.g, color.b, 1f);
-        marker.transform.localScale = Vector3.one * 1.5f;
-
-        float duration = 0.15f;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            marker.color = new Color(color.r, color.g, color.b, 1f - t);
-            marker.transform.localScale = Vector3.one * Mathf.Lerp(1.5f, 1f, t);
-            yield return null;
-        }
-
-        marker.color = new Color(color.r, color.g, color.b, 0f);
-    }
-
-    public void ShowDamageDirection(Vector3 damageSource)
-    {
-        if (Camera.main == null) return;
-
-        // Hasar yonunu hesapla
-        Vector3 playerPos = Camera.main.transform.position;
-        Vector3 direction = (damageSource - playerPos).normalized;
-
-        // Hangi indicator'i goster
-        float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-        int index = GetDirectionIndex(angle);
-
-        StartCoroutine(DamageIndicatorAnimation(index));
-    }
-
-    int GetDirectionIndex(float angle)
-    {
-        if (angle >= -45 && angle < 45) return 0;      // Top
-        if (angle >= 45 && angle < 135) return 1;      // Right
-        if (angle >= -135 && angle < -45) return 3;    // Left
-        return 2;                                       // Bottom
-    }
-
-    IEnumerator DamageIndicatorAnimation(int index)
-    {
-        if (index < 0 || index >= damageDirectionIndicators.Length) yield break;
-
-        Image indicator = damageDirectionIndicators[index];
-        indicator.color = new Color(1f, 0f, 0f, 0.8f);
-
-        float duration = 0.5f;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            indicator.color = new Color(1f, 0f, 0f, 0.8f * (1f - t));
-            yield return null;
-        }
-
-        indicator.color = new Color(1f, 0f, 0f, 0f);
-    }
-
-    public void AddKillFeedEntry(string killerName, string victimName, string weaponName)
-    {
-        StartCoroutine(ShowKillFeedEntry(killerName, victimName, weaponName));
-    }
-
-    IEnumerator ShowKillFeedEntry(string killer, string victim, string weapon)
-    {
-        GameObject entry = CreateUIElement("KillEntry", killFeedPanel);
-        RectTransform entryRt = entry.GetComponent<RectTransform>();
-        entryRt.sizeDelta = new Vector2(240, 25);
-
-        LayoutElement le = entry.AddComponent<LayoutElement>();
-        le.preferredHeight = 25;
-
-        Image bg = entry.AddComponent<Image>();
-        bg.color = new Color(0f, 0f, 0f, 0.6f);
-
-        TextMeshProUGUI text = entry.AddComponent<TextMeshProUGUI>();
-        text.text = $"<color=#00FFFF>{killer}</color> <color=#FF66AA>[{weapon}]</color> <color=#FF3333>{victim}</color>";
-        text.fontSize = 14;
-        text.alignment = TextAlignmentOptions.Right;
-
-        // 5 saniye sonra kaybol
-        yield return new WaitForSeconds(5f);
-
-        float fadeDuration = 0.5f;
-        float elapsed = 0f;
-        CanvasGroup cg = entry.AddComponent<CanvasGroup>();
-
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            cg.alpha = 1f - (elapsed / fadeDuration);
-            yield return null;
-        }
-
-        Destroy(entry);
-    }
+    // ============================================================
+    // PUBLIC API - Power-Up
+    // ============================================================
 
     public void ShowPowerUp(PowerUpType type, float duration)
     {
         if (powerUpIndicators.ContainsKey(type))
-        {
-            // Zaten var, sureyi guncelle
             return;
-        }
 
         StartCoroutine(CreatePowerUpIndicator(type, duration));
     }
@@ -1351,7 +1095,7 @@ public class NeonHUD : MonoBehaviour
         bg.color = new Color(0f, 0f, 0f, 0.7f);
 
         Color powerUpColor = GetPowerUpColor(type);
-        AddNeonBorder(indicator, powerUpColor, 1);
+        AddNeonBorder(indicator, powerUpColor);
 
         // Icon
         GameObject iconObj = CreateUIElement("Icon", indicator.transform);
@@ -1386,7 +1130,6 @@ public class NeonHUD : MonoBehaviour
         };
         powerUpIndicators[type] = indicatorUI;
 
-        // Sure bekle
         yield return new WaitForSeconds(duration);
 
         // Fade out
@@ -1440,69 +1183,20 @@ public class NeonHUD : MonoBehaviour
         }
     }
 
+    // ============================================================
+    // PUBLIC API - Boss Health
+    // ============================================================
+
     public void ShowBossHealth(string bossName, int maxHealth)
     {
         bossMaxHealth = maxHealth;
 
         if (bossHealthPanel == null)
-        {
             CreateBossHealthBar();
-        }
 
         bossHealthPanel.gameObject.SetActive(true);
         bossNameText.text = bossName.ToUpper();
         bossHealthFill.rectTransform.anchorMax = Vector2.one;
-    }
-
-    void CreateBossHealthBar()
-    {
-        bossHealthPanel = CreatePanel("BossHealthPanel",
-            new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-            new Vector2(0, -120), new Vector2(500, 50));
-
-        Image bg = bossHealthPanel.gameObject.AddComponent<Image>();
-        bg.color = new Color(0.05f, 0.02f, 0.02f, 0.9f);
-        AddNeonBorder(bossHealthPanel.gameObject, new Color(1f, 0.2f, 0.2f), 2);
-
-        // Boss name
-        GameObject nameObj = CreateUIElement("BossName", bossHealthPanel);
-        RectTransform nameRt = nameObj.GetComponent<RectTransform>();
-        nameRt.anchorMin = new Vector2(0.5f, 1);
-        nameRt.anchorMax = new Vector2(0.5f, 1);
-        nameRt.pivot = new Vector2(0.5f, 1);
-        nameRt.anchoredPosition = new Vector2(0, -3);
-        nameRt.sizeDelta = new Vector2(480, 20);
-
-        bossNameText = nameObj.AddComponent<TextMeshProUGUI>();
-        bossNameText.fontSize = 16;
-        bossNameText.fontStyle = FontStyles.Bold;
-        bossNameText.alignment = TextAlignmentOptions.Center;
-        bossNameText.color = new Color(1f, 0.3f, 0.3f);
-
-        // Health bar
-        GameObject barBg = CreateUIElement("HealthBarBg", bossHealthPanel);
-        RectTransform barRt = barBg.GetComponent<RectTransform>();
-        barRt.anchorMin = new Vector2(0.5f, 0);
-        barRt.anchorMax = new Vector2(0.5f, 0);
-        barRt.pivot = new Vector2(0.5f, 0);
-        barRt.anchoredPosition = new Vector2(0, 5);
-        barRt.sizeDelta = new Vector2(480, 20);
-
-        Image barBgImg = barBg.AddComponent<Image>();
-        barBgImg.color = new Color(0.2f, 0.05f, 0.05f, 0.9f);
-
-        GameObject fillObj = CreateUIElement("Fill", barBg.transform);
-        RectTransform fillRt = fillObj.GetComponent<RectTransform>();
-        fillRt.anchorMin = Vector2.zero;
-        fillRt.anchorMax = Vector2.one;
-        fillRt.offsetMin = new Vector2(2, 2);
-        fillRt.offsetMax = new Vector2(-2, -2);
-        fillRt.pivot = new Vector2(0, 0.5f);
-
-        bossHealthFill = fillObj.AddComponent<Image>();
-        bossHealthFill.color = new Color(1f, 0.2f, 0.2f);
-
-        bossHealthPanel.gameObject.SetActive(false);
     }
 
     public void UpdateBossHealth(int currentHealth)
@@ -1512,7 +1206,6 @@ public class NeonHUD : MonoBehaviour
         float percent = (float)currentHealth / bossMaxHealth;
         bossHealthFill.rectTransform.anchorMax = new Vector2(percent, 1);
 
-        // Renk degisimi
         if (percent > 0.66f)
             bossHealthFill.color = new Color(1f, 0.2f, 0.2f);
         else if (percent > 0.33f)
@@ -1524,31 +1217,14 @@ public class NeonHUD : MonoBehaviour
     public void HideBossHealth()
     {
         if (bossHealthPanel != null)
-        {
             bossHealthPanel.gameObject.SetActive(false);
-        }
     }
 }
 
-// Helper Classes
-public class SkillIconUI
-{
-    public RectTransform container;
-    public Image background;
-    public Image cooldownFill;
-    public TextMeshProUGUI keyLabel;
-    public Color baseColor;
-}
-
+// Helper class
 public class PowerUpIndicatorUI
 {
     public GameObject container;
     public Image icon;
     public TextMeshProUGUI text;
-}
-
-public class KillFeedEntry
-{
-    public GameObject gameObject;
-    public float creationTime;
 }

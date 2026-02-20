@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo:*)",
+      "Bash(CLAUDECODE= claude mcp:*)",
+      "Read(//c/Users/pc/**)",
+      "Bash(node -e:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(cmd //c \"tasklist /FI \"\"PID eq 15144\"\" /FO CSV /NH\")",
+      "mcp__mcp-unity__get_console_logs",
+      "mcp__mcp-unity__send_console_log",
+      "mcp__mcp-unity__get_gameobject",
+      "mcp__mcp-unity__recompile_scripts",
+      "Bash(taskkill:*)",
+      "Bash(python3:*)",
+      "mcp__plugin_firebase_firebase__firebase_get_environment"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\pc\\Desktop\\Projects\\NeonJump\\Assets\\UI\\Weapon"
+    ]
+  }
+}

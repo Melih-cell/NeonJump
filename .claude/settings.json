@@ -1,10 +1,11 @@
 {
   "mcpServers": {
     "mcp-unity": {
-      "command": "bash",
+      "command": "node",
       "args": [
-        "C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh"
+        "C:/Users/pc/mcp-unity/Server~/build/index.js"
       ],
+      "cwd": "C:/Users/pc/Desktop/Projects/NeonJump/Assets",
       "env": {
         "UNITY_HOST": "localhost",
         "LOGGING": "true"

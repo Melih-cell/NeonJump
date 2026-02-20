@@ -844,49 +844,12 @@ public class CompleteGameBuilder : MonoBehaviour
         GameObject uiManagerObj = new GameObject("UIManager");
         UIManager uiManager = uiManagerObj.AddComponent<UIManager>();
 
-        // HUD
-        CreateHUD(canvasObj.transform, uiManager);
+        // HUD artik NeonHUD tarafindan yonetiliyor
 
         // Panels
         CreateGameOverPanel(canvasObj.transform, uiManager);
         CreateWinPanel(canvasObj.transform, uiManager);
         CreatePausePanel(canvasObj.transform, uiManager);
-    }
-
-    void CreateHUD(Transform canvas, UIManager uiManager)
-    {
-        // Score Panel
-        GameObject scorePanel = CreatePanel(canvas, "ScorePanel",
-            new Vector2(0, 1), new Vector2(20, -20), new Vector2(250, 100));
-
-        TextMeshProUGUI scoreLabel = CreateText(scorePanel.transform, "SKOR", 20,
-            new Vector2(10, -10), TextAnchor.UpperLeft, new Color(0.7f, 0.7f, 0.7f));
-
-        uiManager.scoreText = CreateText(scorePanel.transform, "0", 36,
-            new Vector2(10, -35), TextAnchor.UpperLeft, Color.white);
-
-        // Coin display
-        uiManager.coinText = CreateText(scorePanel.transform, "x 0", 24,
-            new Vector2(10, -75), TextAnchor.UpperLeft, new Color(1f, 0.85f, 0.2f));
-
-        // Hearts Panel
-        GameObject heartsPanel = CreatePanel(canvas, "HeartsPanel",
-            new Vector2(1, 1), new Vector2(-20, -20), new Vector2(180, 60));
-
-        GameObject heartsContainer = new GameObject("HeartsContainer");
-        heartsContainer.transform.SetParent(heartsPanel.transform, false);
-        RectTransform heartsRT = heartsContainer.AddComponent<RectTransform>();
-        heartsRT.anchorMin = heartsRT.anchorMax = new Vector2(0.5f, 0.5f);
-        heartsRT.anchoredPosition = Vector2.zero;
-        heartsRT.sizeDelta = new Vector2(160, 40);
-
-        HorizontalLayoutGroup hlg = heartsContainer.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 10;
-        hlg.childAlignment = TextAnchor.MiddleCenter;
-        hlg.childForceExpandWidth = false;
-        hlg.childForceExpandHeight = false;
-
-        uiManager.heartsContainer = heartsRT;
     }
 
     void CreateGameOverPanel(Transform canvas, UIManager uiManager)

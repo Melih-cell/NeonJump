@@ -35,7 +35,10 @@
       "Bash(CLAUDECODE= claude mcp add -s local -e UNITY_HOST=localhost -e LOGGING=true mcp-unity -- bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
       "Bash(CLAUDECODE= claude mcp add -s local -e UNITY_HOST=localhost -e LOGGING=true mcp-unity bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
       "Bash(CLAUDECODE= claude mcp add -s local mcp-unity bash \"C:/Users/pc/Desktop/Projects/NeonJump/mcp-start.sh\")",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__mcp-unity__send_console_log"
     ]
   }
 }

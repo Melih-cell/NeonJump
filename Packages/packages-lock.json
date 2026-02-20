@@ -9,7 +9,7 @@
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.test-framework": "1.3.3"
       },
-      "hash": "64324a54490e4d277c75ae3bba0cc206a6dc7ca3"
+      "hash": "2b22ab96c90590c5477bc0fdd559b928a13c655b"
     },
     "com.unity.2d.animation": {
       "version": "13.0.4",
@@ -203,7 +203,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "2.11.2",
+      "version": "2.11.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {},

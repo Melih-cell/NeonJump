@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Jump - Store Visuals</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #111;
+    color: #eee;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 40px 20px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 42px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #00ffff, #ff00ff, #00ff88);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    margin-bottom: 50px;
+    font-size: 16px;
+  }
+  .section {
+    max-width: 1200px;
+    margin: 0 auto 60px auto;
+  }
+  .section h2 {
+    color: #00ffff;
+    font-size: 28px;
+    margin-bottom: 5px;
+    text-shadow: 0 0 10px #00ffff55;
+  }
+  .section .desc {
+    color: #777;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .canvas-wrap {
+    display: inline-block;
+    margin: 10px;
+    text-align: center;
+    vertical-align: top;
+  }
+  canvas {
+    display: block;
+    margin-bottom: 10px;
+    border-radius: 4px;
+  }
+  .btn-download {
+    background: linear-gradient(135deg, #00ffff33, #ff00ff33);
+    border: 1px solid #00ffff88;
+    color: #00ffff;
+    padding: 10px 28px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s;
+    margin-top: 4px;
+  }
+  .btn-download:hover {
+    background: linear-gradient(135deg, #00ffff55, #ff00ff55);
+    box-shadow: 0 0 15px #00ffff44;
+  }
+  .screenshots-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  .screenshot-item {
+    text-align: center;
+  }
+  .screenshot-item .caption {
+    color: #aaa;
+    font-size: 13px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>NEON JUMP - Store Visuals</h1>
+<p class="subtitle">Mobile Game Store Assets &mdash; All Canvases Auto-Rendered</p>
+
+<!-- APP ICON -->
+<div class="section">
+  <h2>1. App Icon (1024x1024)</h2>
+  <p class="desc">Google Play / App Store icon &mdash; Option A style</p>
+  <div class="canvas-wrap">
+    <canvas id="appIcon" width="1024" height="1024"></canvas>
+    <button class="btn-download" onclick="downloadCanvas('appIcon','NeonJump_AppIcon_1024x1024.png')">PNG Indir</button>
+  </div>
+</div>
+
+<!-- FEATURE GRAPHIC -->
+<div class="section">
+  <h2>2. Feature Graphic (1024x500)</h2>
+  <p class="desc">Google Play feature graphic / banner</p>
+  <div class="canvas-wrap">
+    <canvas id="featureGraphic" width="1024" height="500"></canvas>
+    <button class="btn-download" onclick="downloadCanvas('featureGraphic','NeonJump_FeatureGraphic_1024x500.png')">PNG Indir</button>
+  </div>
+</div>
+
+<!-- SCREENSHOTS -->
+<div class="section">
+  <h2>3. Store Screenshots (390x844 each)</h2>
+  <p class="desc">6 screenshots simulating iPhone screens</p>
+  <div class="screenshots-row">
+    <div class="screenshot-item">
+      <canvas id="ss1" width="390" height="844"></canvas>
+      <p class="caption">Gameplay</p>
+      <button class="btn-download" onclick="downloadCanvas('ss1','NeonJump_SS1_Gameplay.png')">PNG Indir</button>
+    </div>
+    <div class="screenshot-item">
+      <canvas id="ss2" width="390" height="844"></canvas>
+      <p class="caption">Weapons</p>
+      <button class="btn-download" onclick="downloadCanvas('ss2','NeonJump_SS2_Weapons.png')">PNG Indir</button>
+    </div>
+    <div class="screenshot-item">
+      <canvas id="ss3" width="390" height="844"></canvas>
+      <p class="caption">Boss Fight</p>
+      <button class="btn-download" onclick="downloadCanvas('ss3','NeonJump_SS3_BossFight.png')">PNG Indir</button>
+    </div>
+    <div class="screenshot-item">
+      <canvas id="ss4" width="390" height="844"></canvas>
+      <p class="caption">Inventory</p>
+      <button class="btn-download" onclick="downloadCanvas('ss4','NeonJump_SS4_Inventory.png')">PNG Indir</button>
+    </div>
+    <div class="screenshot-item">
+      <canvas id="ss5" width="390" height="844"></canvas>
+      <p class="caption">Upgrades</p>
+      <button class="btn-download" onclick="downloadCanvas('ss5','NeonJump_SS5_Upgrades.png')">PNG Indir</button>
+    </div>
+    <div class="screenshot-item">
+      <canvas id="ss6" width="390" height="844"></canvas>
+      <p class="caption">Crafting</p>
+      <button class="btn-download" onclick="downloadCanvas('ss6','NeonJump_SS6_Crafting.png')">PNG Indir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== UTILITIES =====================
+function downloadCanvas(id, filename) {
+  const c = document.getElementById(id);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = c.toDataURL('image/png');
+  link.click();
+}
+
+function neonGlow(ctx, color, blur) {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+}
+function resetGlow(ctx) {
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+}
+
+function drawStars(ctx, w, h, count) {
+  for (let i = 0; i < count; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h * 0.7;
+    const r = Math.random() * 1.8 + 0.3;
+    const alpha = Math.random() * 0.7 + 0.3;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fill();
+  }
+}
+
+function drawNeonText(ctx, text, x, y, font, color, glowSize) {
+  ctx.save();
+  ctx.font = font;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  neonGlow(ctx, color, glowSize || 30);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+  ctx.fillText(text, x, y);
+  resetGlow(ctx);
+  ctx.fillStyle = '#fff';
+  ctx.globalAlpha = 0.5;
+  ctx.fillText(text, x, y);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawNeonRect(ctx, x, y, w, h, color, lineWidth) {
+  ctx.save();
+  neonGlow(ctx, color, 15);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth || 2;
+  ctx.strokeRect(x, y, w, h);
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawNeonLine(ctx, x1, y1, x2, y2, color, lw) {
+  ctx.save();
+  neonGlow(ctx, color, 10);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw || 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawNeonCircle(ctx, x, y, r, color, fill) {
+  ctx.save();
+  neonGlow(ctx, color, 18);
+  if (fill) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawPerspectiveGrid(ctx, w, h, floorY, color, rows, cols) {
+  ctx.save();
+  const vanishX = w / 2;
+  const vanishY = floorY - h * 0.35;
+  neonGlow(ctx, color, 6);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.5;
+  // horizontal lines
+  for (let i = 0; i <= rows; i++) {
+    const t = i / rows;
+    const y = vanishY + (floorY - vanishY) * t * t;
+    const spread = (t * t) * w * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(vanishX - spread, y);
+    ctx.lineTo(vanishX + spread, y);
+    ctx.stroke();
+  }
+  // vertical (converging) lines
+  for (let i = -cols; i <= cols; i++) {
+    const bottomX = vanishX + (i / cols) * w * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(vanishX, vanishY);
+    ctx.lineTo(bottomX, floorY);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawNeonPlatform(ctx, x, y, w, h, color) {
+  ctx.save();
+  neonGlow(ctx, color, 20);
+  ctx.fillStyle = color + '33';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  const r = 6;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // top highlight
+  neonGlow(ctx, color, 10);
+  ctx.strokeStyle = '#fff';
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + r + 4, y + 2);
+  ctx.lineTo(x + w - r - 4, y + 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawStickFigure(ctx, x, y, scale, color, jumping) {
+  ctx.save();
+  const s = scale;
+  neonGlow(ctx, color, 20);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4 * s;
+  ctx.lineCap = 'round';
+  // head
+  ctx.beginPath();
+  ctx.arc(x, y - 40 * s, 10 * s, 0, Math.PI * 2);
+  ctx.stroke();
+  // body
+  ctx.beginPath();
+  ctx.moveTo(x, y - 30 * s);
+  ctx.lineTo(x, y + 5 * s);
+  ctx.stroke();
+  if (jumping) {
+    // arms up (V shape for jump)
+    ctx.beginPath();
+    ctx.moveTo(x - 20 * s, y - 35 * s);
+    ctx.lineTo(x, y - 18 * s);
+    ctx.lineTo(x + 20 * s, y - 35 * s);
+    ctx.stroke();
+    // legs spread
+    ctx.beginPath();
+    ctx.moveTo(x, y + 5 * s);
+    ctx.lineTo(x - 18 * s, y + 30 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y + 5 * s);
+    ctx.lineTo(x + 18 * s, y + 30 * s);
+    ctx.stroke();
+  } else {
+    // arms
+    ctx.beginPath();
+    ctx.moveTo(x - 18 * s, y - 10 * s);
+    ctx.lineTo(x, y - 18 * s);
+    ctx.lineTo(x + 18 * s, y - 10 * s);
+    ctx.stroke();
+    // legs
+    ctx.beginPath();
+    ctx.moveTo(x, y + 5 * s);
+    ctx.lineTo(x - 12 * s, y + 32 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y + 5 * s);
+    ctx.lineTo(x + 12 * s, y + 32 * s);
+    ctx.stroke();
+  }
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawJumpTrail(ctx, x, y, color) {
+  ctx.save();
+  for (let i = 0; i < 15; i++) {
+    const px = x + (Math.random() - 0.5) * 40;
+    const py = y + Math.random() * 60 + 10;
+    const r = Math.random() * 4 + 1;
+    const alpha = Math.random() * 0.7 + 0.2;
+    ctx.globalAlpha = alpha;
+    neonGlow(ctx, color, 8);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawParticles(ctx, w, h, count, colors) {
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const px = Math.random() * w;
+    const py = Math.random() * h;
+    const r = Math.random() * 3 + 0.5;
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    ctx.globalAlpha = Math.random() * 0.6 + 0.2;
+    neonGlow(ctx, c, 6);
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+function drawPhoneFrame(ctx, w, h) {
+  ctx.save();
+  // dark bg
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#0a0a2e');
+  grad.addColorStop(1, '#000010');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  roundRect(ctx, 0, 0, w, h, 24);
+  ctx.fill();
+  // border
+  neonGlow(ctx, '#00ffff', 8);
+  ctx.strokeStyle = '#00ffff44';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  roundRect(ctx, 1.5, 1.5, w - 3, h - 3, 24);
+  ctx.stroke();
+  resetGlow(ctx);
+  // status bar
+  ctx.fillStyle = '#ffffff22';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('9:41', 20, 22);
+  ctx.textAlign = 'right';
+  ctx.fillText('100%', w - 20, 22);
+  // notch
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  roundRect(ctx, w / 2 - 50, 0, 100, 14, 7);
+  ctx.fill();
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  roundRect(ctx, x, y, w, h, r);
+  ctx.fill();
+}
+
+function strokeRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  roundRect(ctx, x, y, w, h, r);
+  ctx.stroke();
+}
+
+function drawScreenCaption(ctx, w, h, text) {
+  ctx.save();
+  // caption bg
+  ctx.fillStyle = '#000000cc';
+  fillRoundRect(ctx, 15, h - 70, w - 30, 50, 12);
+  neonGlow(ctx, '#ff00ff', 15);
+  ctx.fillStyle = '#ff00ff';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, w / 2, h - 45);
+  resetGlow(ctx);
+  ctx.restore();
+}
+
+// ===================== 1. APP ICON =====================
+(function drawAppIcon() {
+  const c = document.getElementById('appIcon');
+  const ctx = c.getContext('2d');
+  const W = 1024, H = 1024;
+
+  // background radial gradient
+  const bg = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, 700);
+  bg.addColorStop(0, '#0a0a2e');
+  bg.addColorStop(1, '#000010');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // stars
+  drawStars(ctx, W, H, 120);
+
+  // perspective grid floor
+  drawPerspectiveGrid(ctx, W, H, H * 0.82, '#00ffff', 18, 12);
+
+  // 3 neon platforms
+  drawNeonPlatform(ctx, 140, 620, 200, 18, '#00ffff');
+  drawNeonPlatform(ctx, 430, 500, 180, 18, '#ff00ff');
+  drawNeonPlatform(ctx, 680, 380, 190, 18, '#00ff88');
+
+  // stick figure on top platform, jumping
+  drawStickFigure(ctx, 770, 310, 2.8, '#00ffff', true);
+
+  // jump trail
+  drawJumpTrail(ctx, 770, 380, '#00ffff');
+  drawJumpTrail(ctx, 520, 500, '#ff00ff');
+
+  // particles
+  drawParticles(ctx, W, H, 60, ['#00ffff', '#ff00ff', '#00ff88', '#ffff00']);
+
+  // "NEON" text
+  drawNeonText(ctx, 'NEON', W / 2, 160, 'bold 140px Arial', '#ff00ff', 50);
+  // "JUMP" text
+  drawNeonText(ctx, 'JUMP', W / 2, 290, 'bold 140px Arial', '#00ffff', 50);
+
+  // subtle vignette
+  const vig = ctx.createRadialGradient(W/2, H/2, 300, W/2, H/2, 720);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+})();
+
+// ===================== 2. FEATURE GRAPHIC =====================
+(function drawFeatureGraphic() {
+  const c = document.getElementById('featureGraphic');
+  const ctx = c.getContext('2d');
+  const W = 1024, H = 500;
+
+  // background
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0a0a2e');
+  bg.addColorStop(0.5, '#120025');
+  bg.addColorStop(1, '#000010');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // subtle grid
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  neonGlow(ctx, '#00ffff', 3);
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+
+  // stars
+  drawStars(ctx, W, H, 80);
+
+  // platforms
+  drawNeonPlatform(ctx, 60, 350, 160, 14, '#00ffff');
+  drawNeonPlatform(ctx, 250, 280, 140, 14, '#ff00ff');
+  drawNeonPlatform(ctx, 780, 320, 170, 14, '#00ff88');
+  drawNeonPlatform(ctx, 880, 230, 120, 14, '#ffff00');
+
+  // character silhouette on right side jumping
+  drawStickFigure(ctx, 860, 165, 2.2, '#00ffff', true);
+  drawJumpTrail(ctx, 860, 230, '#00ffff');
+
+  // character on left
+  drawStickFigure(ctx, 150, 295, 1.8, '#ff00ff', true);
+  drawJumpTrail(ctx, 150, 350, '#ff00ff');
+
+  // particles
+  drawParticles(ctx, W, H, 80, ['#00ffff', '#ff00ff', '#00ff88', '#ffff00', '#ff8800']);
+
+  // title "NEON JUMP"
+  drawNeonText(ctx, 'NEON JUMP', W / 2, 130, 'bold 100px Arial', '#00ffff', 60);
+
+  // underline
+  ctx.save();
+  neonGlow(ctx, '#ff00ff', 15);
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 250, 185);
+  ctx.lineTo(W / 2 + 250, 185);
+  ctx.stroke();
+  resetGlow(ctx);
+  ctx.restore();
+
+  // tagline
+  drawNeonText(ctx, 'ZIPLA. SAVAS. HAYATTA KAL.', W / 2, 240, 'bold 36px Arial', '#ff00ff', 25);
+
+  // small subtitle
+  drawNeonText(ctx, '2D Neon Aksiyon Platformer', W / 2, 430, '22px Arial', '#00ff88', 15);
+
+  // vignette
+  const vig = ctx.createRadialGradient(W/2, H/2, 200, W/2, H/2, 600);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.4)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+})();
+
+// ===================== 3. SCREENSHOTS =====================
+
+// --- Screenshot 1: Gameplay ---
+(function drawSS1() {
+  const c = document.getElementById('ss1');
+  const ctx = c.getContext('2d');
+  const W = 390, H = 844;
+
+  drawPhoneFrame(ctx, W, H);
+
+  // perspective grid
+  drawPerspectiveGrid(ctx, W, H, H * 0.78, '#00ffff', 12, 8);
+
+  // platforms
+  drawNeonPlatform(ctx, 30, 520, 100, 10, '#00ffff');
+  drawNeonPlatform(ctx, 160, 440, 90, 10, '#ff00ff');
+  drawNeonPlatform(ctx, 270, 360, 95, 10, '#00ff88');
+  drawNeonPlatform(ctx, 80, 300, 110, 10, '#ffff00');
+  drawNeonPlatform(ctx, 200, 240, 100, 10, '#00ffff');
+  drawNeonPlatform(ctx, 50, 600, 120, 10, '#ff8800');
+
+  // character jumping between platforms
+  drawStickFigure(ctx, 210, 390, 1.0, '#00ffff', true);
+  drawJumpTrail(ctx, 210, 440, '#00ffff');
+
+  // enemy on a platform
+  ctx.save();
+  neonGlow(ctx, '#ff0044', 12);
+  ctx.fillStyle = '#ff0044';
+  // simple enemy triangle
+  ctx.beginPath();
+  ctx.moveTo(105, 280);
+  ctx.lineTo(90, 298);
+  ctx.lineTo(120, 298);
+  ctx.closePath();
+  ctx.fill();
+  // enemy eyes
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(100, 290, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(110, 290, 2, 0, Math.PI*2); ctx.fill();
+  resetGlow(ctx);
+  ctx.restore();
+
+  // coins floating
+  const coinPositions = [[140, 410], [180, 370], [330, 330], [60, 270]];
+  coinPositions.forEach(([cx, cy]) => {
+    ctx.save();
+    neonGlow(ctx, '#ffff00', 10);
+    ctx.fillStyle = '#ffff00';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$', cx, cy);
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  // particles
+  drawParticles(ctx, W, H * 0.75, 30, ['#00ffff', '#ff00ff', '#00ff88']);
+
+  // HUD - Health bar top left
+  ctx.save();
+  ctx.fillStyle = '#00000088';
+  fillRoundRect(ctx, 12, 38, 120, 18, 5);
+  neonGlow(ctx, '#ff0044', 8);
+  ctx.fillStyle = '#ff0044';
+  fillRoundRect(ctx, 14, 40, 85, 14, 4);
+  resetGlow(ctx);
+  // heart icon
+  ctx.fillStyle = '#ff0044';
+  ctx.font = '14px Arial';
+  ctx.fillText('\u2764', 18, 52);
+  ctx.restore();
+
+  // HUD - Score top right
+  ctx.save();
+  ctx.fillStyle = '#00000088';
+  fillRoundRect(ctx, W - 110, 38, 96, 18, 5);
+  neonGlow(ctx, '#ffff00', 8);
+  ctx.fillStyle = '#ffff00';
+  ctx.font = 'bold 13px Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText('12,450', W - 22, 51);
+  ctx.textAlign = 'left';
+  ctx.fillText('\u2605', W - 106, 52);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // HUD - Coin counter
+  ctx.save();
+  ctx.fillStyle = '#00000088';
+  fillRoundRect(ctx, 12, 62, 80, 18, 5);
+  neonGlow(ctx, '#ffff00', 6);
+  ctx.fillStyle = '#ffff00';
+  ctx.beginPath(); ctx.arc(26, 71, 5, 0, Math.PI*2); ctx.fill();
+  ctx.font = 'bold 12px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('x 238', 36, 75);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // HUD - Weapon icon bottom
+  ctx.save();
+  ctx.fillStyle = '#00000088';
+  fillRoundRect(ctx, W / 2 - 25, H - 100, 50, 50, 8);
+  neonGlow(ctx, '#ff8800', 10);
+  ctx.strokeStyle = '#ff8800';
+  ctx.lineWidth = 2;
+  strokeRoundRect(ctx, W / 2 - 25, H - 100, 50, 50, 8);
+  // gun icon
+  ctx.strokeStyle = '#ff8800';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(W/2 - 12, H - 75);
+  ctx.lineTo(W/2 + 12, H - 75);
+  ctx.lineTo(W/2 + 12, H - 80);
+  ctx.lineTo(W/2 + 5, H - 80);
+  ctx.lineTo(W/2 + 5, H - 85);
+  ctx.lineTo(W/2 - 5, H - 85);
+  ctx.lineTo(W/2 - 5, H - 80);
+  ctx.stroke();
+  // handle
+  ctx.beginPath();
+  ctx.moveTo(W/2 - 3, H - 75);
+  ctx.lineTo(W/2 - 5, H - 65);
+  ctx.lineTo(W/2 + 5, H - 65);
+  ctx.lineTo(W/2 + 3, H - 75);
+  ctx.stroke();
+  resetGlow(ctx);
+  ctx.restore();
+
+  // joystick area hint (left)
+  ctx.save();
+  ctx.globalAlpha = 0.2;
+  neonGlow(ctx, '#ffffff', 5);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(80, H - 120, 35, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(80, H - 120, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+
+  // jump button hint (right)
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  neonGlow(ctx, '#00ffff', 5);
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(W - 60, H - 130, 22, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u25B2', W - 60, H - 126);
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+
+  drawScreenCaption(ctx, W, H, 'Neon Platformer Aksiyonu!');
+})();
+
+// --- Screenshot 2: Weapons ---
+(function drawSS2() {
+  const c = document.getElementById('ss2');
+  const ctx = c.getContext('2d');
+  const W = 390, H = 844;
+
+  drawPhoneFrame(ctx, W, H);
+
+  // title
+  drawNeonText(ctx, 'SILAH SECIMI', W / 2, 60, 'bold 26px Arial', '#ff00ff', 20);
+
+  // weapon wheel
+  const cx = W / 2, cy = 320, radius = 120;
+  const weapons = [
+    { name: 'Pistol', color: '#aaaaaa', angle: 0 },
+    { name: 'Rifle', color: '#00ff88', angle: Math.PI / 4 },
+    { name: 'Shotgun', color: '#ff8800', angle: Math.PI / 2 },
+    { name: 'SMG', color: '#00ffff', angle: 3 * Math.PI / 4 },
+    { name: 'Sniper', color: '#ff00ff', angle: Math.PI },
+    { name: 'Rocket', color: '#ff0044', angle: 5 * Math.PI / 4 },
+    { name: 'Flame', color: '#ffff00', angle: 3 * Math.PI / 2 },
+    { name: 'Grenade', color: '#00ff88', angle: 7 * Math.PI / 4 }
+  ];
+
+  // outer ring
+  ctx.save();
+  neonGlow(ctx, '#00ffff', 15);
+  ctx.strokeStyle = '#00ffff44';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + 20, 0, Math.PI * 2);
+  ctx.stroke();
+  resetGlow(ctx);
+
+  // inner ring
+  neonGlow(ctx, '#ff00ff', 10);
+  ctx.strokeStyle = '#ff00ff44';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 35, 0, Math.PI * 2);
+  ctx.stroke();
+  resetGlow(ctx);
+
+  // center text
+  drawNeonText(ctx, 'SELECT', cx, cy - 5, 'bold 12px Arial', '#ffffff', 8);
+  drawNeonText(ctx, 'WEAPON', cx, cy + 10, 'bold 12px Arial', '#ffffff', 8);
+
+  // radial lines
+  weapons.forEach(w => {
+    const ix = cx + Math.cos(w.angle) * 40;
+    const iy = cy + Math.sin(w.angle) * 40;
+    const ox = cx + Math.cos(w.angle) * (radius - 10);
+    const oy = cy + Math.sin(w.angle) * (radius - 10);
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    neonGlow(ctx, w.color, 4);
+    ctx.strokeStyle = w.color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ix, iy);
+    ctx.lineTo(ox, oy);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  // weapon slots
+  weapons.forEach((w, i) => {
+    const wx = cx + Math.cos(w.angle) * radius;
+    const wy = cy + Math.sin(w.angle) * radius;
+
+    ctx.save();
+    // slot bg
+    neonGlow(ctx, w.color, 15);
+    ctx.fillStyle = '#0a0a2e';
+    ctx.beginPath();
+    ctx.arc(wx, wy, 28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = w.color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(wx, wy, 28, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // weapon icon (simplified shapes)
+    ctx.strokeStyle = w.color;
+    ctx.fillStyle = w.color;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    if (w.name === 'Pistol') {
+      ctx.beginPath(); ctx.moveTo(wx-10, wy-3); ctx.lineTo(wx+10, wy-3); ctx.lineTo(wx+10, wy-7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx+2, wy-3); ctx.lineTo(wx, wy+10); ctx.lineTo(wx+6, wy+10); ctx.lineTo(wx+4, wy-3); ctx.stroke();
+    } else if (w.name === 'Rifle') {
+      ctx.beginPath(); ctx.moveTo(wx-15, wy); ctx.lineTo(wx+15, wy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx-8, wy); ctx.lineTo(wx-8, wy-6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx+3, wy); ctx.lineTo(wx+1, wy+8); ctx.lineTo(wx+6, wy+8); ctx.stroke();
+    } else if (w.name === 'Shotgun') {
+      ctx.beginPath(); ctx.moveTo(wx-14, wy-2); ctx.lineTo(wx+14, wy-2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx-14, wy+2); ctx.lineTo(wx+14, wy+2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx+5, wy); ctx.lineTo(wx+3, wy+10); ctx.lineTo(wx+8, wy+10); ctx.stroke();
+    } else if (w.name === 'SMG') {
+      ctx.beginPath(); ctx.moveTo(wx-12, wy-2); ctx.lineTo(wx+12, wy-2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx-4, wy-2); ctx.lineTo(wx-6, wy+8); ctx.stroke();
+      ctx.fillRect(wx-2, wy-8, 6, 6);
+    } else if (w.name === 'Sniper') {
+      ctx.beginPath(); ctx.moveTo(wx-18, wy); ctx.lineTo(wx+18, wy); ctx.stroke();
+      ctx.beginPath(); ctx.arc(wx-8, wy-6, 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx+8, wy); ctx.lineTo(wx+6, wy+10); ctx.stroke();
+    } else if (w.name === 'Rocket') {
+      ctx.beginPath(); ctx.moveTo(wx-12, wy); ctx.lineTo(wx+8, wy); ctx.lineTo(wx+14, wy-3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx+8, wy); ctx.lineTo(wx+14, wy+3); ctx.stroke();
+      ctx.fillRect(wx-14, wy-4, 5, 8);
+    } else if (w.name === 'Flame') {
+      // flame shape
+      ctx.beginPath();
+      ctx.moveTo(wx, wy - 12);
+      ctx.quadraticCurveTo(wx + 10, wy - 4, wx + 6, wy + 6);
+      ctx.quadraticCurveTo(wx + 2, wy + 10, wx, wy + 8);
+      ctx.quadraticCurveTo(wx - 2, wy + 10, wx - 6, wy + 6);
+      ctx.quadraticCurveTo(wx - 10, wy - 4, wx, wy - 12);
+      ctx.fill();
+    } else if (w.name === 'Grenade') {
+      ctx.beginPath(); ctx.arc(wx, wy + 2, 9, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx, wy-7); ctx.lineTo(wx, wy-12); ctx.lineTo(wx+4, wy-14); ctx.stroke();
+    }
+    resetGlow(ctx);
+    ctx.restore();
+
+    // label
+    const lx = cx + Math.cos(w.angle) * (radius + 48);
+    const ly = cy + Math.sin(w.angle) * (radius + 48);
+    drawNeonText(ctx, w.name, lx, ly, 'bold 11px Arial', w.color, 6);
+  });
+
+  // rarity levels display
+  const rarities = [
+    { name: 'Common', color: '#aaaaaa' },
+    { name: 'Uncommon', color: '#00ff88' },
+    { name: 'Rare', color: '#00aaff' },
+    { name: 'Epic', color: '#ff00ff' },
+    { name: 'Legendary', color: '#ffaa00' }
+  ];
+  const startY = 530;
+  drawNeonText(ctx, 'NADIRLIK SEVIYELERI', W / 2, startY, 'bold 18px Arial', '#ffff00', 12);
+
+  rarities.forEach((r, i) => {
+    const ry = startY + 35 + i * 42;
+    ctx.save();
+    // bar bg
+    ctx.fillStyle = '#0a0a2eaa';
+    fillRoundRect(ctx, 30, ry, W - 60, 32, 6);
+    // border
+    neonGlow(ctx, r.color, 10);
+    ctx.strokeStyle = r.color;
+    ctx.lineWidth = 2;
+    strokeRoundRect(ctx, 30, ry, W - 60, 32, 6);
+    // fill bar (increasing with rarity)
+    const fillW = (W - 70) * ((i + 1) / 5) * 0.6;
+    ctx.fillStyle = r.color + '44';
+    fillRoundRect(ctx, 34, ry + 3, fillW, 26, 4);
+    // star icons
+    for (let s = 0; s <= i; s++) {
+      ctx.fillStyle = r.color;
+      ctx.font = '14px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('\u2605', 40 + s * 16, ry + 21);
+    }
+    // name
+    ctx.fillStyle = r.color;
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(r.name, W - 42, ry + 21);
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  drawScreenCaption(ctx, W, H, '8 Silah, 5 Nadirlik Seviyesi!');
+})();
+
+// --- Screenshot 3: Boss Fight ---
+(function drawSS3() {
+  const c = document.getElementById('ss3');
+  const ctx = c.getContext('2d');
+  const W = 390, H = 844;
+
+  drawPhoneFrame(ctx, W, H);
+
+  // boss fight arena background
+  ctx.save();
+  const arenaGrad = ctx.createRadialGradient(W/2, 350, 50, W/2, 350, 350);
+  arenaGrad.addColorStop(0, '#1a002e');
+  arenaGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = arenaGrad;
+  ctx.fillRect(0, 30, W, H - 30);
+  ctx.restore();
+
+  // perspective grid
+  drawPerspectiveGrid(ctx, W, H, H * 0.75, '#ff00ff', 10, 6);
+
+  // Boss health bar at top
+  ctx.save();
+  ctx.fillStyle = '#000000cc';
+  fillRoundRect(ctx, 15, 42, W - 30, 50, 8);
+  // boss name
+  neonGlow(ctx, '#ff0044', 10);
+  ctx.fillStyle = '#ff0044';
+  ctx.font = 'bold 14px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('NEON GUARDIAN', W / 2, 58);
+  // health bar bg
+  ctx.fillStyle = '#333';
+  fillRoundRect(ctx, 25, 65, W - 50, 18, 4);
+  // health bar fill (70%)
+  const hpGrad = ctx.createLinearGradient(25, 0, 25 + (W - 50) * 0.7, 0);
+  hpGrad.addColorStop(0, '#ff0044');
+  hpGrad.addColorStop(1, '#ff4488');
+  ctx.fillStyle = hpGrad;
+  fillRoundRect(ctx, 25, 65, (W - 50) * 0.7, 18, 4);
+  // hp text
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px Arial';
+  ctx.fillText('24,500 / 35,000', W / 2, 77);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // boss body - large geometric neon shape (hexagon + inner star)
+  const bx = W / 2, by = 280, bSize = 80;
+  ctx.save();
+  // glow aura
+  const auraGrad = ctx.createRadialGradient(bx, by, 30, bx, by, 140);
+  auraGrad.addColorStop(0, '#ff004433');
+  auraGrad.addColorStop(0.5, '#ff00ff22');
+  auraGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = auraGrad;
+  ctx.fillRect(bx - 150, by - 150, 300, 300);
+
+  // hexagon body
+  neonGlow(ctx, '#ff0044', 30);
+  ctx.strokeStyle = '#ff0044';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 2;
+    const px = bx + bSize * Math.cos(angle);
+    const py = by + bSize * Math.sin(angle);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#ff004422';
+  ctx.fill();
+  ctx.stroke();
+
+  // inner triangle/star pattern
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 2;
+  neonGlow(ctx, '#ff00ff', 15);
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const angle = (2 * Math.PI / 3) * i - Math.PI / 2;
+    const px = bx + bSize * 0.6 * Math.cos(angle);
+    const py = by + bSize * 0.6 * Math.sin(angle);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // boss eye
+  neonGlow(ctx, '#ff0044', 20);
+  ctx.fillStyle = '#ff0044';
+  ctx.beginPath();
+  ctx.arc(bx, by, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(bx, by, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ff0044';
+  ctx.beginPath();
+  ctx.arc(bx + 2, by - 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // boss energy beams shooting out
+  ctx.globalAlpha = 0.4;
+  neonGlow(ctx, '#ff0044', 8);
+  ctx.strokeStyle = '#ff0044';
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i + 0.3;
+    ctx.beginPath();
+    ctx.moveTo(bx + 40 * Math.cos(angle), by + 40 * Math.sin(angle));
+    ctx.lineTo(bx + 150 * Math.cos(angle), by + 150 * Math.sin(angle));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  resetGlow(ctx);
+  ctx.restore();
+
+  // player character shooting
+  drawStickFigure(ctx, 80, 530, 1.2, '#00ffff', false);
+
+  // bullet trail from player to boss
+  ctx.save();
+  neonGlow(ctx, '#ffff00', 12);
+  ctx.strokeStyle = '#ffff00';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.moveTo(100, 510);
+  ctx.lineTo(bx - 40, by + 40);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // muzzle flash
+  neonGlow(ctx, '#ffff00', 20);
+  ctx.fillStyle = '#ffff00';
+  ctx.beginPath();
+  ctx.arc(105, 510, 6, 0, Math.PI * 2);
+  ctx.fill();
+  resetGlow(ctx);
+  ctx.restore();
+
+  // floating damage numbers
+  const dmgNums = [
+    { text: '-1,250', x: 220, y: 200, color: '#ffff00' },
+    { text: 'CRIT!', x: 280, y: 170, color: '#ff0044' },
+    { text: '-890', x: 160, y: 230, color: '#ff8800' },
+    { text: '-450', x: 300, y: 250, color: '#ffff00' },
+    { text: '-2,100', x: 200, y: 150, color: '#ff0044' }
+  ];
+  dmgNums.forEach(d => {
+    drawNeonText(ctx, d.text, d.x, d.y, 'bold 16px Arial', d.color, 10);
+  });
+
+  // platform for player
+  drawNeonPlatform(ctx, 30, 570, 130, 10, '#00ffff');
+
+  // particles / explosions
+  drawParticles(ctx, W, 500, 40, ['#ff0044', '#ff00ff', '#ffff00', '#ff8800']);
+
+  // player health bar bottom-left
+  ctx.save();
+  ctx.fillStyle = '#00000088';
+  fillRoundRect(ctx, 12, H - 105, 100, 14, 4);
+  ctx.fillStyle = '#00ff88';
+  neonGlow(ctx, '#00ff88', 6);
+  fillRoundRect(ctx, 14, H - 103, 65, 10, 3);
+  resetGlow(ctx);
+  ctx.fillStyle = '#fff';
+  ctx.font = '9px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('HP', 16, H - 95);
+  ctx.restore();
+
+  drawScreenCaption(ctx, W, H, 'Epik Boss Savaslari!');
+})();
+
+// --- Screenshot 4: Inventory ---
+(function drawSS4() {
+  const c = document.getElementById('ss4');
+  const ctx = c.getContext('2d');
+  const W = 390, H = 844;
+
+  drawPhoneFrame(ctx, W, H);
+
+  // title
+  drawNeonText(ctx, 'ENVANTER', W / 2, 55, 'bold 24px Arial', '#00ffff', 18);
+
+  // tab bar
+  const tabs = ['Hepsi', 'Tuketim', 'Ekipman', 'Malzeme'];
+  const tabW = (W - 40) / 4;
+  tabs.forEach((t, i) => {
+    const tx = 20 + i * tabW;
+    ctx.save();
+    const isActive = i === 0;
+    ctx.fillStyle = isActive ? '#00ffff22' : '#0a0a2e88';
+    fillRoundRect(ctx, tx, 75, tabW - 4, 28, 6);
+    neonGlow(ctx, isActive ? '#00ffff' : '#555', 6);
+    ctx.strokeStyle = isActive ? '#00ffff' : '#333';
+    ctx.lineWidth = 1.5;
+    strokeRoundRect(ctx, tx, 75, tabW - 4, 28, 6);
+    ctx.fillStyle = isActive ? '#00ffff' : '#888';
+    ctx.font = isActive ? 'bold 11px Arial' : '11px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(t, tx + (tabW - 4) / 2, 93);
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  // inventory grid 6x5
+  const gridX = 15, gridY = 115;
+  const cellSize = 55;
+  const gap = 4;
+  const rarityColors = ['#aaaaaa', '#00ff88', '#00aaff', '#ff00ff', '#ffaa00'];
+  const itemIcons = [
+    '\u2694', '\u{1F6E1}', '\u2764', '\u26A1', '\u2B50', '\u{1F48E}',
+    '\u{1F525}', '\u2744', '\u{1F300}', '\u2728', '\u{1F52B}', '\u{1F4A3}',
+    '\u{1F48A}', '\u{1F52E}', '\u{1F3AF}', '\u{1F31F}', '\u{1F319}', '\u{1F30A}',
+    '\u2601', '\u{1F308}', '\u26D4', '\u2705', '\u{1F512}', '\u{1F511}',
+    '', '', '', '', '', ''
+  ];
+
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 6; col++) {
+      const ix = gridX + col * (cellSize + gap);
+      const iy = gridY + row * (cellSize + gap);
+      const idx = row * 6 + col;
+      const hasItem = idx < 24;
+      const rarity = hasItem ? rarityColors[Math.floor(Math.random() * 5)] : '#222';
+
+      ctx.save();
+      // cell bg
+      ctx.fillStyle = hasItem ? '#0a0a2ecc' : '#0a0a2e44';
+      fillRoundRect(ctx, ix, iy, cellSize, cellSize, 6);
+      // rarity border
+      neonGlow(ctx, rarity, hasItem ? 8 : 2);
+      ctx.strokeStyle = rarity;
+      ctx.lineWidth = hasItem ? 2 : 0.5;
+      strokeRoundRect(ctx, ix, iy, cellSize, cellSize, 6);
+
+      if (hasItem && itemIcons[idx]) {
+        ctx.font = '22px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(itemIcons[idx], ix + cellSize / 2, iy + cellSize / 2);
+        // quantity
+        if (Math.random() > 0.5) {
+          ctx.font = '9px Arial';
+          ctx.fillStyle = '#ccc';
+          ctx.textAlign = 'right';
+          ctx.fillText('x' + Math.floor(Math.random() * 20 + 1), ix + cellSize - 4, iy + cellSize - 5);
+        }
+      }
+      resetGlow(ctx);
+      ctx.restore();
+    }
+  }
+
+  // Equipment panel
+  const eqY = gridY + 5 * (cellSize + gap) + 15;
+  drawNeonText(ctx, 'EKIPMAN', W / 2, eqY, 'bold 18px Arial', '#ff00ff', 12);
+
+  const eqSlots = [
+    { name: 'Silah', icon: '\u2694', color: '#ff8800' },
+    { name: 'Mod', icon: '\u2699', color: '#00ffff' },
+    { name: 'Aksesuar', icon: '\u{1F48E}', color: '#ff00ff' },
+    { name: 'Zirh', icon: '\u{1F6E1}', color: '#00ff88' }
+  ];
+  const eqSlotW = 75, eqGap = 12;
+  const eqStartX = (W - (eqSlotW * 4 + eqGap * 3)) / 2;
+
+  eqSlots.forEach((slot, i) => {
+    const sx = eqStartX + i * (eqSlotW + eqGap);
+    const sy = eqY + 18;
+    ctx.save();
+    // slot bg
+    ctx.fillStyle = '#0a0a2ecc';
+    fillRoundRect(ctx, sx, sy, eqSlotW, eqSlotW + 20, 8);
+    neonGlow(ctx, slot.color, 12);
+    ctx.strokeStyle = slot.color;
+    ctx.lineWidth = 2;
+    strokeRoundRect(ctx, sx, sy, eqSlotW, eqSlotW + 20, 8);
+    // icon
+    ctx.font = '28px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(slot.icon, sx + eqSlotW / 2, sy + eqSlotW / 2 - 2);
+    // label
+    ctx.font = '10px Arial';
+    ctx.fillStyle = slot.color;
+    ctx.fillText(slot.name, sx + eqSlotW / 2, sy + eqSlotW + 10);
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  // item info panel at bottom
+  const infoY = eqY + eqSlotW + 50;
+  ctx.save();
+  ctx.fillStyle = '#0a0a2ecc';
+  fillRoundRect(ctx, 15, infoY, W - 30, 90, 10);
+  neonGlow(ctx, '#ffaa00', 10);
+  ctx.strokeStyle = '#ffaa00';
+  ctx.lineWidth = 1.5;
+  strokeRoundRect(ctx, 15, infoY, W - 30, 90, 10);
+  // item name
+  ctx.fillStyle = '#ffaa00';
+  ctx.font = 'bold 15px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('\u2605 Neon Blade', 30, infoY + 22);
+  // stats
+  ctx.fillStyle = '#aaa';
+  ctx.font = '12px Arial';
+  ctx.fillText('Hasar: +45  |  Hiz: +12', 30, infoY + 44);
+  ctx.fillText('Nadirlik: Legendary', 30, infoY + 62);
+  // equip button
+  ctx.fillStyle = '#00ffff33';
+  fillRoundRect(ctx, W - 110, infoY + 30, 80, 30, 6);
+  neonGlow(ctx, '#00ffff', 8);
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 1.5;
+  strokeRoundRect(ctx, W - 110, infoY + 30, 80, 30, 6);
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('EKLE', W - 70, infoY + 49);
+  resetGlow(ctx);
+  ctx.restore();
+
+  drawScreenCaption(ctx, W, H, 'Envanter & Loot Sistemi!');
+})();
+
+// --- Screenshot 5: Upgrades ---
+(function drawSS5() {
+  const c = document.getElementById('ss5');
+  const ctx = c.getContext('2d');
+  const W = 390, H = 844;
+
+  drawPhoneFrame(ctx, W, H);
+
+  // title
+  drawNeonText(ctx, 'YUKSELTMELER', W / 2, 55, 'bold 26px Arial', '#ffff00', 20);
+
+  // character preview
+  const charY = 140;
+  drawStickFigure(ctx, W / 2, charY, 1.8, '#00ffff', true);
+
+  // level badge
+  ctx.save();
+  neonGlow(ctx, '#ffff00', 12);
+  ctx.fillStyle = '#000000cc';
+  ctx.beginPath();
+  ctx.arc(W / 2, charY + 60, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffff00';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(W / 2, charY + 60, 20, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#ffff00';
+  ctx.font = 'bold 14px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('LV.12', W / 2, charY + 60);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // stat summary
+  ctx.save();
+  ctx.fillStyle = '#0a0a2eaa';
+  fillRoundRect(ctx, 20, charY + 90, W - 40, 30, 8);
+  neonGlow(ctx, '#00ffff', 5);
+  ctx.fillStyle = '#00ffff';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Toplam Guc: 2,450  |  Altin: 15,820', W / 2, charY + 109);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // upgrade bars
+  const upgrades = [
+    { name: 'Saglik', color: '#ff0044', level: 7, max: 15, cost: '500', icon: '\u2764' },
+    { name: 'Hiz', color: '#00ff88', level: 5, max: 15, cost: '350', icon: '\u26A1' },
+    { name: 'Dash', color: '#00aaff', level: 3, max: 15, cost: '420', icon: '\u{1F4A8}' },
+    { name: 'Ziplama', color: '#ffff00', level: 9, max: 15, cost: '600', icon: '\u2B06' },
+    { name: 'Hasar', color: '#ff8800', level: 6, max: 15, cost: '750', icon: '\u2694' }
+  ];
+
+  const startY = charY + 140;
+  const barH = 95;
+
+  upgrades.forEach((u, i) => {
+    const uy = startY + i * barH;
+
+    ctx.save();
+    // card bg
+    ctx.fillStyle = '#0a0a2ecc';
+    fillRoundRect(ctx, 15, uy, W - 30, barH - 10, 12);
+    neonGlow(ctx, u.color, 10);
+    ctx.strokeStyle = u.color + '66';
+    ctx.lineWidth = 1.5;
+    strokeRoundRect(ctx, 15, uy, W - 30, barH - 10, 12);
+
+    // icon
+    ctx.font = '26px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(u.icon, 45, uy + 30);
+
+    // name and level
+    ctx.fillStyle = u.color;
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(u.name, 70, uy + 25);
+
+    ctx.fillStyle = '#aaa';
+    ctx.font = '12px Arial';
+    ctx.fillText('Level ' + u.level + ' / ' + u.max, 70, uy + 42);
+
+    // progress bar background
+    const barX = 70, barW = 200;
+    ctx.fillStyle = '#222';
+    fillRoundRect(ctx, barX, uy + 52, barW, 14, 4);
+
+    // progress bar fill
+    const fillW = barW * (u.level / u.max);
+    const barGrad = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+    barGrad.addColorStop(0, u.color + '88');
+    barGrad.addColorStop(1, u.color);
+    ctx.fillStyle = barGrad;
+    fillRoundRect(ctx, barX, uy + 52, fillW, 14, 4);
+
+    // level dots
+    for (let d = 0; d < u.max; d++) {
+      const dx = barX + (barW / u.max) * d + (barW / u.max) / 2;
+      ctx.fillStyle = d < u.level ? '#fff' : '#444';
+      ctx.beginPath();
+      ctx.arc(dx, uy + 59, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // upgrade button
+    ctx.fillStyle = u.color + '33';
+    fillRoundRect(ctx, W - 95, uy + 15, 70, 50, 8);
+    neonGlow(ctx, u.color, 8);
+    ctx.strokeStyle = u.color;
+    ctx.lineWidth = 1.5;
+    strokeRoundRect(ctx, W - 95, uy + 15, 70, 50, 8);
+    // arrow up
+    ctx.fillStyle = u.color;
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u25B2', W - 60, uy + 35);
+    // cost
+    ctx.fillStyle = '#ffff00';
+    ctx.font = 'bold 11px Arial';
+    ctx.fillText(u.cost, W - 60, uy + 55);
+
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  drawScreenCaption(ctx, W, H, 'Karakterini Guclendir!');
+})();
+
+// --- Screenshot 6: Crafting ---
+(function drawSS6() {
+  const c = document.getElementById('ss6');
+  const ctx = c.getContext('2d');
+  const W = 390, H = 844;
+
+  drawPhoneFrame(ctx, W, H);
+
+  // title
+  drawNeonText(ctx, 'CRAFT SISTEMI', W / 2, 55, 'bold 24px Arial', '#00ff88', 18);
+
+  // two-panel layout
+  const panelY = 80;
+  const leftW = 145;
+  const rightW = W - leftW - 30;
+  const panelH = 680;
+
+  // Left panel - recipe list
+  ctx.save();
+  ctx.fillStyle = '#0a0a2ecc';
+  fillRoundRect(ctx, 10, panelY, leftW, panelH, 10);
+  neonGlow(ctx, '#00ff88', 6);
+  ctx.strokeStyle = '#00ff8844';
+  ctx.lineWidth = 1;
+  strokeRoundRect(ctx, 10, panelY, leftW, panelH, 10);
+  resetGlow(ctx);
+
+  // recipe list header
+  drawNeonText(ctx, 'Tarifler', 10 + leftW / 2, panelY + 20, 'bold 14px Arial', '#00ff88', 8);
+
+  const recipes = [
+    { name: 'Neon Blade', icon: '\u2694', color: '#ff00ff', selected: true },
+    { name: 'Shield Gen', icon: '\u{1F6E1}', color: '#00aaff', selected: false },
+    { name: 'Speed Potion', icon: '\u{1F48A}', color: '#00ff88', selected: false },
+    { name: 'Fire Bomb', icon: '\u{1F4A3}', color: '#ff8800', selected: false },
+    { name: 'Heal Pack', icon: '\u2764', color: '#ff0044', selected: false },
+    { name: 'Ice Shard', icon: '\u2744', color: '#aaddff', selected: false },
+    { name: 'Lightning', icon: '\u26A1', color: '#ffff00', selected: false },
+    { name: 'Dark Orb', icon: '\u{1F52E}', color: '#aa44ff', selected: false },
+    { name: 'Nano Armor', icon: '\u{1F6E1}', color: '#00ff88', selected: false },
+    { name: 'Crit Ring', icon: '\u{1F48E}', color: '#ffaa00', selected: false },
+    { name: 'Dash Core', icon: '\u{1F4A8}', color: '#00ffff', selected: false },
+    { name: 'Venom Tip', icon: '\u{1F40D}', color: '#44ff44', selected: false }
+  ];
+
+  recipes.forEach((r, i) => {
+    const ry = panelY + 38 + i * 52;
+    ctx.save();
+    if (r.selected) {
+      ctx.fillStyle = r.color + '22';
+      fillRoundRect(ctx, 14, ry, leftW - 8, 46, 6);
+      neonGlow(ctx, r.color, 8);
+      ctx.strokeStyle = r.color;
+      ctx.lineWidth = 1.5;
+      strokeRoundRect(ctx, 14, ry, leftW - 8, 46, 6);
+    }
+    // icon
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(r.icon, 36, ry + 24);
+    // name
+    ctx.fillStyle = r.selected ? r.color : '#999';
+    ctx.font = (r.selected ? 'bold ' : '') + '11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(r.name, 52, ry + 22);
+    // rarity dot
+    neonGlow(ctx, r.color, 4);
+    ctx.fillStyle = r.color;
+    ctx.beginPath();
+    ctx.arc(52 + ctx.measureText(r.name).width + 6, ry + 18, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // sub info
+    ctx.fillStyle = '#666';
+    ctx.font = '9px Arial';
+    ctx.fillText('Tier ' + (Math.floor(Math.random() * 4) + 1), 52, ry + 36);
+    resetGlow(ctx);
+    ctx.restore();
+  });
+  ctx.restore();
+
+  // Right panel - crafting detail
+  const rpX = leftW + 20;
+  ctx.save();
+  ctx.fillStyle = '#0a0a2ecc';
+  fillRoundRect(ctx, rpX, panelY, rightW, panelH, 10);
+  neonGlow(ctx, '#ff00ff', 6);
+  ctx.strokeStyle = '#ff00ff44';
+  ctx.lineWidth = 1;
+  strokeRoundRect(ctx, rpX, panelY, rightW, panelH, 10);
+  resetGlow(ctx);
+
+  // selected recipe details
+  const detailX = rpX + 10;
+  const detailW = rightW - 20;
+
+  // recipe icon large
+  ctx.save();
+  neonGlow(ctx, '#ff00ff', 20);
+  ctx.fillStyle = '#ff00ff11';
+  ctx.beginPath();
+  ctx.arc(rpX + rightW / 2, panelY + 70, 40, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(rpX + rightW / 2, panelY + 70, 40, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.font = '36px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('\u2694', rpX + rightW / 2, panelY + 70);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // name
+  drawNeonText(ctx, 'Neon Blade', rpX + rightW / 2, panelY + 125, 'bold 18px Arial', '#ff00ff', 12);
+
+  // rarity
+  ctx.save();
+  ctx.fillStyle = '#ff00ff';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u2605\u2605\u2605\u2605 Epic', rpX + rightW / 2, panelY + 145);
+  ctx.restore();
+
+  // stats
+  ctx.save();
+  ctx.fillStyle = '#0a0a2e';
+  fillRoundRect(ctx, detailX, panelY + 158, detailW, 60, 6);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  strokeRoundRect(ctx, detailX, panelY + 158, detailW, 60, 6);
+  ctx.fillStyle = '#ccc';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('Hasar: +45', detailX + 10, panelY + 178);
+  ctx.fillText('Hiz: +12', detailX + 10, panelY + 195);
+  ctx.fillStyle = '#ff00ff';
+  ctx.fillText('Ozel: Neon Slash', detailX + 10, panelY + 212);
+  ctx.restore();
+
+  // ingredients header
+  drawNeonText(ctx, 'MALZEMELER', rpX + rightW / 2, panelY + 245, 'bold 14px Arial', '#ffff00', 8);
+
+  // ingredients
+  const ingredients = [
+    { name: 'Neon Crystal', icon: '\u{1F48E}', need: 5, have: 5, color: '#00ffff' },
+    { name: 'Dark Steel', icon: '\u{1F529}', need: 3, have: 3, color: '#aaaaaa' },
+    { name: 'Energy Core', icon: '\u26A1', need: 2, have: 2, color: '#ffff00' },
+    { name: 'Plasma Gel', icon: '\u{1F300}', need: 4, have: 4, color: '#ff00ff' }
+  ];
+
+  ingredients.forEach((ing, i) => {
+    const iy = panelY + 265 + i * 58;
+    ctx.save();
+    ctx.fillStyle = '#0a0a2e88';
+    fillRoundRect(ctx, detailX, iy, detailW, 50, 6);
+    // icon box
+    neonGlow(ctx, ing.color, 8);
+    ctx.fillStyle = '#0a0a2e';
+    fillRoundRect(ctx, detailX + 4, iy + 5, 40, 40, 4);
+    ctx.strokeStyle = ing.color;
+    ctx.lineWidth = 1.5;
+    strokeRoundRect(ctx, detailX + 4, iy + 5, 40, 40, 4);
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(ing.icon, detailX + 24, iy + 25);
+    // name
+    ctx.fillStyle = '#ccc';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(ing.name, detailX + 50, iy + 22);
+    // count
+    const hasEnough = ing.have >= ing.need;
+    ctx.fillStyle = hasEnough ? '#00ff88' : '#ff0044';
+    ctx.font = 'bold 12px Arial';
+    ctx.fillText(ing.have + ' / ' + ing.need, detailX + 50, iy + 40);
+    // check mark
+    if (hasEnough) {
+      ctx.fillStyle = '#00ff88';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText('\u2713', detailX + detailW - 8, iy + 30);
+    }
+    resetGlow(ctx);
+    ctx.restore();
+  });
+
+  // craft progress bar
+  const craftY = panelY + 265 + 4 * 58 + 10;
+  ctx.save();
+  ctx.fillStyle = '#222';
+  fillRoundRect(ctx, detailX, craftY, detailW, 16, 4);
+  const craftGrad = ctx.createLinearGradient(detailX, 0, detailX + detailW * 0.65, 0);
+  craftGrad.addColorStop(0, '#00ff8866');
+  craftGrad.addColorStop(1, '#00ff88');
+  ctx.fillStyle = craftGrad;
+  fillRoundRect(ctx, detailX, craftY, detailW * 0.65, 16, 4);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('65%', detailX + detailW / 2, craftY + 12);
+  ctx.restore();
+
+  // craft button
+  ctx.save();
+  const btnY = craftY + 28;
+  const btnGrad = ctx.createLinearGradient(detailX, btnY, detailX + detailW, btnY + 44);
+  btnGrad.addColorStop(0, '#00ff8833');
+  btnGrad.addColorStop(1, '#00ff8811');
+  ctx.fillStyle = btnGrad;
+  fillRoundRect(ctx, detailX, btnY, detailW, 44, 8);
+  neonGlow(ctx, '#00ff88', 15);
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 2;
+  strokeRoundRect(ctx, detailX, btnY, detailW, 44, 8);
+  ctx.fillStyle = '#00ff88';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('CRAFT ET', detailX + detailW / 2, btnY + 22);
+  resetGlow(ctx);
+  ctx.restore();
+
+  // success rate
+  ctx.save();
+  ctx.fillStyle = '#888';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Basari Orani: %92', rpX + rightW / 2, craftY + 90);
+  ctx.restore();
+
+  // crafting time
+  ctx.save();
+  neonGlow(ctx, '#ffff00', 5);
+  ctx.fillStyle = '#ffff00';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u23F1 Craft Suresi: 3s', rpX + rightW / 2, craftY + 108);
+  resetGlow(ctx);
+  ctx.restore();
+
+  drawScreenCaption(ctx, W, H, 'Craft & Olustur!');
+})();
+
+</script>
+</body>
+</html>

@@ -7,8 +7,6 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class NeonHUDSetup : MonoBehaviour
 {
-    private static bool isCreated = false;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void OnSceneLoaded()
     {
@@ -25,7 +23,6 @@ public class NeonHUDSetup : MonoBehaviour
         if (NeonHUD.Instance != null) return;
 
         // Mevcut HUD objelerini kontrol et - cakismayi onle
-        // WeaponUI ve AdvancedHUD'u deaktive et (NeonHUD bunlari icerir)
         DeactivateOldHUD();
 
         // NeonHUD olustur
@@ -41,12 +38,6 @@ public class NeonHUDSetup : MonoBehaviour
         if (WeaponUI.Instance != null)
         {
             WeaponUI.Instance.gameObject.SetActive(false);
-        }
-
-        // AdvancedHUD deaktive et (NeonHUD bunun ozelliklerini icerir)
-        if (AdvancedHUD.Instance != null)
-        {
-            AdvancedHUD.Instance.gameObject.SetActive(false);
         }
     }
 

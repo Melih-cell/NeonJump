@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Jump - UI Designs</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #111;
+  color: #eee;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  font-size: 36px;
+  color: #00ffff;
+  text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+  margin-bottom: 10px;
+  letter-spacing: 4px;
+}
+h1 span { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff; }
+.subtitle {
+  text-align: center;
+  color: #888;
+  margin-bottom: 40px;
+  font-size: 14px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.canvas-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.canvas-label {
+  font-size: 16px;
+  color: #00ffff;
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px #00ffff;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+canvas {
+  border: 1px solid #333;
+  border-radius: 12px;
+  cursor: pointer;
+}
+canvas:hover { border-color: #00ffff; box-shadow: 0 0 15px rgba(0,255,255,0.3); }
+.download-btn {
+  margin-top: 8px;
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+.download-btn:hover {
+  background: #00ffff;
+  color: #111;
+}
+@media (max-width: 1200px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>NEON <span>JUMP</span></h1>
+<p class="subtitle">UI Mockup Designs &mdash; Mobile Game (390 x 844)</p>
+
+<div class="grid">
+  <div class="canvas-wrapper">
+    <div class="canvas-label">1. ANA MENU</div>
+    <canvas id="c1" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c1','AnaMenu')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">2. OYUN ICI HUD</div>
+    <canvas id="c2" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c2','OyunIciHUD')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">3. ENVANTER</div>
+    <canvas id="c3" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c3','Envanter')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">4. SILAH CARKI</div>
+    <canvas id="c4" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c4','SilahCarki')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">5. BOSS HEALTH BAR</div>
+    <canvas id="c5" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c5','BossHealthBar')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">6. YUKSELTME PANELI</div>
+    <canvas id="c6" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c6','Yukseltme')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">7. AYARLAR</div>
+    <canvas id="c7" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c7','Ayarlar')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">8. ISTATISTIKLER</div>
+    <canvas id="c8" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c8','Istatistikler')">Download PNG</button>
+  </div>
+  <div class="canvas-wrapper">
+    <div class="canvas-label">9. URETIM (CRAFTING)</div>
+    <canvas id="c9" width="390" height="844"></canvas>
+    <button class="download-btn" onclick="dl('c9','Uretim')">Download PNG</button>
+  </div>
+</div>
+
+<script>
+// ========== UTILITY FUNCTIONS ==========
+function dl(id, name) {
+  const c = document.getElementById(id);
+  const a = document.createElement('a');
+  a.download = 'NeonJump_' + name + '.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (r > w/2) r = w/2;
+  if (r > h/2) r = h/2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fillRoundRect(ctx, x, y, w, h, r, fill) {
+  roundRect(ctx, x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+function strokeRoundRect(ctx, x, y, w, h, r, stroke, lw) {
+  roundRect(ctx, x, y, w, h, r);
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = lw || 2;
+  ctx.stroke();
+}
+
+function neonText(ctx, text, x, y, color, size, align, glow) {
+  ctx.save();
+  ctx.font = 'bold ' + size + 'px Segoe UI, Arial, sans-serif';
+  ctx.textAlign = align || 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = glow || 15;
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+  ctx.shadowBlur = (glow || 15) / 2;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function neonLine(ctx, x1, y1, x2, y2, color, lw) {
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw || 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBg(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#0a0a1a');
+  g.addColorStop(0.5, '#0d0d2b');
+  g.addColorStop(1, '#0a0a1a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function drawParticles(ctx, w, h, count, color) {
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const px = Math.random() * w;
+    const py = Math.random() * h;
+    const ps = Math.random() * 2 + 0.5;
+    const alpha = Math.random() * 0.6 + 0.1;
+    ctx.beginPath();
+    ctx.arc(px, py, ps, 0, Math.PI * 2);
+    ctx.fillStyle = color || `rgba(0,255,255,${alpha})`;
+    ctx.shadowColor = color || '#00ffff';
+    ctx.shadowBlur = 8;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawNeonButton(ctx, x, y, w, h, text, borderColor, fontSize) {
+  ctx.save();
+  fillRoundRect(ctx, x, y, w, h, 10, 'rgba(0,0,0,0.6)');
+  ctx.shadowColor = borderColor;
+  ctx.shadowBlur = 15;
+  strokeRoundRect(ctx, x, y, w, h, 10, borderColor, 2);
+  ctx.shadowBlur = 8;
+  strokeRoundRect(ctx, x, y, w, h, 10, borderColor, 1);
+  ctx.restore();
+  neonText(ctx, text, x + w/2, y + h/2, borderColor, fontSize || 18, 'center', 12);
+}
+
+function drawIcon(ctx, x, y, r, symbol, bgColor, symbolColor) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = bgColor;
+  ctx.shadowColor = bgColor;
+  ctx.shadowBlur = 10;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, symbol, x, y, symbolColor || '#fff', r * 0.9, 'center', 5);
+}
+
+function drawSlider(ctx, x, y, w, val, color) {
+  const h = 6;
+  fillRoundRect(ctx, x, y - h/2, w, h, 3, '#222');
+  fillRoundRect(ctx, x, y - h/2, w * val, h, 3, color);
+  ctx.save();
+  ctx.beginPath();
+  const knobX = x + w * val;
+  ctx.arc(knobX, y, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawProgressBar(ctx, x, y, w, h, val, color, bgColor) {
+  fillRoundRect(ctx, x, y, w, h, h/2, bgColor || '#222');
+  if (val > 0) {
+    fillRoundRect(ctx, x, y, w * val, h, h/2, color);
+  }
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+  strokeRoundRect(ctx, x, y, w, h, h/2, color, 1);
+  ctx.restore();
+}
+
+const W = 390, H = 844;
+
+// ========== SCREEN 1: MAIN MENU ==========
+(function() {
+  const ctx = document.getElementById('c1').getContext('2d');
+  drawBg(ctx, W, H);
+  drawParticles(ctx, W, H, 60, 'rgba(0,255,255,0.3)');
+  drawParticles(ctx, W, H, 30, 'rgba(255,0,255,0.2)');
+
+  // Animated neon lines on sides
+  ctx.save();
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = 2;
+  // Left side decorations
+  ctx.shadowColor = '#00ffff';
+  ctx.strokeStyle = '#00ffff';
+  ctx.beginPath(); ctx.moveTo(15, 100); ctx.lineTo(15, 300); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(25, 150); ctx.lineTo(25, 250); ctx.stroke();
+  ctx.shadowColor = '#ff00ff';
+  ctx.strokeStyle = '#ff00ff';
+  ctx.beginPath(); ctx.moveTo(15, 550); ctx.lineTo(15, 750); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(25, 600); ctx.lineTo(25, 700); ctx.stroke();
+  // Right side decorations
+  ctx.shadowColor = '#ff00ff';
+  ctx.strokeStyle = '#ff00ff';
+  ctx.beginPath(); ctx.moveTo(375, 100); ctx.lineTo(375, 300); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(365, 150); ctx.lineTo(365, 250); ctx.stroke();
+  ctx.shadowColor = '#00ffff';
+  ctx.strokeStyle = '#00ffff';
+  ctx.beginPath(); ctx.moveTo(375, 550); ctx.lineTo(375, 750); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(365, 600); ctx.lineTo(365, 700); ctx.stroke();
+  // Horizontal accent lines
+  ctx.shadowColor = '#00ffff';
+  ctx.strokeStyle = 'rgba(0,255,255,0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const ly = 160 + i * 8;
+    ctx.beginPath(); ctx.moveTo(50, ly); ctx.lineTo(150, ly); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(240, ly); ctx.lineTo(340, ly); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Logo
+  neonText(ctx, 'NEON', W/2, 120, '#00ffff', 52, 'center', 30);
+  neonText(ctx, 'JUMP', W/2, 180, '#ff00ff', 52, 'center', 30);
+
+  // Decorative line under logo
+  neonLine(ctx, 100, 220, 290, 220, '#00ffff', 2);
+  neonLine(ctx, 130, 228, 260, 228, '#ff00ff', 1);
+
+  // Coin display top-right
+  ctx.save();
+  fillRoundRect(ctx, 260, 30, 110, 32, 16, 'rgba(0,0,0,0.6)');
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 8;
+  strokeRoundRect(ctx, 260, 30, 110, 32, 16, '#ffff00', 1);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(280, 46, 10, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffff00';
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, '$', 280, 46, '#333', 10, 'center', 0);
+  neonText(ctx, '12,456', 335, 46, '#ffff00', 14, 'center', 5);
+
+  // Menu buttons
+  const buttons = [
+    { text: 'OYNA', color: '#00ffff', y: 310, h: 60, fs: 24 },
+    { text: 'ENVANTER', color: '#ff00ff', y: 390, h: 50, fs: 18 },
+    { text: 'YUKSELTME', color: '#00ff88', y: 458, h: 50, fs: 18 },
+    { text: 'AYARLAR', color: '#ffff00', y: 526, h: 50, fs: 18 },
+    { text: 'ISTATISTIKLER', color: '#ff8800', y: 594, h: 50, fs: 18 },
+  ];
+  buttons.forEach(b => {
+    drawNeonButton(ctx, 60, b.y, 270, b.h, b.text, b.color, b.fs);
+  });
+
+  // Bottom decorative elements
+  neonLine(ctx, 50, 720, 340, 720, 'rgba(0,255,255,0.2)', 1);
+  neonLine(ctx, 80, 728, 310, 728, 'rgba(255,0,255,0.2)', 1);
+
+  // Version text
+  neonText(ctx, 'v0.1.0 Alpha', W/2, 800, '#555', 12, 'center', 0);
+  neonText(ctx, 'Neon Jump Studio', W/2, 818, '#444', 10, 'center', 0);
+})();
+
+// ========== SCREEN 2: IN-GAME HUD ==========
+(function() {
+  const ctx = document.getElementById('c2').getContext('2d');
+  // Dark gameplay background
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#050510');
+  g.addColorStop(0.5, '#0a0a20');
+  g.addColorStop(1, '#050515');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines for depth
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 20; i++) {
+    ctx.beginPath(); ctx.moveTo(0, i * 50); ctx.lineTo(W, i * 50); ctx.stroke();
+  }
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath(); ctx.moveTo(i * 50, 0); ctx.lineTo(i * 50, H); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Platforms
+  ctx.save();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = '#00ffff';
+  ctx.fillRect(50, 600, 120, 8);
+  ctx.fillStyle = '#ff00ff';
+  ctx.shadowColor = '#ff00ff';
+  ctx.fillRect(220, 500, 130, 8);
+  ctx.fillStyle = '#00ff88';
+  ctx.shadowColor = '#00ff88';
+  ctx.fillRect(80, 400, 100, 8);
+  ctx.fillStyle = '#ffff00';
+  ctx.shadowColor = '#ffff00';
+  ctx.fillRect(250, 320, 110, 8);
+  ctx.fillStyle = '#00ffff';
+  ctx.shadowColor = '#00ffff';
+  ctx.fillRect(30, 700, W - 60, 8);
+  ctx.restore();
+
+  // Player character (simple neon figure)
+  ctx.save();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#00ffff';
+  ctx.fillRect(105, 575, 16, 22);
+  // Head
+  ctx.beginPath();
+  ctx.arc(113, 568, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Projectile
+  ctx.save();
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#ffff00';
+  ctx.beginPath();
+  ctx.arc(160, 583, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(185, 583, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Enemy
+  ctx.save();
+  ctx.shadowColor = '#ff0044';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#ff0044';
+  ctx.fillRect(240, 476, 18, 20);
+  ctx.beginPath();
+  ctx.arc(249, 469, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // --- HUD ELEMENTS ---
+  // Health bar top-left
+  ctx.save();
+  fillRoundRect(ctx, 10, 20, 155, 28, 8, 'rgba(0,0,0,0.7)');
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 8;
+  strokeRoundRect(ctx, 10, 20, 155, 28, 8, '#00ffff', 1.5);
+  ctx.restore();
+  // Heart icon
+  ctx.save();
+  ctx.fillStyle = '#ff3355';
+  ctx.shadowColor = '#ff3355';
+  ctx.shadowBlur = 8;
+  ctx.font = '14px Arial';
+  ctx.fillText('\u2764', 18, 39);
+  ctx.restore();
+  // Health bar fill
+  const hpGrad = ctx.createLinearGradient(36, 0, 155, 0);
+  hpGrad.addColorStop(0, '#ff3355');
+  hpGrad.addColorStop(1, '#ff0044');
+  fillRoundRect(ctx, 36, 26, 100 * 0.85, 16, 5, hpGrad);
+  fillRoundRect(ctx, 36, 26, 100, 16, 5, 'transparent');
+  strokeRoundRect(ctx, 36, 26, 100, 16, 5, 'rgba(255,51,85,0.3)', 1);
+  neonText(ctx, 'HP 85/100', 106, 34, '#fff', 9, 'center', 0);
+
+  // Score top-right
+  ctx.save();
+  fillRoundRect(ctx, 235, 20, 145, 28, 8, 'rgba(0,0,0,0.7)');
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 6;
+  strokeRoundRect(ctx, 235, 20, 145, 28, 8, '#00ffff', 1);
+  ctx.restore();
+  neonText(ctx, 'SKOR: 12,450', 307, 34, '#00ffff', 13, 'center', 8);
+
+  // Coin counter below score
+  ctx.save();
+  fillRoundRect(ctx, 285, 54, 95, 24, 7, 'rgba(0,0,0,0.7)');
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 6;
+  strokeRoundRect(ctx, 285, 54, 95, 24, 7, '#ffff00', 1);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(300, 66, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffff00';
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 5;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, '$', 300, 66, '#333', 8, 'center', 0);
+  neonText(ctx, 'x 234', 347, 66, '#ffff00', 12, 'center', 5);
+
+  // Combo indicator center-top
+  ctx.save();
+  fillRoundRect(ctx, 130, 60, 130, 36, 10, 'rgba(0,0,0,0.7)');
+  ctx.shadowColor = '#ff8800';
+  ctx.shadowBlur = 15;
+  strokeRoundRect(ctx, 130, 60, 130, 36, 10, '#ff8800', 2);
+  ctx.restore();
+  neonText(ctx, 'x5 COMBO!', 195, 78, '#ff8800', 16, 'center', 20);
+
+  // Minimap top-right corner
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(348, 126, 32, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fill();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  // Map dots
+  const mapDots = [
+    { x: 340, y: 120, c: '#00ffff', r: 3 },
+    { x: 355, y: 130, c: '#ff0044', r: 2 },
+    { x: 348, y: 115, c: '#ffff00', r: 2 },
+    { x: 360, y: 138, c: '#ff0044', r: 2 },
+  ];
+  mapDots.forEach(d => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+    ctx.fillStyle = d.c;
+    ctx.shadowColor = d.c;
+    ctx.shadowBlur = 5;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Weapon display bottom-left
+  ctx.save();
+  fillRoundRect(ctx, 10, 730, 110, 50, 8, 'rgba(0,0,0,0.7)');
+  ctx.shadowColor = '#a855f7';
+  ctx.shadowBlur = 10;
+  strokeRoundRect(ctx, 10, 730, 110, 50, 8, '#a855f7', 2);
+  ctx.restore();
+  // Weapon icon placeholder
+  fillRoundRect(ctx, 16, 736, 38, 38, 6, 'rgba(168,85,247,0.2)');
+  neonText(ctx, '\u2694', 35, 755, '#a855f7', 20, 'center', 8);
+  neonText(ctx, 'RIFLE', 85, 748, '#ccc', 10, 'center', 0);
+  neonText(ctx, '24/120', 85, 766, '#ff8800', 11, 'center', 5);
+
+  // Skill buttons bottom-right
+  // Skill 1
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(310, 755, 24, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fill();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, '\u26A1', 310, 755, '#00ffff', 18, 'center', 8);
+  // Cooldown overlay on skill 1
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(310, 755);
+  ctx.arc(310, 755, 24, -Math.PI/2, Math.PI * 0.8 - Math.PI/2);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, '3s', 310, 755, '#fff', 10, 'center', 0);
+
+  // Skill 2
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(365, 755, 24, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fill();
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, '\u2604', 365, 755, '#ff00ff', 18, 'center', 8);
+
+  // Joystick area bottom-left
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(80, 790, 45, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(80, 790, 18, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,255,255,0.15)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,255,255,0.4)';
+  ctx.setLineDash([]);
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, 'JOYSTICK', 80, 790, 'rgba(0,255,255,0.3)', 8, 'center', 0);
+
+  // Jump button
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(340, 810, 28, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,255,136,0.15)';
+  ctx.fill();
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, '\u2191', 340, 808, '#00ff88', 22, 'center', 10);
+
+  // Dash button
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(280, 810, 22, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,255,255,0.1)';
+  ctx.fill();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, '\u2192', 280, 808, '#00ffff', 16, 'center', 8);
+  neonText(ctx, 'DASH', 280, 825, 'rgba(0,255,255,0.4)', 7, 'center', 0);
+})();
+
+// ========== SCREEN 3: INVENTORY ==========
+(function() {
+  const ctx = document.getElementById('c3').getContext('2d');
+  drawBg(ctx, W, H);
+
+  // Header
+  fillRoundRect(ctx, 0, 0, W, 56, 0, 'rgba(0,0,0,0.6)');
+  neonLine(ctx, 0, 56, W, 56, '#00ffff', 1);
+  neonText(ctx, '\u2190', 30, 28, '#00ffff', 22, 'center', 8);
+  neonText(ctx, 'ENVANTER', W/2, 28, '#00ffff', 20, 'center', 12);
+
+  // Sort and search icons
+  neonText(ctx, '\u2261', 330, 28, '#00ffff', 20, 'center', 5);
+  neonText(ctx, '\u26B2', 362, 28, '#00ffff', 16, 'center', 5);
+
+  // Tab bar
+  const tabs = [
+    { text: 'Tumu', x: 10, w: 65 },
+    { text: 'Tuketim', x: 80, w: 70 },
+    { text: 'Ekipman', x: 155, w: 70 },
+    { text: 'Malzeme', x: 230, w: 75 },
+    { text: 'Setler', x: 310, w: 65 },
+  ];
+  fillRoundRect(ctx, 0, 62, W, 40, 0, 'rgba(0,0,0,0.4)');
+  tabs.forEach((t, i) => {
+    const active = i === 0;
+    if (active) {
+      fillRoundRect(ctx, t.x, 66, t.w, 32, 8, 'rgba(0,255,255,0.15)');
+      strokeRoundRect(ctx, t.x, 66, t.w, 32, 8, '#00ffff', 1);
+    }
+    neonText(ctx, t.text, t.x + t.w/2, 82, active ? '#00ffff' : '#666', 11, 'center', active ? 5 : 0);
+  });
+  neonLine(ctx, 0, 104, W, 104, 'rgba(0,255,255,0.3)', 1);
+
+  // Item grid 6x5
+  const gridX = 12, gridY = 115, cellSize = 56, gap = 5;
+  const rarityColors = {
+    common: '#888888',
+    uncommon: '#00ff88',
+    rare: '#4488ff',
+    epic: '#a855f7',
+    legendary: '#ffaa00',
+  };
+  const items = [
+    { row: 0, col: 0, rarity: 'legendary', icon: '\u2694' },
+    { row: 0, col: 1, rarity: 'epic', icon: '\u2748' },
+    { row: 0, col: 3, rarity: 'rare', icon: '\u25C6' },
+    { row: 1, col: 0, rarity: 'uncommon', icon: '\u2665' },
+    { row: 1, col: 2, rarity: 'common', icon: '\u25CB' },
+    { row: 1, col: 4, rarity: 'rare', icon: '\u2726' },
+    { row: 2, col: 1, rarity: 'epic', icon: '\u269B' },
+    { row: 2, col: 3, rarity: 'legendary', icon: '\u2605' },
+    { row: 2, col: 5, rarity: 'uncommon', icon: '\u25A0' },
+    { row: 3, col: 0, rarity: 'common', icon: '\u25B2' },
+    { row: 3, col: 2, rarity: 'rare', icon: '\u2736' },
+    { row: 3, col: 4, rarity: 'common', icon: '\u25CF' },
+    { row: 4, col: 1, rarity: 'uncommon', icon: '\u2663' },
+    { row: 4, col: 3, rarity: 'epic', icon: '\u2660' },
+    { row: 4, col: 5, rarity: 'legendary', icon: '\u2742' },
+  ];
+
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 6; c++) {
+      const x = gridX + c * (cellSize + gap);
+      const y = gridY + r * (cellSize + gap);
+      fillRoundRect(ctx, x, y, cellSize, cellSize, 6, 'rgba(20,20,40,0.8)');
+      strokeRoundRect(ctx, x, y, cellSize, cellSize, 6, 'rgba(0,255,255,0.15)', 1);
+    }
+  }
+  items.forEach(item => {
+    const x = gridX + item.col * (cellSize + gap);
+    const y = gridY + item.row * (cellSize + gap);
+    const rc = rarityColors[item.rarity];
+    fillRoundRect(ctx, x, y, cellSize, cellSize, 6, 'rgba(20,20,40,0.9)');
+    ctx.save();
+    ctx.shadowColor = rc;
+    ctx.shadowBlur = 8;
+    strokeRoundRect(ctx, x, y, cellSize, cellSize, 6, rc, 2);
+    ctx.restore();
+    neonText(ctx, item.icon, x + cellSize/2, y + cellSize/2, rc, 22, 'center', 8);
+    // Quantity badge
+    fillRoundRect(ctx, x + cellSize - 18, y + cellSize - 16, 16, 14, 3, 'rgba(0,0,0,0.7)');
+    neonText(ctx, '' + (Math.floor(Math.random() * 9) + 1), x + cellSize - 10, y + cellSize - 9, '#ccc', 8, 'center', 0);
+  });
+
+  // Equipment panel
+  const eqY = 435;
+  fillRoundRect(ctx, 10, eqY, W - 20, 300, 12, 'rgba(10,10,30,0.8)');
+  ctx.save();
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 10;
+  strokeRoundRect(ctx, 10, eqY, W - 20, 300, 12, '#ff00ff', 1.5);
+  ctx.restore();
+  neonText(ctx, 'EKIPMAN', W/2, eqY + 22, '#ff00ff', 14, 'center', 8);
+  neonLine(ctx, 30, eqY + 36, W - 30, eqY + 36, 'rgba(255,0,255,0.3)', 1);
+
+  // Character silhouette
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,0,255,0.1)';
+  ctx.strokeStyle = 'rgba(255,0,255,0.4)';
+  ctx.lineWidth = 1;
+  // Body
+  ctx.fillRect(180, eqY + 75, 30, 50);
+  ctx.strokeRect(180, eqY + 75, 30, 50);
+  // Head
+  ctx.beginPath();
+  ctx.arc(195, eqY + 63, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Legs
+  ctx.fillRect(182, eqY + 125, 10, 35);
+  ctx.strokeRect(182, eqY + 125, 10, 35);
+  ctx.fillRect(198, eqY + 125, 10, 35);
+  ctx.strokeRect(198, eqY + 125, 10, 35);
+  // Arms
+  ctx.fillRect(165, eqY + 80, 12, 30);
+  ctx.strokeRect(165, eqY + 80, 12, 30);
+  ctx.fillRect(213, eqY + 80, 12, 30);
+  ctx.strokeRect(213, eqY + 80, 12, 30);
+  ctx.restore();
+
+  // Equipment slots around character
+  const eqSlots = [
+    { label: 'Weapon Mod 1', x: 40, y: eqY + 55, c: '#a855f7', icon: '\u2694' },
+    { label: 'Weapon Mod 2', x: 40, y: eqY + 120, c: '#4488ff', icon: '\u2748' },
+    { label: 'Accessory 1', x: 290, y: eqY + 55, c: '#ffaa00', icon: '\u2605' },
+    { label: 'Accessory 2', x: 290, y: eqY + 120, c: '#00ff88', icon: '\u25C6' },
+    { label: 'Armor', x: 165, y: eqY + 180, c: '#00ffff', icon: '\u2616' },
+  ];
+  eqSlots.forEach(s => {
+    fillRoundRect(ctx, s.x, s.y, 52, 52, 8, 'rgba(20,20,40,0.9)');
+    ctx.save();
+    ctx.shadowColor = s.c;
+    ctx.shadowBlur = 8;
+    strokeRoundRect(ctx, s.x, s.y, 52, 52, 8, s.c, 1.5);
+    ctx.restore();
+    neonText(ctx, s.icon, s.x + 26, s.y + 24, s.c, 18, 'center', 6);
+    neonText(ctx, s.label, s.x + 26, s.y + 44, '#888', 7, 'center', 0);
+    // Draw connector lines to character
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,0,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(s.x + 26, s.y + 26);
+    ctx.lineTo(195, eqY + 95);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Quick slot bar at bottom
+  const qsY = eqY + 255;
+  neonText(ctx, 'HIZLI ERISIM', W/2, qsY, '#888', 10, 'center', 0);
+  for (let i = 0; i < 4; i++) {
+    const qx = 95 + i * 55;
+    fillRoundRect(ctx, qx, qsY + 10, 48, 48, 6, 'rgba(20,20,40,0.8)');
+    strokeRoundRect(ctx, qx, qsY + 10, 48, 48, 6, 'rgba(0,255,255,0.3)', 1);
+    neonText(ctx, '' + (i + 1), qx + 24, qsY + 34, 'rgba(0,255,255,0.3)', 16, 'center', 0);
+  }
+
+  // Bottom bar
+  fillRoundRect(ctx, 0, H - 50, W, 50, 0, 'rgba(0,0,0,0.6)');
+  neonLine(ctx, 0, H - 50, W, H - 50, 'rgba(0,255,255,0.3)', 1);
+  neonText(ctx, 'Toplam: 15 / 30 slot', W/2, H - 25, '#888', 12, 'center', 0);
+})();
+
+// ========== SCREEN 4: WEAPON WHEEL ==========
+(function() {
+  const ctx = document.getElementById('c4').getContext('2d');
+  // Gameplay background
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#050510');
+  g.addColorStop(1, '#0a0a20');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Dim overlay
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Weapon wheel title
+  neonText(ctx, 'SILAH SECIMI', W/2, 60, '#00ffff', 18, 'center', 12);
+
+  // Large circle
+  const cx = W/2, cy = 370, radius = 140;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + 20, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  // Center crosshair
+  neonLine(ctx, cx - 15, cy, cx + 15, cy, 'rgba(255,255,255,0.3)', 1);
+  neonLine(ctx, cx, cy - 15, cx, cy + 15, 'rgba(255,255,255,0.3)', 1);
+
+  // 8 weapon positions
+  const weapons = [
+    { name: 'Sniper', angle: -Math.PI/2, color: '#4488ff', icon: '\u2316', rarity: 'Legendary' },
+    { name: 'Rocket', angle: -Math.PI/4, color: '#a855f7', icon: '\u2622', rarity: 'Epic' },
+    { name: 'Shotgun', angle: 0, color: '#00ff88', icon: '\u25A3', rarity: 'Rare' },
+    { name: 'Flame', angle: Math.PI/4, color: '#ffaa00', icon: '\u2668', rarity: 'Legendary' },
+    { name: 'Grenade', angle: Math.PI/2, color: '#4488ff', icon: '\u25CF', rarity: 'Rare' },
+    { name: 'SMG', angle: 3*Math.PI/4, color: '#00ff88', icon: '\u2593', rarity: 'Uncommon' },
+    { name: 'Rifle', angle: Math.PI, color: '#a855f7', icon: '\u2503', rarity: 'Epic' },
+    { name: 'Pistol', angle: -3*Math.PI/4, color: '#888888', icon: '\u25B8', rarity: 'Common' },
+  ];
+
+  const selectedIdx = 0; // Sniper selected
+  weapons.forEach((w, i) => {
+    const wx = cx + Math.cos(w.angle) * radius;
+    const wy = cy + Math.sin(w.angle) * radius;
+    const selected = i === selectedIdx;
+    const slotR = selected ? 34 : 28;
+
+    // Connector line
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(wx, wy);
+    ctx.stroke();
+    ctx.restore();
+
+    // Weapon slot
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(wx, wy, slotR, 0, Math.PI * 2);
+    ctx.fillStyle = selected ? 'rgba(68,136,255,0.2)' : 'rgba(20,20,40,0.8)';
+    ctx.fill();
+    ctx.shadowColor = w.color;
+    ctx.shadowBlur = selected ? 20 : 8;
+    ctx.strokeStyle = w.color;
+    ctx.lineWidth = selected ? 3 : 1.5;
+    ctx.stroke();
+    if (selected) {
+      ctx.beginPath();
+      ctx.arc(wx, wy, slotR + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(68,136,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    neonText(ctx, w.icon, wx, wy - 2, w.color, selected ? 20 : 16, 'center', selected ? 12 : 5);
+    neonText(ctx, w.name, wx, wy + slotR + 14, selected ? '#fff' : '#888', 9, 'center', selected ? 3 : 0);
+  });
+
+  // Selected weapon details at bottom
+  fillRoundRect(ctx, 20, 580, W - 40, 130, 12, 'rgba(10,10,30,0.9)');
+  ctx.save();
+  ctx.shadowColor = '#4488ff';
+  ctx.shadowBlur = 12;
+  strokeRoundRect(ctx, 20, 580, W - 40, 130, 12, '#4488ff', 2);
+  ctx.restore();
+
+  neonText(ctx, 'SNIPER RIFLE', W/2, 605, '#4488ff', 18, 'center', 12);
+  neonText(ctx, 'Legendary', W/2, 625, '#ffaa00', 12, 'center', 8);
+
+  // Stat bars
+  neonText(ctx, 'HASAR', 55, 650, '#888', 10, 'left', 0);
+  drawProgressBar(ctx, 110, 645, 230, 10, 0.92, '#ff3355', '#222');
+  neonText(ctx, '92', 350, 650, '#ff3355', 10, 'center', 3);
+
+  neonText(ctx, 'HIZI', 55, 670, '#888', 10, 'left', 0);
+  drawProgressBar(ctx, 110, 665, 230, 10, 0.3, '#00ffff', '#222');
+  neonText(ctx, '30', 350, 670, '#00ffff', 10, 'center', 3);
+
+  neonText(ctx, 'MENZIL', 55, 690, '#888', 10, 'left', 0);
+  drawProgressBar(ctx, 110, 685, 230, 10, 0.95, '#00ff88', '#222');
+  neonText(ctx, '95', 350, 690, '#00ff88', 10, 'center', 3);
+
+  // Hint text
+  neonText(ctx, 'Serbest birak = Sec', W/2, 760, 'rgba(255,255,255,0.3)', 12, 'center', 0);
+})();
+
+// ========== SCREEN 5: BOSS HEALTH BAR ==========
+(function() {
+  const ctx = document.getElementById('c5').getContext('2d');
+  // Dark gameplay background
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0a0015');
+  g.addColorStop(0.5, '#150020');
+  g.addColorStop(1, '#0a0015');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,0,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 20; i++) {
+    ctx.beginPath(); ctx.moveTo(0, i * 50); ctx.lineTo(W, i * 50); ctx.stroke();
+  }
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath(); ctx.moveTo(i * 50, 0); ctx.lineTo(i * 50, H); ctx.stroke();
+  }
+  ctx.restore();
+
+  drawParticles(ctx, W, H, 30, 'rgba(255,0,255,0.2)');
+
+  // Boss name
+  neonText(ctx, 'NEON GUARDIAN', W/2, 45, '#ff00ff', 20, 'center', 25);
+
+  // Decorative accent lines top
+  neonLine(ctx, 40, 60, 160, 60, '#ff00ff', 1);
+  neonLine(ctx, 230, 60, 350, 60, '#ff00ff', 1);
+  // Small diamond accents
+  ctx.save();
+  ctx.fillStyle = '#ff00ff';
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(195, 55); ctx.lineTo(200, 60); ctx.lineTo(195, 65); ctx.lineTo(190, 60);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Boss health bar
+  const bhX = 25, bhY = 72, bhW = W - 50, bhH = 28;
+  // Frame
+  fillRoundRect(ctx, bhX - 4, bhY - 4, bhW + 8, bhH + 8, 8, 'rgba(0,0,0,0.6)');
+  ctx.save();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 12;
+  strokeRoundRect(ctx, bhX - 4, bhY - 4, bhW + 8, bhH + 8, 8, '#00ffff', 2);
+  ctx.restore();
+
+  // Health bar background
+  fillRoundRect(ctx, bhX, bhY, bhW, bhH, 5, '#1a0a0a');
+
+  // Health bar fill (67%)
+  const hpRatio = 0.67;
+  const hpGrad = ctx.createLinearGradient(bhX, 0, bhX + bhW * hpRatio, 0);
+  hpGrad.addColorStop(0, '#00ff44');
+  hpGrad.addColorStop(0.5, '#aaff00');
+  hpGrad.addColorStop(1, '#ffff00');
+  fillRoundRect(ctx, bhX, bhY, bhW * hpRatio, bhH, 5, hpGrad);
+
+  // Segment lines on health bar
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 10; i++) {
+    const sx = bhX + (bhW / 10) * i;
+    ctx.beginPath();
+    ctx.moveTo(sx, bhY);
+    ctx.lineTo(sx, bhY + bhH);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Health percentage
+  neonText(ctx, '67%', W/2, bhY + bhH/2, '#fff', 14, 'center', 0);
+
+  // Decorative accent lines bottom of bar
+  neonLine(ctx, 40, bhY + bhH + 12, 160, bhY + bhH + 12, '#00ffff', 1);
+  neonLine(ctx, 230, bhY + bhH + 12, 350, bhY + bhH + 12, '#00ffff', 1);
+
+  // Boss: Large geometric neon shape (hexagon with glowing edges)
+  const bossCx = W/2, bossCy = 340, bossR = 90;
+  ctx.save();
+  // Outer glow circle
+  ctx.beginPath();
+  ctx.arc(bossCx, bossCy, bossR + 30, 0, Math.PI * 2);
+  const bossGlow = ctx.createRadialGradient(bossCx, bossCy, bossR - 20, bossCx, bossCy, bossR + 40);
+  bossGlow.addColorStop(0, 'rgba(255,0,255,0.05)');
+  bossGlow.addColorStop(1, 'rgba(255,0,255,0)');
+  ctx.fillStyle = bossGlow;
+  ctx.fill();
+
+  // Hexagon
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 25;
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    const hx = bossCx + Math.cos(angle) * bossR;
+    const hy = bossCy + Math.sin(angle) * bossR;
+    if (i === 0) ctx.moveTo(hx, hy);
+    else ctx.lineTo(hx, hy);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,0,255,0.08)';
+  ctx.fill();
+  ctx.stroke();
+
+  // Inner diamond
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const innerR = 50;
+  ctx.moveTo(bossCx, bossCy - innerR);
+  ctx.lineTo(bossCx + innerR, bossCy);
+  ctx.lineTo(bossCx, bossCy + innerR);
+  ctx.lineTo(bossCx - innerR, bossCy);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0,255,255,0.05)';
+  ctx.fill();
+  ctx.stroke();
+
+  // Eye in center
+  ctx.beginPath();
+  ctx.arc(bossCx, bossCy, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#ff0044';
+  ctx.shadowColor = '#ff0044';
+  ctx.shadowBlur = 20;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(bossCx, bossCy, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.restore();
+
+  // Boss energy lines radiating
+  ctx.save();
+  for (let i = 0; i < 12; i++) {
+    const angle = (Math.PI * 2 / 12) * i;
+    const lx1 = bossCx + Math.cos(angle) * (bossR + 5);
+    const ly1 = bossCy + Math.sin(angle) * (bossR + 5);
+    const lx2 = bossCx + Math.cos(angle) * (bossR + 20 + Math.random() * 15);
+    const ly2 = bossCy + Math.sin(angle) * (bossR + 20 + Math.random() * 15);
+    neonLine(ctx, lx1, ly1, lx2, ly2, 'rgba(255,0,255,0.4)', 1);
+  }
+  ctx.restore();
+
+  // Player character at bottom
+  ctx.save();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#00ffff';
+  // Body
+  ctx.fillRect(185, 640, 20, 28);
+  // Head
+  ctx.beginPath();
+  ctx.arc(195, 630, 10, 0, Math.PI * 2);
+  ctx.fill();
+  // Arm with gun pointing up
+  ctx.fillRect(190, 620, 4, 20);
+  ctx.restore();
+
+  // Shooting projectiles upward
+  ctx.save();
+  for (let i = 0; i < 4; i++) {
+    const py = 600 - i * 50;
+    const px = 192 + (Math.random() - 0.5) * 10;
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffff00';
+    ctx.shadowColor = '#ffff00';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Floating damage numbers
+  const dmgNums = [
+    { text: '-245', x: 230, y: 280, s: 18 },
+    { text: '-189', x: 140, y: 310, s: 15 },
+    { text: '-312', x: 260, y: 250, s: 16 },
+    { text: 'CRIT -445', x: 180, y: 230, s: 14 },
+  ];
+  dmgNums.forEach(d => {
+    neonText(ctx, d.text, d.x, d.y, d.text.includes('CRIT') ? '#ffaa00' : '#ff3355', d.s, 'center', 10);
+  });
+
+  // Player HUD elements (simplified)
+  fillRoundRect(ctx, 10, 730, 130, 22, 6, 'rgba(0,0,0,0.7)');
+  const playerHpGrad = ctx.createLinearGradient(15, 0, 130, 0);
+  playerHpGrad.addColorStop(0, '#ff3355');
+  playerHpGrad.addColorStop(1, '#ff0044');
+  fillRoundRect(ctx, 15, 735, 80, 12, 4, playerHpGrad);
+  strokeRoundRect(ctx, 10, 730, 130, 22, 6, '#00ffff', 1);
+  neonText(ctx, 'HP 72/100', 75, 741, '#fff', 8, 'center', 0);
+
+  // Platform at bottom
+  ctx.save();
+  ctx.fillStyle = '#00ffff';
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(50, 680, W - 100, 6);
+  ctx.restore();
+
+  // "BOSS FIGHT" indicator
+  ctx.save();
+  fillRoundRect(ctx, 130, 790, 130, 30, 8, 'rgba(255,0,68,0.2)');
+  ctx.shadowColor = '#ff0044';
+  ctx.shadowBlur = 10;
+  strokeRoundRect(ctx, 130, 790, 130, 30, 8, '#ff0044', 1.5);
+  ctx.restore();
+  neonText(ctx, '\u26A0 BOSS FIGHT', W/2, 805, '#ff0044', 12, 'center', 10);
+})();
+
+// ========== SCREEN 6: UPGRADE PANEL ==========
+(function() {
+  const ctx = document.getElementById('c6').getContext('2d');
+  drawBg(ctx, W, H);
+
+  // Header
+  fillRoundRect(ctx, 0, 0, W, 56, 0, 'rgba(0,0,0,0.6)');
+  neonLine(ctx, 0, 56, W, 56, '#00ff88', 1);
+  neonText(ctx, 'YUKSELTMELER', W/2, 28, '#00ff88', 20, 'center', 12);
+  // Close button
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(360, 28, 14, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,0,68,0.2)';
+  ctx.fill();
+  ctx.shadowColor = '#ff0044';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#ff0044';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, '\u2715', 360, 28, '#ff0044', 12, 'center', 5);
+
+  // Upgrade rows
+  const upgrades = [
+    { name: 'SAGLIK', desc: 'Can Puani', icon: '\u2665', color: '#ff3355', level: 3, max: 10, cost: 150, symbol: 'HP' },
+    { name: 'HIZ', desc: 'Hareket Hizi', icon: '\u2192', color: '#00ff88', level: 5, max: 10, cost: 250, symbol: 'SPD' },
+    { name: 'ATILMA', desc: 'Dash Becerisi', icon: '\u21E8', color: '#4488ff', level: 2, max: 10, cost: 100, symbol: 'DSH' },
+    { name: 'ZIPLAMA', desc: 'Ziplama Gucu', icon: '\u2191', color: '#ffff00', level: 4, max: 10, cost: 200, symbol: 'JMP' },
+    { name: 'HASAR', desc: 'Saldiri Gucu', icon: '\u2694', color: '#ff8800', level: 6, max: 10, cost: 350, symbol: 'DMG' },
+  ];
+
+  upgrades.forEach((u, i) => {
+    const rowY = 80 + i * 132;
+    // Row background
+    fillRoundRect(ctx, 15, rowY, W - 30, 120, 12, 'rgba(10,10,30,0.8)');
+    ctx.save();
+    ctx.shadowColor = u.color;
+    ctx.shadowBlur = 6;
+    strokeRoundRect(ctx, 15, rowY, W - 30, 120, 12, u.color, 1);
+    ctx.restore();
+
+    // Icon
+    drawIcon(ctx, 50, rowY + 35, 20, u.icon, u.color + '33', u.color);
+
+    // Name and description
+    neonText(ctx, u.name, 130, rowY + 22, u.color, 16, 'center', 8);
+    neonText(ctx, u.desc, 130, rowY + 40, '#888', 10, 'center', 0);
+
+    // Level text
+    neonText(ctx, 'Lv ' + u.level + '/' + u.max, 130, rowY + 58, '#ccc', 11, 'center', 0);
+
+    // Progress bar
+    drawProgressBar(ctx, 30, rowY + 72, 210, 10, u.level / u.max, u.color, '#1a1a2e');
+
+    // Level dots
+    for (let d = 0; d < u.max; d++) {
+      const dotX = 30 + (210 / u.max) * d + (210 / u.max) / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(dotX, rowY + 77, 2, 0, Math.PI * 2);
+      ctx.fillStyle = d < u.level ? u.color : 'rgba(255,255,255,0.1)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Stats preview
+    neonText(ctx, u.symbol + ': ' + (u.level * 10 + 50), 300, rowY + 22, '#aaa', 10, 'center', 0);
+
+    // Cost display
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(270, rowY + 98, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffff00';
+    ctx.shadowColor = '#ffff00';
+    ctx.shadowBlur = 5;
+    ctx.fill();
+    ctx.restore();
+    neonText(ctx, '$', 270, rowY + 98, '#333', 8, 'center', 0);
+    neonText(ctx, '' + u.cost, 295, rowY + 98, '#ffff00', 12, 'left', 3);
+
+    // Upgrade button
+    drawNeonButton(ctx, 310, rowY + 85, 50, 26, 'UP', u.color, 11);
+    neonText(ctx, '\u2191', 348, rowY + 98, u.color, 10, 'center', 5);
+  });
+
+  // Total coins at bottom
+  fillRoundRect(ctx, 100, 760, 190, 40, 12, 'rgba(0,0,0,0.7)');
+  ctx.save();
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 8;
+  strokeRoundRect(ctx, 100, 760, 190, 40, 12, '#ffff00', 1.5);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(130, 780, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffff00';
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, '$', 130, 780, '#333', 10, 'center', 0);
+  neonText(ctx, '12,456', 195, 780, '#ffff00', 18, 'center', 8);
+
+  neonText(ctx, 'Toplam Coin', 195, 810, '#888', 10, 'center', 0);
+})();
+
+// ========== SCREEN 7: SETTINGS ==========
+(function() {
+  const ctx = document.getElementById('c7').getContext('2d');
+  drawBg(ctx, W, H);
+
+  // Header
+  fillRoundRect(ctx, 0, 0, W, 56, 0, 'rgba(0,0,0,0.6)');
+  neonLine(ctx, 0, 56, W, 56, '#ffff00', 1);
+  neonText(ctx, '\u2190', 30, 28, '#ffff00', 22, 'center', 8);
+  neonText(ctx, 'AYARLAR', W/2, 28, '#ffff00', 20, 'center', 12);
+
+  let yPos = 75;
+
+  // SES (Audio) Section
+  neonText(ctx, 'SES', 30, yPos, '#00ffff', 14, 'left', 8);
+  neonLine(ctx, 70, yPos, W - 20, yPos, 'rgba(0,255,255,0.3)', 1);
+  yPos += 30;
+
+  fillRoundRect(ctx, 15, yPos, W - 30, 90, 10, 'rgba(10,10,30,0.6)');
+  strokeRoundRect(ctx, 15, yPos, W - 30, 90, 10, 'rgba(0,255,255,0.2)', 1);
+
+  neonText(ctx, 'Muzik', 40, yPos + 25, '#ccc', 12, 'left', 0);
+  drawSlider(ctx, 110, yPos + 25, 220, 0.7, '#00ffff');
+  neonText(ctx, '70%', 350, yPos + 25, '#888', 10, 'center', 0);
+
+  neonText(ctx, 'SFX', 40, yPos + 60, '#ccc', 12, 'left', 0);
+  drawSlider(ctx, 110, yPos + 60, 220, 0.85, '#00ffff');
+  neonText(ctx, '85%', 350, yPos + 60, '#888', 10, 'center', 0);
+
+  yPos += 110;
+
+  // GORSEL (Visual) Section
+  neonText(ctx, 'GORSEL', 30, yPos, '#ff00ff', 14, 'left', 8);
+  neonLine(ctx, 100, yPos, W - 20, yPos, 'rgba(255,0,255,0.3)', 1);
+  yPos += 30;
+
+  fillRoundRect(ctx, 15, yPos, W - 30, 90, 10, 'rgba(10,10,30,0.6)');
+  strokeRoundRect(ctx, 15, yPos, W - 30, 90, 10, 'rgba(255,0,255,0.2)', 1);
+
+  neonText(ctx, 'Parlaklik', 40, yPos + 25, '#ccc', 12, 'left', 0);
+  drawSlider(ctx, 130, yPos + 25, 200, 0.6, '#ff00ff');
+  neonText(ctx, '60%', 350, yPos + 25, '#888', 10, 'center', 0);
+
+  neonText(ctx, 'Ekran Titremesi', 40, yPos + 60, '#ccc', 12, 'left', 0);
+  // Toggle ON
+  fillRoundRect(ctx, 290, yPos + 52, 50, 22, 11, '#00ff88');
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(328, yPos + 63, 9, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, 'ON', 356, yPos + 63, '#00ff88', 10, 'center', 3);
+
+  yPos += 110;
+
+  // ERISILEBILIRLIK (Accessibility) Section
+  neonText(ctx, 'ERISILEBILIRLIK', 30, yPos, '#00ff88', 14, 'left', 8);
+  neonLine(ctx, 175, yPos, W - 20, yPos, 'rgba(0,255,136,0.3)', 1);
+  yPos += 30;
+
+  fillRoundRect(ctx, 15, yPos, W - 30, 210, 10, 'rgba(10,10,30,0.6)');
+  strokeRoundRect(ctx, 15, yPos, W - 30, 210, 10, 'rgba(0,255,136,0.2)', 1);
+
+  // UI Scale slider
+  neonText(ctx, 'UI Boyutu', 40, yPos + 25, '#ccc', 12, 'left', 0);
+  drawSlider(ctx, 140, yPos + 25, 190, 0.5, '#00ff88');
+  neonText(ctx, '100%', 350, yPos + 25, '#888', 10, 'center', 0);
+
+  // Color Blind Mode
+  neonText(ctx, 'Renk Korlugu Modu', 40, yPos + 55, '#ccc', 12, 'left', 0);
+  const cbModes = [
+    { text: 'Normal', x: 30, active: true },
+    { text: 'Deutan', x: 110, active: false },
+    { text: 'Protan', x: 195, active: false },
+    { text: 'Tritan', x: 280, active: false },
+  ];
+  cbModes.forEach(m => {
+    const btnW = 72;
+    if (m.active) {
+      fillRoundRect(ctx, m.x, yPos + 70, btnW, 26, 6, 'rgba(0,255,136,0.2)');
+      strokeRoundRect(ctx, m.x, yPos + 70, btnW, 26, 6, '#00ff88', 1.5);
+    } else {
+      fillRoundRect(ctx, m.x, yPos + 70, btnW, 26, 6, 'rgba(30,30,50,0.8)');
+      strokeRoundRect(ctx, m.x, yPos + 70, btnW, 26, 6, '#555', 1);
+    }
+    neonText(ctx, m.text, m.x + btnW/2, yPos + 83, m.active ? '#00ff88' : '#888', 10, 'center', m.active ? 5 : 0);
+  });
+
+  // Color preview swatches
+  neonText(ctx, 'Renk Onizleme:', 40, yPos + 115, '#888', 10, 'left', 0);
+  const swatchSets = [
+    { label: 'Normal', colors: ['#ff3355', '#00ff88', '#4488ff', '#ffff00'], y: yPos + 130 },
+    { label: 'Deutan', colors: ['#cc9944', '#bbbb44', '#4466cc', '#ffff00'], y: yPos + 155 },
+    { label: 'Protan', colors: ['#887744', '#aabb55', '#4488ff', '#ffff00'], y: yPos + 180 },
+  ];
+  swatchSets.forEach(ss => {
+    neonText(ctx, ss.label, 40, ss.y + 8, '#666', 9, 'left', 0);
+    ss.colors.forEach((c, ci) => {
+      ctx.save();
+      ctx.fillStyle = c;
+      ctx.shadowColor = c;
+      ctx.shadowBlur = 4;
+      fillRoundRect(ctx, 120 + ci * 55, ss.y, 40, 16, 4, c);
+      ctx.restore();
+    });
+  });
+
+  yPos += 230;
+
+  // KONTROLLER (Controls) Section
+  neonText(ctx, 'KONTROLLER', 30, yPos, '#ff8800', 14, 'left', 8);
+  neonLine(ctx, 145, yPos, W - 20, yPos, 'rgba(255,136,0,0.3)', 1);
+  yPos += 30;
+
+  fillRoundRect(ctx, 15, yPos, W - 30, 90, 10, 'rgba(10,10,30,0.6)');
+  strokeRoundRect(ctx, 15, yPos, W - 30, 90, 10, 'rgba(255,136,0,0.2)', 1);
+
+  neonText(ctx, 'Joystick Boyutu', 40, yPos + 25, '#ccc', 12, 'left', 0);
+  drawSlider(ctx, 170, yPos + 25, 160, 0.6, '#ff8800');
+  neonText(ctx, '60%', 350, yPos + 25, '#888', 10, 'center', 0);
+
+  neonText(ctx, 'Buton Opakligi', 40, yPos + 60, '#ccc', 12, 'left', 0);
+  drawSlider(ctx, 170, yPos + 60, 160, 0.8, '#ff8800');
+  neonText(ctx, '80%', 350, yPos + 60, '#888', 10, 'center', 0);
+})();
+
+// ========== SCREEN 8: STATISTICS ==========
+(function() {
+  const ctx = document.getElementById('c8').getContext('2d');
+  drawBg(ctx, W, H);
+
+  // Header
+  fillRoundRect(ctx, 0, 0, W, 56, 0, 'rgba(0,0,0,0.6)');
+  neonLine(ctx, 0, 56, W, 56, '#ff8800', 1);
+  neonText(ctx, '\u2190', 30, 28, '#ff8800', 22, 'center', 8);
+  neonText(ctx, 'ISTATISTIKLER', W/2, 28, '#ff8800', 20, 'center', 12);
+
+  // Stats grid (2 columns, 4 rows)
+  const stats = [
+    { label: 'En Yuksek Skor', value: '45,230', icon: '\u2605', color: '#ffff00' },
+    { label: 'Toplam Coin', value: '12,456', icon: '$', color: '#ffaa00' },
+    { label: 'Oldurulen Dusman', value: '1,847', icon: '\u2694', color: '#ff3355' },
+    { label: 'Olum Sayisi', value: '234', icon: '\u2620', color: '#ff00ff' },
+    { label: 'Oynama Suresi', value: '24s 15d', icon: '\u23F1', color: '#00ffff' },
+    { label: 'Maks Combo', value: 'x15', icon: '\u26A1', color: '#ff8800' },
+    { label: 'Yenilen Boss', value: '8', icon: '\u2666', color: '#a855f7' },
+    { label: 'K/D Orani', value: '7.9', icon: '\u2620', color: '#00ff88' },
+  ];
+
+  const cardW = 165, cardH = 90, gap = 12;
+  const startX = (W - cardW * 2 - gap) / 2;
+  const startY = 75;
+
+  stats.forEach((s, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const cx = startX + col * (cardW + gap);
+    const cy = startY + row * (cardH + gap);
+
+    fillRoundRect(ctx, cx, cy, cardW, cardH, 10, 'rgba(10,10,30,0.8)');
+    ctx.save();
+    ctx.shadowColor = s.color;
+    ctx.shadowBlur = 8;
+    strokeRoundRect(ctx, cx, cy, cardW, cardH, 10, s.color, 1.5);
+    ctx.restore();
+
+    // Icon
+    drawIcon(ctx, cx + 28, cy + 28, 16, s.icon, s.color + '33', s.color);
+
+    // Label
+    neonText(ctx, s.label, cx + cardW/2 + 10, cy + 25, '#888', 10, 'center', 0);
+
+    // Value
+    neonText(ctx, s.value, cx + cardW/2 + 10, cy + 55, s.color, 22, 'center', 10);
+
+    // Decorative line
+    neonLine(ctx, cx + 15, cy + 40, cx + cardW - 15, cy + 40, s.color + '33', 1);
+  });
+
+  // Upgrade levels section
+  const ugY = startY + 4 * (cardH + gap) + 10;
+  neonText(ctx, 'YUKSELTME SEVIYELERI', W/2, ugY, '#00ffff', 14, 'center', 8);
+  neonLine(ctx, 30, ugY + 12, W - 30, ugY + 12, 'rgba(0,255,255,0.3)', 1);
+
+  const ugrades = [
+    { name: 'Saglik', level: 3, max: 10, color: '#ff3355' },
+    { name: 'Hiz', level: 5, max: 10, color: '#00ff88' },
+    { name: 'Atilma', level: 2, max: 10, color: '#4488ff' },
+    { name: 'Ziplama', level: 4, max: 10, color: '#ffff00' },
+    { name: 'Hasar', level: 6, max: 10, color: '#ff8800' },
+  ];
+
+  fillRoundRect(ctx, 15, ugY + 22, W - 30, 200, 10, 'rgba(10,10,30,0.6)');
+  strokeRoundRect(ctx, 15, ugY + 22, W - 30, 200, 10, 'rgba(0,255,255,0.2)', 1);
+
+  ugrades.forEach((u, i) => {
+    const uy = ugY + 45 + i * 36;
+    neonText(ctx, u.name, 40, uy, '#ccc', 12, 'left', 0);
+    neonText(ctx, 'Lv ' + u.level, 110, uy, u.color, 11, 'left', 3);
+    drawProgressBar(ctx, 155, uy - 5, 170, 10, u.level / u.max, u.color, '#1a1a2e');
+    neonText(ctx, u.level + '/' + u.max, 345, uy, '#888', 10, 'center', 0);
+  });
+
+  // Reset button
+  const resetY = ugY + 240;
+  fillRoundRect(ctx, 100, resetY, 190, 42, 10, 'rgba(255,0,68,0.1)');
+  ctx.save();
+  ctx.shadowColor = '#ff0044';
+  ctx.shadowBlur = 10;
+  strokeRoundRect(ctx, 100, resetY, 190, 42, 10, '#ff0044', 2);
+  ctx.restore();
+  neonText(ctx, '\u26A0 Verileri Sifirla', W/2, resetY + 21, '#ff0044', 14, 'center', 8);
+})();
+
+// ========== SCREEN 9: CRAFTING ==========
+(function() {
+  const ctx = document.getElementById('c9').getContext('2d');
+  drawBg(ctx, W, H);
+
+  // Header
+  fillRoundRect(ctx, 0, 0, W, 56, 0, 'rgba(0,0,0,0.6)');
+  neonLine(ctx, 0, 56, W, 56, '#a855f7', 1);
+  neonText(ctx, '\u2190', 30, 28, '#a855f7', 22, 'center', 8);
+  neonText(ctx, 'URETIM', W/2, 28, '#a855f7', 20, 'center', 12);
+
+  // Category tabs
+  const cats = [
+    { text: 'Tuketim', x: 20, w: 100, active: false },
+    { text: 'Ekipman', x: 130, w: 100, active: true },
+    { text: 'Malzeme', x: 240, w: 100, active: false },
+  ];
+  cats.forEach(c => {
+    if (c.active) {
+      fillRoundRect(ctx, c.x, 64, c.w, 30, 8, 'rgba(168,85,247,0.15)');
+      strokeRoundRect(ctx, c.x, 64, c.w, 30, 8, '#a855f7', 1.5);
+    } else {
+      fillRoundRect(ctx, c.x, 64, c.w, 30, 8, 'rgba(30,30,50,0.6)');
+      strokeRoundRect(ctx, c.x, 64, c.w, 30, 8, '#444', 1);
+    }
+    neonText(ctx, c.text, c.x + c.w/2, 79, c.active ? '#a855f7' : '#888', 12, 'center', c.active ? 5 : 0);
+  });
+
+  // Left panel: Recipe list
+  const listX = 10, listY = 105, listW = 165;
+  fillRoundRect(ctx, listX, listY, listW, 490, 10, 'rgba(10,10,30,0.7)');
+  strokeRoundRect(ctx, listX, listY, listW, 490, 10, 'rgba(168,85,247,0.3)', 1);
+
+  neonText(ctx, 'TARIFLER', listX + listW/2, listY + 18, '#a855f7', 12, 'center', 5);
+  neonLine(ctx, listX + 10, listY + 30, listX + listW - 10, listY + 30, 'rgba(168,85,247,0.3)', 1);
+
+  const recipes = [
+    { name: 'Neon Kilici', rarity: '#ffaa00', icon: '\u2694', craftable: true, selected: true },
+    { name: 'Enerji Kalkani', rarity: '#a855f7', icon: '\u25C6', craftable: true, selected: false },
+    { name: 'Iyilesme Iksi', rarity: '#00ff88', icon: '\u2665', craftable: true, selected: false },
+    { name: 'Plazma Bombasi', rarity: '#4488ff', icon: '\u25CF', craftable: false, selected: false },
+    { name: 'Hiz Buyusu', rarity: '#00ff88', icon: '\u2192', craftable: true, selected: false },
+    { name: 'Neon Zirhli', rarity: '#ffaa00', icon: '\u2616', craftable: false, selected: false },
+    { name: 'Laser Kesici', rarity: '#a855f7', icon: '\u2316', craftable: false, selected: false },
+    { name: 'EMP Bombasi', rarity: '#4488ff', icon: '\u26A1', craftable: true, selected: false },
+    { name: 'Gizlilik Pelerini', rarity: '#ffaa00', icon: '\u2605', craftable: false, selected: false },
+    { name: 'Atesli Mermi', rarity: '#ff3355', icon: '\u2748', craftable: true, selected: false },
+  ];
+
+  recipes.forEach((r, i) => {
+    const ry = listY + 40 + i * 44;
+    if (r.selected) {
+      fillRoundRect(ctx, listX + 5, ry, listW - 10, 40, 6, 'rgba(168,85,247,0.2)');
+      strokeRoundRect(ctx, listX + 5, ry, listW - 10, 40, 6, '#a855f7', 1);
+    }
+    // Icon
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(listX + 22, ry + 20, 12, 0, Math.PI * 2);
+    ctx.fillStyle = r.rarity + '22';
+    ctx.fill();
+    ctx.shadowColor = r.rarity;
+    ctx.shadowBlur = 4;
+    ctx.strokeStyle = r.rarity;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+    neonText(ctx, r.icon, listX + 22, ry + 20, r.rarity, 10, 'center', 3);
+    // Name
+    neonText(ctx, r.name, listX + 42, ry + 16, r.selected ? '#fff' : '#bbb', 9, 'left', r.selected ? 2 : 0);
+    // Craftable indicator
+    neonText(ctx, r.craftable ? '\u2713' : '\u2717', listX + listW - 20, ry + 20, r.craftable ? '#00ff88' : '#ff3355', 12, 'center', 5);
+    // Rarity text
+    const rarNames = { '#ffaa00': 'Legendary', '#a855f7': 'Epic', '#4488ff': 'Rare', '#00ff88': 'Uncommon', '#ff3355': 'Rare' };
+    neonText(ctx, rarNames[r.rarity] || '', listX + 42, ry + 30, r.rarity, 7, 'left', 0);
+  });
+
+  // Right panel: Selected recipe detail
+  const detX = 185, detY = 105, detW = 195;
+  fillRoundRect(ctx, detX, detY, detW, 490, 10, 'rgba(10,10,30,0.7)');
+  strokeRoundRect(ctx, detX, detY, detW, 490, 10, 'rgba(168,85,247,0.3)', 1);
+
+  // Large item icon
+  const itemCx = detX + detW/2, itemCy = detY + 70;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(itemCx, itemCy, 40, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,170,0,0.1)';
+  ctx.fill();
+  ctx.shadowColor = '#ffaa00';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#ffaa00';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.restore();
+  neonText(ctx, '\u2694', itemCx, itemCy, '#ffaa00', 32, 'center', 15);
+
+  // Item name
+  neonText(ctx, 'NEON KILICI', itemCx, itemCy + 58, '#ffaa00', 16, 'center', 10);
+  neonText(ctx, 'Legendary Silah', itemCx, itemCy + 76, '#ffaa00', 10, 'center', 3);
+
+  // Description
+  neonLine(ctx, detX + 15, itemCy + 90, detX + detW - 15, itemCy + 90, 'rgba(255,170,0,0.3)', 1);
+  ctx.save();
+  ctx.font = '10px Segoe UI, Arial';
+  ctx.fillStyle = '#aaa';
+  ctx.textAlign = 'center';
+  ctx.fillText('Neon enerjisi ile guclendirilmis', itemCx, itemCy + 108);
+  ctx.fillText('efsanevi bir kilic. Yuksek hasar.', itemCx, itemCy + 122);
+  ctx.restore();
+
+  // Stats
+  neonText(ctx, 'Hasar: +45', detX + 30, itemCy + 145, '#ff3355', 11, 'left', 3);
+  neonText(ctx, 'Hiz: +15', detX + 115, itemCy + 145, '#00ffff', 11, 'left', 3);
+
+  // Required materials
+  neonLine(ctx, detX + 15, itemCy + 160, detX + detW - 15, itemCy + 160, 'rgba(168,85,247,0.3)', 1);
+  neonText(ctx, 'GEREKLI MALZEMELER', itemCx, itemCy + 178, '#a855f7', 11, 'center', 5);
+
+  const materials = [
+    { name: 'Neon Kristali', icon: '\u25C6', owned: 5, needed: 5, color: '#00ffff' },
+    { name: 'Karanlik Cevher', icon: '\u25A0', owned: 3, needed: 3, color: '#a855f7' },
+    { name: 'Ates Parcasi', icon: '\u2748', owned: 8, needed: 8, color: '#ff8800' },
+    { name: 'Altim Toz', icon: '\u2605', owned: 2, needed: 2, color: '#ffaa00' },
+  ];
+
+  materials.forEach((m, i) => {
+    const my = itemCy + 195 + i * 36;
+    fillRoundRect(ctx, detX + 10, my, detW - 20, 30, 6, 'rgba(20,20,40,0.6)');
+    // Icon
+    neonText(ctx, m.icon, detX + 28, my + 15, m.color, 12, 'center', 3);
+    // Name
+    neonText(ctx, m.name, detX + 45, my + 12, '#ccc', 9, 'left', 0);
+    // Count
+    const hasEnough = m.owned >= m.needed;
+    neonText(ctx, m.owned + '/' + m.needed, detX + detW - 30, my + 15, hasEnough ? '#00ff88' : '#ff3355', 11, 'center', 3);
+    if (hasEnough) {
+      neonText(ctx, '\u2713', detX + detW - 48, my + 15, '#00ff88', 10, 'center', 3);
+    }
+  });
+
+  // Cost
+  const costY = itemCy + 345;
+  neonLine(ctx, detX + 15, costY, detX + detW - 15, costY, 'rgba(168,85,247,0.3)', 1);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(detX + 55, costY + 20, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffff00';
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 5;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, '$', detX + 55, costY + 20, '#333', 8, 'center', 0);
+  neonText(ctx, '500', detX + 80, costY + 20, '#ffff00', 14, 'left', 5);
+
+  // Craft button
+  const craftBtnY = costY + 42;
+  fillRoundRect(ctx, detX + 20, craftBtnY, detW - 40, 42, 10, 'rgba(0,255,255,0.1)');
+  ctx.save();
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  strokeRoundRect(ctx, detX + 20, craftBtnY, detW - 40, 42, 10, '#00ffff', 2);
+  ctx.restore();
+  neonText(ctx, '\u2692 URET', itemCx, craftBtnY + 21, '#00ffff', 16, 'center', 12);
+
+  // Crafting progress bar (example)
+  const progY = craftBtnY + 52;
+  neonText(ctx, 'Uretim Suresi', itemCx, progY + 5, '#888', 9, 'center', 0);
+  drawProgressBar(ctx, detX + 20, progY + 15, detW - 40, 8, 0.0, '#00ffff', '#1a1a2e');
+
+  // Bottom info bar
+  fillRoundRect(ctx, 10, H - 55, W - 20, 42, 10, 'rgba(0,0,0,0.6)');
+  strokeRoundRect(ctx, 10, H - 55, W - 20, 42, 10, 'rgba(168,85,247,0.3)', 1);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(35, H - 34, 10, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffff00';
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 5;
+  ctx.fill();
+  ctx.restore();
+  neonText(ctx, '$', 35, H - 34, '#333', 9, 'center', 0);
+  neonText(ctx, '12,456', 75, H - 34, '#ffff00', 14, 'left', 5);
+  neonText(ctx, 'Uretilen: 23 | Tarif: 45', 280, H - 34, '#888', 10, 'center', 0);
+})();
+</script>
+</body>
+</html>

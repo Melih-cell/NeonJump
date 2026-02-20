@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mcp-unity__get_scene_info",
+      "Bash(tasklist:*)",
+      "Bash(CLAUDECODE= claude mcp list:*)"
+    ]
+  }
+}

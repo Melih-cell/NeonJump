@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Jump Icon</title>
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 40px;
+  }
+  .label {
+    color: #aaa;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .icon-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  canvas {
+    border-radius: 20%;
+  }
+</style>
+</head>
+<body>
+
+<div class="icon-wrapper">
+  <div class="label">Option A - Neon Character</div>
+  <canvas id="iconA" width="1024" height="1024"></canvas>
+</div>
+
+<div class="icon-wrapper">
+  <div class="label">Option B - Abstract Neon</div>
+  <canvas id="iconB" width="1024" height="1024"></canvas>
+</div>
+
+<div class="icon-wrapper">
+  <div class="label">Option C - Minimal Glow</div>
+  <canvas id="iconC" width="1024" height="1024"></canvas>
+</div>
+
+<script>
+// === OPTION A: Neon Character Jump ===
+function drawIconA() {
+  const c = document.getElementById('iconA');
+  const ctx = c.getContext('2d');
+  const w = 1024, h = 1024;
+
+  // Background gradient
+  const bg = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.7);
+  bg.addColorStop(0, '#0a0a2e');
+  bg.addColorStop(1, '#000010');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Grid floor
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i <= 10; i++) {
+    const y = 650 + i * 25;
+    const perspective = 1 + (i / 10) * 2;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  for (let i = 0; i <= 12; i++) {
+    const x = (w / 12) * i;
+    ctx.beginPath();
+    ctx.moveTo(w/2, 650);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
+  // Platform (neon cyan)
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 30;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(300, 620);
+  ctx.lineTo(724, 620);
+  ctx.stroke();
+
+  // Second platform
+  ctx.shadowColor = '#ff00ff';
+  ctx.strokeStyle = '#ff00ff';
+  ctx.shadowBlur = 25;
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(450, 380);
+  ctx.lineTo(750, 380);
+  ctx.stroke();
+
+  // Third platform
+  ctx.shadowColor = '#00ff88';
+  ctx.strokeStyle = '#00ff88';
+  ctx.shadowBlur = 25;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(250, 200);
+  ctx.lineTo(550, 200);
+  ctx.stroke();
+
+  // Character (stickman style, neon)
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const cx = 480, cy = 440;
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, cy - 70, 28, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Body
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 42);
+  ctx.lineTo(cx, cy + 30);
+  ctx.stroke();
+
+  // Arms (up = jumping pose)
+  ctx.beginPath();
+  ctx.moveTo(cx - 40, cy - 45);
+  ctx.lineTo(cx, cy - 15);
+  ctx.lineTo(cx + 40, cy - 45);
+  ctx.stroke();
+
+  // Legs (spread = jumping)
+  ctx.beginPath();
+  ctx.moveTo(cx - 35, cy + 70);
+  ctx.lineTo(cx, cy + 30);
+  ctx.lineTo(cx + 35, cy + 70);
+  ctx.stroke();
+
+  // Jump trail
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15;
+  for (let i = 0; i < 5; i++) {
+    ctx.globalAlpha = 0.3 - i * 0.05;
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 100 + i * 30, 8 - i, 0, Math.PI);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Title "NEON" text
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = '#ff00ff';
+  ctx.font = 'bold 110px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('NEON', w/2, h - 120);
+
+  // "JUMP" text
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 80px Arial';
+  ctx.fillText('JUMP', w/2, h - 40);
+
+  // Stars
+  ctx.shadowBlur = 10;
+  for (let i = 0; i < 30; i++) {
+    const sx = Math.random() * w;
+    const sy = Math.random() * 600;
+    const size = Math.random() * 3 + 1;
+    ctx.shadowColor = '#ffffff';
+    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.7 + 0.3})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.shadowBlur = 0;
+}
+
+// === OPTION B: Abstract Neon ===
+function drawIconB() {
+  const c = document.getElementById('iconB');
+  const ctx = c.getContext('2d');
+  const w = 1024, h = 1024;
+
+  // Background
+  const bg = ctx.createRadialGradient(w/2, h*0.6, 0, w/2, h/2, w*0.8);
+  bg.addColorStop(0, '#120025');
+  bg.addColorStop(1, '#000008');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Large neon circle in center
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 80;
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(w/2, h/2 - 40, 280, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Inner circle
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 50;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(w/2, h/2 - 40, 220, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Arrow pointing up (jump symbol)
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur = 40;
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const arrowCx = w/2, arrowCy = h/2 - 40;
+  ctx.beginPath();
+  ctx.moveTo(arrowCx, arrowCy - 120);
+  ctx.lineTo(arrowCx, arrowCy + 100);
+  ctx.stroke();
+
+  // Arrow head
+  ctx.beginPath();
+  ctx.moveTo(arrowCx - 70, arrowCy - 40);
+  ctx.lineTo(arrowCx, arrowCy - 120);
+  ctx.lineTo(arrowCx + 70, arrowCy - 40);
+  ctx.stroke();
+
+  // Horizontal neon lines
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 5; i++) {
+    const ly = 700 + i * 30;
+    ctx.globalAlpha = 0.6 - i * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(100, ly);
+    ctx.lineTo(w - 100, ly);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // "N" letter - large neon
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 35;
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 160px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('N', w/2, h - 60);
+
+  // Small "NEON JUMP" subtitle
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#ff00ff';
+  ctx.font = 'bold 36px Arial';
+  ctx.fillText('NEON JUMP', w/2, h - 10);
+
+  // Particles
+  for (let i = 0; i < 40; i++) {
+    const px = Math.random() * w;
+    const py = Math.random() * h;
+    const ps = Math.random() * 4 + 1;
+    const colors = ['#00ffff', '#ff00ff', '#00ff88'];
+    const color = colors[Math.floor(Math.random() * 3)];
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = Math.random() * 0.6 + 0.2;
+    ctx.beginPath();
+    ctx.arc(px, py, ps, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
+// === OPTION C: Minimal Glow ===
+function drawIconC() {
+  const c = document.getElementById('iconC');
+  const ctx = c.getContext('2d');
+  const w = 1024, h = 1024;
+
+  // Solid dark background
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle gradient overlay
+  const overlay = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/2);
+  overlay.addColorStop(0, 'rgba(0, 255, 255, 0.05)');
+  overlay.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = overlay;
+  ctx.fillRect(0, 0, w, h);
+
+  // Main "NJ" monogram
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 60;
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 380px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('NJ', w/2, h/2 - 30);
+
+  // Second layer glow
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 120;
+  ctx.globalAlpha = 0.3;
+  ctx.fillText('NJ', w/2, h/2 - 30);
+  ctx.globalAlpha = 1;
+
+  // Underline
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 30;
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(w/2 - 200, h/2 + 160);
+  ctx.lineTo(w/2 + 200, h/2 + 160);
+  ctx.stroke();
+
+  // "NEON JUMP" below
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#ff00ff';
+  ctx.font = 'bold 60px Arial';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('NEON JUMP', w/2, h/2 + 240);
+
+  // Corner accents
+  const accentSize = 60;
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur = 15;
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 3;
+
+  // Top-left
+  ctx.beginPath();
+  ctx.moveTo(40, 40 + accentSize);
+  ctx.lineTo(40, 40);
+  ctx.lineTo(40 + accentSize, 40);
+  ctx.stroke();
+
+  // Top-right
+  ctx.beginPath();
+  ctx.moveTo(w - 40 - accentSize, 40);
+  ctx.lineTo(w - 40, 40);
+  ctx.lineTo(w - 40, 40 + accentSize);
+  ctx.stroke();
+
+  // Bottom-left
+  ctx.beginPath();
+  ctx.moveTo(40, h - 40 - accentSize);
+  ctx.lineTo(40, h - 40);
+  ctx.lineTo(40 + accentSize, h - 40);
+  ctx.stroke();
+
+  // Bottom-right
+  ctx.beginPath();
+  ctx.moveTo(w - 40 - accentSize, h - 40);
+  ctx.lineTo(w - 40, h - 40);
+  ctx.lineTo(w - 40, h - 40 - accentSize);
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+}
+
+drawIconA();
+drawIconB();
+drawIconC();
+</script>
+</body>
+</html>

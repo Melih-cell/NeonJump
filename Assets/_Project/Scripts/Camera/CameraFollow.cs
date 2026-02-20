@@ -11,7 +11,7 @@ public class CameraFollow : MonoBehaviour
     [Header("Camera Bounds")]
     public float minX = -100f;
     public float maxX = 250f;
-    public float minY = -100f;  // Asagi dogru level tasarimi icin
+    public float minY = -100f;
     public float maxY = 100f;
 
     [Header("Screen Shake")]
@@ -21,7 +21,7 @@ public class CameraFollow : MonoBehaviour
     private float shakeTimer = 0f;
     private Vector3 shakeOffset = Vector3.zero;
 
-    // Gelismis shake parametreleri
+    // Advanced shake parameters
     private Vector2 shakeDirection = Vector2.zero;
     private bool useDirectionalShake = false;
     private float shakeFrequency = 25f;
@@ -37,7 +37,7 @@ public class CameraFollow : MonoBehaviour
     [Tooltip("Hareket yonune look-ahead mesafesi")]
     public float lookAheadDistance = 3.5f;
     [Tooltip("Look-ahead yumusaklik hizi")]
-    public float lookAheadSmooth = 5f;
+    public float lookAheadSmooth = 8f;
     [Tooltip("Mobilde screen shake carpani (0.5 = %50 daha az)")]
     [Range(0f, 1f)]
     public float mobileShakeMultiplier = 0.5f;
@@ -54,12 +54,63 @@ public class CameraFollow : MonoBehaviour
     [Tooltip("Asagi hareket (dusus) icin smooth carpani")]
     public float downSmoothMultiplier = 1.3f;
 
+    [Header("Dynamic Zoom")]
+    [Tooltip("Enable speed-based dynamic zoom")]
+    public bool enableDynamicZoom = true;
+    [Tooltip("Extra zoom out amount during dash")]
+    public float dashZoomOutAmount = 0.5f;
+    [Tooltip("Speed threshold to start zooming out")]
+    public float zoomSpeedThreshold = 12f;
+    [Tooltip("Max zoom out based on speed")]
+    public float speedZoomOutMax = 0.3f;
+    [Tooltip("How fast zoom transitions happen")]
+    public float zoomSmoothSpeed = 3f;
+
+    [Header("Camera Breathing")]
+    [Tooltip("Enable subtle idle breathing motion")]
+    public bool enableBreathing = false;
+    [Tooltip("Breathing amplitude in units")]
+    public float breathingAmplitude = 0.012f;
+    [Tooltip("Breathing cycles per second")]
+    public float breathingFrequency = 0.4f;
+
+    [Header("Vertical Look-Ahead")]
+    [Tooltip("Vertical look-ahead distance when falling")]
+    public float verticalLookAheadDown = 0f;
+    [Tooltip("Vertical look-ahead distance when jumping")]
+    public float verticalLookAheadUp = 0f;
+    [Tooltip("Vertical look-ahead smooth speed")]
+    public float verticalLookAheadSmooth = 5f;
+
+    [Header("Landing Impact")]
+    [Tooltip("Enable camera dip on landing from height")]
+    public bool enableLandingImpact = false;
+    [Tooltip("Max camera dip distance on landing")]
+    public float landingImpactMax = 0.25f;
+    [Tooltip("Fall speed threshold to trigger landing impact")]
+    public float landingImpactThreshold = 12f;
+    [Tooltip("How fast the landing impact recovers")]
+    public float landingImpactRecoverySpeed = 6f;
+
     private float currentLookAhead = 0f;
+    private float currentVerticalLookAhead = 0f;
     private bool isMobilePlatform = false;
     private float baseOrthographicSize;
     private Vector3 lastTargetPosition;
+    private Camera cam;
+    private Rigidbody2D targetRb;
+    private PlayerController targetPC;
 
-    // Ölüm durumunda kamerayı dondur
+    // Dynamic zoom state
+    private float currentZoomOffset = 0f;
+    private float targetZoomOffset = 0f;
+
+    // Landing impact state
+    private float landingImpactOffset = 0f;
+    private bool wasGroundedLastFrame = false;
+    private float lastFallSpeed = 0f;
+
+    // Freeze state
     private bool isFrozen = false;
     private Vector3 frozenPosition;
 
@@ -70,21 +121,20 @@ public class CameraFollow : MonoBehaviour
 
     void Start()
     {
-        // lastTargetPosition'i baslat
         if (target != null)
+        {
             lastTargetPosition = target.position;
+            CacheTargetComponents();
+        }
 
-        // Mobil platform tespiti
         isMobilePlatform = Application.isMobilePlatform;
 
         #if UNITY_EDITOR
-        // Editor'da MobileControls aktifse mobil gibi davran
         if (MobileControls.Instance != null && MobileControls.Instance.IsEnabled)
             isMobilePlatform = true;
         #endif
 
-        // Ana kamera varsa ortographic size'i kaydet ve mobil zoom out uygula
-        Camera cam = GetComponent<Camera>();
+        cam = GetComponent<Camera>();
         if (cam != null)
         {
             baseOrthographicSize = cam.orthographicSize;
@@ -103,24 +153,25 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        // Kamera dondurulmuşsa hareket etme
         if (isFrozen)
         {
             transform.position = frozenPosition;
             return;
         }
 
-        // Target yoksa veya yok edilmişse bul
         if (target == null)
         {
             FindTarget();
             if (target == null) return;
         }
 
-        // Hedef pozisyon
+        // Cache components if missing
+        if (targetRb == null)
+            CacheTargetComponents();
+
         Vector3 desiredPosition = GetTargetPosition();
 
-        // Dead zone kontrolu - kucuk hareketlerde kamera sabit kalsin
+        // Dead zone
         float deltaX = desiredPosition.x - transform.position.x;
         float deltaY = desiredPosition.y - transform.position.y;
 
@@ -137,19 +188,17 @@ public class CameraFollow : MonoBehaviour
             targetY = desiredPosition.y - Mathf.Sign(deltaY) * deadZoneY;
         }
 
-        // Asimetrik Y takip: yukari yavaş, asagi hizli
+        // Asymmetric Y follow
         float ySmooth = smoothSpeed;
         if (target != null)
         {
             float yVelocity = target.position.y - lastTargetPosition.y;
             if (yVelocity > 0.01f)
             {
-                // Yukari hareket (ziplama) - yavas takip, stabil kamera
                 ySmooth = smoothSpeed * upSmoothMultiplier;
             }
             else if (yVelocity < -0.01f)
             {
-                // Asagi hareket (dusus) - hizli takip, oyuncuyu kaybetmesin
                 ySmooth = smoothSpeed * downSmoothMultiplier;
             }
             lastTargetPosition = target.position;
@@ -161,9 +210,22 @@ public class CameraFollow : MonoBehaviour
             desiredPosition.z
         );
 
-        // Screen Shake uygula
+        // Landing impact offset
+        UpdateLandingImpact();
+        smoothedPosition.y += landingImpactOffset;
+
+        // Camera breathing
+        if (enableBreathing)
+        {
+            smoothedPosition += GetBreathingOffset();
+        }
+
+        // Screen shake
         UpdateShake();
         smoothedPosition += shakeOffset;
+
+        // Dynamic zoom
+        UpdateDynamicZoom();
 
         transform.position = smoothedPosition;
     }
@@ -174,15 +236,13 @@ public class CameraFollow : MonoBehaviour
         {
             shakeTimer -= Time.deltaTime;
 
-            // Zamanla azalan sarsinti (exponential falloff)
             float progress = 1f - (shakeTimer / shakeDuration);
-            float falloff = 1f - (progress * progress); // Quadratic falloff - basta guclu, sonda yavas
+            float falloff = 1f - (progress * progress);
             float currentIntensity = shakeIntensity * falloff;
             currentIntensity = Mathf.Min(currentIntensity, maxShakeIntensity);
 
             if (useDirectionalShake && shakeDirection != Vector2.zero)
             {
-                // Yonlu sarsinti (darbe yonunde daha guclu)
                 float noise = Mathf.PerlinNoise(Time.time * shakeFrequency, 0f) * 2f - 1f;
                 float perpNoise = Mathf.PerlinNoise(0f, Time.time * shakeFrequency) * 2f - 1f;
 
@@ -194,7 +254,6 @@ public class CameraFollow : MonoBehaviour
             }
             else
             {
-                // Rastgele sarsinti (Perlin noise ile daha dogal)
                 float noiseX = Mathf.PerlinNoise(Time.time * shakeFrequency, 0f) * 2f - 1f;
                 float noiseY = Mathf.PerlinNoise(0f, Time.time * shakeFrequency) * 2f - 1f;
 
@@ -205,7 +264,6 @@ public class CameraFollow : MonoBehaviour
                 );
             }
 
-            // Chromatic aberration (opsiyonel)
             if (enableChromaticShake)
             {
                 chromaticAmount = currentIntensity * 0.5f;
@@ -219,16 +277,110 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    // Ekrani salla
+    // === DYNAMIC ZOOM ===
+
+    void UpdateDynamicZoom()
+    {
+        if (!enableDynamicZoom || cam == null) return;
+
+        targetZoomOffset = 0f;
+
+        if (targetRb != null)
+        {
+            // Dash zoom out
+            if (targetPC != null && targetPC.IsDashing())
+            {
+                targetZoomOffset = dashZoomOutAmount;
+            }
+            else
+            {
+                // Speed-based zoom out
+                float speed = targetRb.linearVelocity.magnitude;
+                if (speed > zoomSpeedThreshold)
+                {
+                    float t = Mathf.Clamp01((speed - zoomSpeedThreshold) / (zoomSpeedThreshold * 1.5f));
+                    targetZoomOffset = t * speedZoomOutMax;
+                }
+            }
+        }
+
+        currentZoomOffset = Mathf.Lerp(currentZoomOffset, targetZoomOffset, zoomSmoothSpeed * Time.deltaTime);
+
+        float mobileBase = isMobilePlatform ? baseOrthographicSize - mobileZoomOutOffset : baseOrthographicSize;
+        cam.orthographicSize = mobileBase + currentZoomOffset;
+    }
+
+    // === CAMERA BREATHING ===
+
+    Vector3 GetBreathingOffset()
+    {
+        // Only breathe when player is mostly still
+        float speedSqr = 0f;
+        if (targetRb != null)
+            speedSqr = targetRb.linearVelocity.sqrMagnitude;
+
+        // Fade out breathing when moving fast
+        float breathFade = Mathf.Clamp01(1f - speedSqr / 25f);
+        if (breathFade < 0.01f) return Vector3.zero;
+
+        float t = Time.time * breathingFrequency * Mathf.PI * 2f;
+        float yBreath = Mathf.Sin(t) * breathingAmplitude * breathFade;
+        float xBreath = Mathf.Sin(t * 0.7f) * breathingAmplitude * 0.3f * breathFade;
+
+        return new Vector3(xBreath, yBreath, 0f);
+    }
+
+    // === LANDING IMPACT ===
+
+    void UpdateLandingImpact()
+    {
+        if (!enableLandingImpact)
+        {
+            landingImpactOffset = 0f;
+            return;
+        }
+
+        bool isGrounded = false;
+        if (targetPC != null)
+            isGrounded = targetPC.IsGrounded;
+
+        // Track fall speed while airborne
+        if (!isGrounded && targetRb != null && targetRb.linearVelocity.y < 0)
+        {
+            lastFallSpeed = Mathf.Abs(targetRb.linearVelocity.y);
+        }
+
+        // Detect landing moment
+        if (isGrounded && !wasGroundedLastFrame)
+        {
+            if (lastFallSpeed > landingImpactThreshold)
+            {
+                float normalized = Mathf.Clamp01((lastFallSpeed - landingImpactThreshold) / 15f);
+                landingImpactOffset = -normalized * landingImpactMax;
+            }
+            lastFallSpeed = 0f;
+        }
+
+        // Recover from impact
+        if (landingImpactOffset < 0f)
+        {
+            landingImpactOffset = Mathf.Lerp(landingImpactOffset, 0f, landingImpactRecoverySpeed * Time.deltaTime);
+            if (landingImpactOffset > -0.005f)
+                landingImpactOffset = 0f;
+        }
+
+        wasGroundedLastFrame = isGrounded;
+    }
+
+    // === SHAKE METHODS ===
+
     public void Shake(float intensity, float duration)
     {
-        // Mobilde screen shake azalt
         if (isMobilePlatform)
         {
             intensity *= mobileShakeMultiplier;
         }
 
-        // Daha guclu sarsinti varsa degistirme
         if (intensity > shakeIntensity || shakeTimer <= 0)
         {
             shakeIntensity = intensity;
@@ -237,7 +389,6 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    // Farkli durumlar icin hazir shake metodlari
     public void ShakeOnDamage()
     {
         Shake(0.3f, 0.2f);
@@ -258,12 +409,10 @@ public class CameraFollow : MonoBehaviour
         Shake(0.1f, 0.08f);
     }
 
-    // === GELISMIS SHAKE METODLARI ===
+    // === ADVANCED SHAKE METHODS ===
 
-    // Yonlu sarsinti (darbe veya patlama icin)
     public void DirectionalShake(float intensity, float duration, Vector2 direction)
     {
-        // Mobilde screen shake azalt
         if (isMobilePlatform)
         {
             intensity *= mobileShakeMultiplier;
@@ -279,7 +428,6 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    // Patlama sarsintisi (merkezden disari)
     public void ShakeFromExplosion(Vector3 explosionPos, float intensity, float duration)
     {
         if (target == null) return;
@@ -288,10 +436,8 @@ public class CameraFollow : MonoBehaviour
         DirectionalShake(intensity, duration, direction);
     }
 
-    // Inis sarsintisi (asagi dogru)
     public void ShakeOnLand(float fallSpeed)
     {
-        // Dusus hizina gore sarsinti siddeti
         float normalizedSpeed = Mathf.Clamp01(Mathf.Abs(fallSpeed) / 20f);
         float intensity = normalizedSpeed * 0.3f;
 
@@ -301,37 +447,31 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    // Boss sarsintisi (guclu ve uzun)
     public void ShakeOnBossAttack()
     {
         Shake(0.4f, 0.35f);
     }
 
-    // Boss olum sarsintisi (cok guclu)
     public void ShakeOnBossDeath()
     {
         Shake(0.6f, 0.5f);
     }
 
-    // Kritik vuruş sarsintisi
     public void ShakeOnCriticalHit()
     {
         Shake(0.25f, 0.12f);
     }
 
-    // Oyuncu hasar aldığında yonlu shake
     public void ShakeOnPlayerHit(Vector2 hitDirection)
     {
         DirectionalShake(0.35f, 0.2f, hitDirection);
     }
 
-    // Silah atesi sarsintisi (hafif)
     public void ShakeOnFire(float recoilStrength = 0.05f)
     {
         Shake(recoilStrength, 0.05f);
     }
 
-    // Combo sarsintisi (combo seviyesine gore)
     public void ShakeOnCombo(int comboLevel)
     {
         float intensity = Mathf.Min(0.1f + comboLevel * 0.02f, 0.3f);
@@ -339,8 +479,8 @@ public class CameraFollow : MonoBehaviour
     }
 
     /// <summary>
-    /// Hit freeze efekti - kisa sure oyunu dondurur (hitstop)
-    /// Dusman oldurme ve boss hasarinda kullanilir
+    /// Hit freeze effect - briefly freezes the game (hitstop)
+    /// Used for enemy kills and boss damage
     /// </summary>
     public void HitFreeze(float duration = 0.04f)
     {
@@ -354,49 +494,75 @@ public class CameraFollow : MonoBehaviour
         Time.timeScale = 1f;
     }
 
-    /// <summary>
-    /// Dusman oldurme hitstop'u
-    /// </summary>
     public void HitFreezeOnKill()
     {
         HitFreeze(0.04f);
     }
 
-    /// <summary>
-    /// Boss hasar hitstop'u (daha uzun)
-    /// </summary>
     public void HitFreezeOnBossDamage()
     {
         HitFreeze(0.06f);
     }
 
+    // === TARGET POSITION WITH ENHANCED LOOK-AHEAD ===
+
     Vector3 GetTargetPosition()
     {
         if (target == null) return transform.position;
 
-        // Look-ahead: oyuncunun hareket yonune dogru kamerayi kaydir
+        // Horizontal look-ahead based on velocity direction and magnitude
         float targetLookAhead = 0f;
-        Rigidbody2D targetRb = target.GetComponent<Rigidbody2D>();
-        if (targetRb != null && Mathf.Abs(targetRb.linearVelocity.x) > 0.5f)
+        float targetVertLookAhead = 0f;
+
+        if (targetRb != null)
         {
-            targetLookAhead = Mathf.Sign(targetRb.linearVelocity.x) * lookAheadDistance;
+            float velX = targetRb.linearVelocity.x;
+            float velY = targetRb.linearVelocity.y;
+
+            // Horizontal: scale look-ahead by speed for smoother feel
+            if (Mathf.Abs(velX) > 0.5f)
+            {
+                float speedFactor = Mathf.Clamp01(Mathf.Abs(velX) / 15f);
+                targetLookAhead = Mathf.Sign(velX) * lookAheadDistance * (0.5f + 0.5f * speedFactor);
+            }
+
+            // Vertical look-ahead: look down when falling, slightly up when jumping
+            if (velY < -2f)
+            {
+                float fallFactor = Mathf.Clamp01(Mathf.Abs(velY) / 20f);
+                targetVertLookAhead = -verticalLookAheadDown * fallFactor;
+            }
+            else if (velY > 2f)
+            {
+                float riseFactor = Mathf.Clamp01(velY / 15f);
+                targetVertLookAhead = verticalLookAheadUp * riseFactor;
+            }
         }
+
         currentLookAhead = Mathf.Lerp(currentLookAhead, targetLookAhead, lookAheadSmooth * Time.deltaTime);
+        currentVerticalLookAhead = Mathf.Lerp(currentVerticalLookAhead, targetVertLookAhead, verticalLookAheadSmooth * Time.deltaTime);
 
         Vector3 desiredPosition = new Vector3(
             target.position.x + offset.x + currentLookAhead,
-            target.position.y + offset.y,
+            target.position.y + offset.y + currentVerticalLookAhead,
             offset.z
         );
 
-        // Sinirlari uygula
         desiredPosition.x = Mathf.Clamp(desiredPosition.x, minX, maxX);
         desiredPosition.y = Mathf.Clamp(desiredPosition.y, minY, maxY);
 
         return desiredPosition;
     }
 
-    // Checkpoint icin ani gecis
+    // === UTILITY ===
+
+    void CacheTargetComponents()
+    {
+        if (target == null) return;
+        targetRb = target.GetComponent<Rigidbody2D>();
+        targetPC = target.GetComponent<PlayerController>();
+    }
+
     public void SnapToTarget()
     {
         if (target == null) FindTarget();
@@ -405,7 +571,7 @@ public class CameraFollow : MonoBehaviour
     }
 
     /// <summary>
-    /// Kamerayı mevcut pozisyonda dondur (ölüm için)
+    /// Freeze camera at current position (for death)
     /// </summary>
     public void Freeze()
     {
@@ -414,7 +580,7 @@ public class CameraFollow : MonoBehaviour
     }
 
     /// <summary>
-    /// Kamerayı çöz (respawn için)
+    /// Unfreeze camera (for respawn)
     /// </summary>
     public void Unfreeze()
     {
@@ -423,28 +589,26 @@ public class CameraFollow : MonoBehaviour
 
     void FindTarget()
     {
-        // PlayerController ile ara (en guvenilir)
         PlayerController pc = FindFirstObjectByType<PlayerController>();
         if (pc != null)
         {
             target = pc.transform;
+            CacheTargetComponents();
             return;
         }
 
-        // Player_Asker'i ara
         GameObject player = GameObject.Find("Player_Asker");
 
-        // Yoksa tag ile ara
         if (player == null)
             player = GameObject.FindWithTag("Player");
 
-        // Yoksa "Player" ismini ara
         if (player == null)
             player = GameObject.Find("Player");
 
         if (player != null)
         {
             target = player.transform;
+            CacheTargetComponents();
         }
     }
 }

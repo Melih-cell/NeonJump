@@ -88,7 +88,7 @@ public class UpgradeManager : MonoBehaviour
                     description = "Dash suresi +%30",
                     maxLevel = 2,
                     costs = new int[] { 200, 500 },
-                    iconColor = new Color(0f, 0.8f, 1f) // Cyan
+                    iconColor = new Color(0.45f, 0.72f, 0.88f) // Gok mavisi
                 },
                 new UpgradeInfo
                 {
@@ -97,7 +97,7 @@ public class UpgradeManager : MonoBehaviour
                     description = "Havada ekstra ziplama hakki",
                     maxLevel = 2,
                     costs = new int[] { 250, 600 },
-                    iconColor = new Color(1f, 1f, 0.3f) // Sari
+                    iconColor = new Color(0.9f, 0.8f, 0.55f) // Altin
                 },
                 new UpgradeInfo
                 {
@@ -252,7 +252,7 @@ public class UpgradeManager : MonoBehaviour
             if (isMaxed)
             {
                 costText.text = "MAKSIMUM";
-                costText.color = new Color(0f, 1f, 0.5f);
+                costText.color = new Color(0.35f, 0.75f, 0.45f);
             }
             else
             {
@@ -308,9 +308,9 @@ public class UpgradeManager : MonoBehaviour
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
 
-        // Arka plan
+        // Arka plan - koyu orman temasi
         Image bgImage = upgradePanel.AddComponent<Image>();
-        bgImage.color = new Color(0.02f, 0.02f, 0.08f, 0.95f);
+        bgImage.color = new Color(0.08f, 0.10f, 0.07f, 0.95f);
 
         // Baslik
         CreateNeonText(upgradePanel.transform, "YUKSELTMELER", 48, new Vector2(0, 250));
@@ -318,7 +318,7 @@ public class UpgradeManager : MonoBehaviour
         // Toplam coin
         GameObject coinObj = CreateNeonText(upgradePanel.transform, "COIN: 0", 28, new Vector2(0, 190));
         totalCoinsText = coinObj.GetComponent<TextMeshProUGUI>();
-        totalCoinsText.color = new Color(1f, 0.8f, 0f);
+        totalCoinsText.color = new Color(0.92f, 0.78f, 0.35f);
 
         // Upgrade listesi container
         GameObject container = new GameObject("UpgradeList");
@@ -360,9 +360,9 @@ public class UpgradeManager : MonoBehaviour
 
         // Arka plan
         Image bg = item.AddComponent<Image>();
-        bg.color = new Color(0.1f, 0.1f, 0.15f, 0.9f);
+        bg.color = new Color(0.14f, 0.16f, 0.12f, 0.9f);
 
-        // Icon
+        // Icon - Figma tasarimi oncelikli
         GameObject iconObj = new GameObject("Icon");
         iconObj.transform.SetParent(item.transform, false);
         RectTransform iconRect = iconObj.AddComponent<RectTransform>();
@@ -371,7 +371,16 @@ public class UpgradeManager : MonoBehaviour
         iconRect.anchoredPosition = new Vector2(10, 0);
         iconRect.sizeDelta = new Vector2(50, 50);
         Image iconImg = iconObj.AddComponent<Image>();
-        iconImg.color = info.iconColor;
+        Sprite upgradeIcon = UIAssetLoader.GetUpgradeIcon(info.id);
+        if (upgradeIcon != null)
+        {
+            iconImg.sprite = upgradeIcon;
+            iconImg.color = Color.white;
+        }
+        else
+        {
+            iconImg.color = info.iconColor;
+        }
 
         // Isim
         GameObject nameObj = CreateNeonText(item.transform, info.displayName, 22, new Vector2(-60, 15));
@@ -495,7 +504,7 @@ public class UpgradeManager : MonoBehaviour
         tmp.text = text;
         tmp.fontSize = fontSize;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = new Color(0f, 1f, 1f);
+        tmp.color = new Color(0.9f, 0.8f, 0.55f);
         tmp.fontStyle = FontStyles.Bold;
 
         return textObj;

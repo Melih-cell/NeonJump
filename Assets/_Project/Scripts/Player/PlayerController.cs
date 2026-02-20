@@ -334,8 +334,8 @@ public class PlayerController : MonoBehaviour
             jumpRollTimer = jumpRollMinTime;
             wasInAir = false;
             jumpRollAnimStarted = false;
-            currentAnimState = "";
             isGrounded = false;
+            cachedIsGrounded = false;
         }
         // Double Jump (Power-up)
         else if (jumpBufferCounter > 0 && !isGrounded && PowerUpManager.Instance != null)
@@ -386,7 +386,7 @@ public class PlayerController : MonoBehaviour
             jumpRollTimer = jumpRollMinTime;
             wasInAir = true;
             jumpRollAnimStarted = false;
-            currentAnimState = "";
+            cachedIsGrounded = false;
 
             transform.localScale = new Vector3(wallJumpDirection * Mathf.Abs(transform.localScale.x),
                                                transform.localScale.y, transform.localScale.z);
@@ -408,7 +408,7 @@ public class PlayerController : MonoBehaviour
             if (!movingAwayFromWall)
             {
                 if (!isWallSliding)
-                    currentAnimState = "";
+                    currentAnimState = ""; // Wall slide baslangici - state gecisi zorunlu
 
                 isWallSliding = true;
                 isJumpRolling = false;
@@ -627,6 +627,11 @@ public class PlayerController : MonoBehaviour
 
     // Animasyon state takibi
     private string currentAnimState = "";
+    private float smoothSpeed = 0f; // Smooth edilmis hiz degeri
+    private const float speedSmoothTime = 0.08f; // Hiz yumusatma suresi
+    private float speedSmoothVelocity = 0f; // SmoothDamp icin ref
+    private bool cachedIsGrounded = false; // Animasyon icin cache'lenmis isGrounded
+    private const float runDeadZone = 0.15f; // Kosu animasyonu icin minimum hiz esigi
 
     void PlayAnim(string stateName, float transitionTime = 0.1f)
     {
@@ -642,40 +647,49 @@ public class PlayerController : MonoBehaviour
         // Animator varsa onu kullan
         if (animator != null)
         {
-            animator.SetFloat("Speed", Mathf.Abs(horizontalInput));
-            animator.SetBool("IsGrounded", isGrounded);
-            animator.SetBool("IsFiring", isFiring);
-            animator.SetBool("IsRolling", isRolling || isJumpRolling);
-            animator.SetBool("IsWallSliding", isWallSliding);
-            animator.SetBool("IsDashing", isDashing);
-            animator.SetBool("IsDead", isDead);
+            // isGrounded'i animasyon icin yumusatma - FixedUpdate/Update farkindan kaynaklanan
+            // titremeleri onlemek icin sadece yerde oldugumuzu teyit edince guncelle
+            if (isGrounded && !cachedIsGrounded)
+            {
+                // Yere indik - hemen guncelle
+                cachedIsGrounded = true;
+            }
+            else if (!isGrounded && cachedIsGrounded)
+            {
+                // Yerden ayrilmak icin velocity kontrolu yap (kucuk titremeleri filtrele)
+                if (rb.linearVelocity.y > 1f || rb.linearVelocity.y < -1f || groundContactCount <= 0)
+                {
+                    cachedIsGrounded = false;
+                }
+            }
 
-            // Düşme kontrolü - yerde değil ve aşağı doğru hareket ediyorsa
-            bool isFalling = !isGrounded && rb.linearVelocity.y < -0.5f;
-            animator.SetBool("IsFalling", isFalling);
+            // Speed degerini SmoothDamp ile yumusatarak guvenilir hale getir
+            float targetSpeed = Mathf.Abs(horizontalInput);
+            smoothSpeed = Mathf.SmoothDamp(smoothSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime);
 
-            // Ölüm animasyonu - diğer her şeyden önce kontrol et
+            // Olum animasyonu - diger her seyden once kontrol et
             if (isDead)
             {
                 animator.speed = 1f;
                 PlayAnim("player_Dead", 0.02f);
-                return; // Ölüyken başka animasyon oynatma
+                return; // Oluyken baska animasyon oynatma
             }
 
             // Direkt animasyon kontrolu - transition'lara guvenmiyoruz
             if (isDashing)
             {
-                animator.speed = 1.5f; // Dash animasyonu biraz hızlı
-                PlayAnim("AskerTakla", 0.02f); // Dash icin hizli takla animasyonu
+                animator.speed = 1.5f;
+                PlayAnim("AskerTakla", 0.02f);
             }
             else if (isJumpRolling || isRolling)
             {
-                animator.speed = 1.2f; // Biraz hizli takla animasyonu
+                animator.speed = 1.2f;
 
                 if (!jumpRollAnimStarted)
                 {
                     jumpRollAnimStarted = true;
                     animator.Play("AskerTakla", 0, 0f);
+                    currentAnimState = "AskerTakla";
                 }
                 else
                 {
@@ -693,24 +707,37 @@ public class PlayerController : MonoBehaviour
             }
             else if (isLanding)
             {
-                // Yere iniş/destek alma animasyonu - yüksekten düştükten sonra
-                animator.speed = 2f; // Animasyonu 2x hızlı oynat
-                PlayAnim("player_Fall", 0.02f); // Çok hızlı geçiş
+                animator.speed = 2f;
+                PlayAnim("player_Fall", 0.02f);
             }
             else if (isFiring)
             {
-                animator.speed = 1f; // Normal hız
+                animator.speed = 1f;
                 PlayAnim("FireAnimation", 0.05f);
             }
-            else if (isGrounded && Mathf.Abs(horizontalInput) > 0.1f)
+            else if (cachedIsGrounded && smoothSpeed > runDeadZone)
             {
-                animator.speed = 1f; // Normal hız
-                PlayAnim("Run", 0.05f); // Kosu animasyonu
+                // Kosu animasyonu - smoothSpeed ve dead zone ile akici gecis
+                animator.speed = 1f;
+                PlayAnim("Run", 0.05f);
             }
-            else
+            else if (cachedIsGrounded)
             {
-                animator.speed = 1f; // Normal hız
-                PlayAnim("idle", 0.1f); // Biraz daha yavas gecis
+                // Idle - yerde ve hareket etmiyor
+                animator.speed = 1f;
+                PlayAnim("idle", 0.15f); // idle'a geciste biraz daha yavas transition
+            }
+            else if (!cachedIsGrounded && rb.linearVelocity.y < -1f)
+            {
+                // Dusme animasyonu - sadece belirgin dususte
+                animator.speed = 1f;
+                PlayAnim("player_Fall", 0.1f);
+            }
+            else if (!cachedIsGrounded && rb.linearVelocity.y > 0.5f)
+            {
+                // Yükselme/ziplama durumu - idle kalmasin
+                animator.speed = 1f;
+                PlayAnim("Run", 0.05f);
             }
 
             return;

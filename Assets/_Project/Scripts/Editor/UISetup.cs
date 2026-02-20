@@ -31,46 +31,7 @@ public class UISetup : MonoBehaviour
         GameObject uiManagerObj = new GameObject("UIManager");
         UIManager uiManager = uiManagerObj.AddComponent<UIManager>();
 
-        // HUD Panel
-        GameObject hudPanel = CreatePanel(canvasObj.transform, "HUDPanel", new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(400, 100));
-
-        // Score Text
-        GameObject scoreObj = CreateTMPText(hudPanel.transform, "ScoreText", "0", 48, TextAlignmentOptions.Left);
-        RectTransform scoreRT = scoreObj.GetComponent<RectTransform>();
-        scoreRT.anchorMin = new Vector2(0, 1);
-        scoreRT.anchorMax = new Vector2(0, 1);
-        scoreRT.pivot = new Vector2(0, 1);
-        scoreRT.anchoredPosition = new Vector2(20, -20);
-        scoreRT.sizeDelta = new Vector2(200, 60);
-        uiManager.scoreText = scoreObj.GetComponent<TextMeshProUGUI>();
-
-        // Coin Text
-        GameObject coinObj = CreateTMPText(hudPanel.transform, "CoinText", "0", 32, TextAlignmentOptions.Left);
-        RectTransform coinRT = coinObj.GetComponent<RectTransform>();
-        coinRT.anchorMin = new Vector2(0, 1);
-        coinRT.anchorMax = new Vector2(0, 1);
-        coinRT.pivot = new Vector2(0, 1);
-        coinRT.anchoredPosition = new Vector2(20, -80);
-        coinRT.sizeDelta = new Vector2(150, 40);
-        TextMeshProUGUI coinTMP = coinObj.GetComponent<TextMeshProUGUI>();
-        coinTMP.color = new Color(1f, 0.84f, 0f); // Gold
-        uiManager.coinText = coinTMP;
-
-        // Hearts Container
-        GameObject heartsContainer = new GameObject("HeartsContainer");
-        heartsContainer.transform.SetParent(canvasObj.transform, false);
-        RectTransform heartsRT = heartsContainer.AddComponent<RectTransform>();
-        heartsRT.anchorMin = new Vector2(1, 1);
-        heartsRT.anchorMax = new Vector2(1, 1);
-        heartsRT.pivot = new Vector2(1, 1);
-        heartsRT.anchoredPosition = new Vector2(-20, -20);
-        heartsRT.sizeDelta = new Vector2(200, 50);
-        HorizontalLayoutGroup hlg = heartsContainer.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 10;
-        hlg.childAlignment = TextAnchor.UpperRight;
-        hlg.childForceExpandWidth = false;
-        hlg.childForceExpandHeight = false;
-        uiManager.heartsContainer = heartsRT;
+        // HUD artik NeonHUD tarafindan yonetiliyor
 
         // Game Over Panel
         GameObject gameOverPanel = CreatePanel(canvasObj.transform, "GameOverPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500, 400));

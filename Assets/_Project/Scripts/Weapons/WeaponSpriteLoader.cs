@@ -61,7 +61,7 @@ public static class WeaponSpriteLoader
     }
 
     /// <summary>
-    /// Silah icon'u yükle (UI için)
+    /// Silah icon'u yükle (UI için) - Figma ikonlari oncelikli
     /// </summary>
     public static Sprite GetWeaponIcon(WeaponType type)
     {
@@ -70,7 +70,13 @@ public static class WeaponSpriteLoader
         if (spriteCache.TryGetValue(path, out Sprite cached))
             return cached;
 
-        Sprite sprite = LoadSpriteFromResources(path);
+        // Figma ikonunu dene
+        Sprite sprite = UIAssetLoader.GetWeaponIcon(type);
+
+        if (sprite == null)
+        {
+            sprite = LoadSpriteFromResources(path);
+        }
 
         if (sprite == null)
         {
